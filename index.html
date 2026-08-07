@@ -18,7 +18,7 @@
 .result{font-size:34px;font-weight:900;color:var(--navy)}.muted{font-size:12px;color:var(--muted)}.tag{display:inline-block;padding:4px 7px;border-radius:999px;background:var(--green);color:var(--greenT);font-size:10px;font-weight:900}
 .notice{padding:10px 12px;border-radius:8px;background:var(--amber);color:var(--amberT);font-size:12px;margin-bottom:14px;line-height:1.45}
 .tableWrap{overflow:auto;border:1px solid var(--border);border-radius:9px}table{width:100%;border-collapse:collapse;min-width:820px}th,td{padding:9px 10px;border-bottom:1px solid #edf1f5;text-align:left;font-size:12px;vertical-align:top}th{background:#f1f5f8;color:#456175;font-size:10px;text-transform:uppercase;position:sticky;top:0;z-index:1}
-.bomGrid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:14px}.bomCard{border:1px solid var(--border);border-radius:10px;padding:12px;background:#fff}.bomCard b{display:block;color:var(--navy);font-size:12px;margin-bottom:6px}.bomCard span{font-size:12px;color:var(--muted)}
+.bomGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:14px}.bomCard{border:1px solid var(--border);border-radius:10px;padding:12px;background:#fff}.bomCard b{display:block;color:var(--navy);font-size:12px;margin-bottom:6px}.bomCard span{font-size:12px;color:var(--muted)}
 .priceInput{min-width:120px}.sectionTitle{font-weight:900;color:var(--navy);margin:16px 0 8px}.bomNote{margin-top:10px;font-size:11px;color:var(--muted);line-height:1.45}
 @media(max-width:950px){.app{grid-template-columns:1fr}.nav{grid-template-columns:repeat(3,1fr)}.grid,.formGrid,.kpis,.bomGrid{grid-template-columns:1fr}.full{grid-column:auto}.main{padding:14px}}
 </style>
@@ -28,7 +28,7 @@
 <div id="loginScreen" class="login">
   <div class="loginCard">
     <h1>WINKO Quick Calculator</h1>
-    <p>Sales quick calculator with Main-only BOM price control.</p>
+    <p>Supabase-synced sales calculator with Main-only BOM control.</p>
     <div class="field"><label>Username</label><input id="loginUser" class="input"></div>
     <div class="field"><label>Password</label><input id="loginPass" class="input" type="password" onkeydown="if(event.key==='Enter')doLogin()"></div>
     <button class="btn primary" style="width:100%" onclick="doLogin()">Login</button>
@@ -51,83 +51,109 @@
 </div>
 
 <script>
-const STORAGE='winko_quick_calc_full_bom_v2';
 const SESSION='winko_quick_calc_session';
+const API_URL='https://yzequtnkzuyayydpqayf.supabase.co/functions/v1/factory-simple-api';
 
 const BOM_CATALOGUE=[
   {key:'manhole',category:'Panels',item:'Manhole',unit:'pcs'},
-  {key:'roof15',category:'Panels',item:'1.5mm (Roof)',unit:'pcs'},
+  {key:'roof15',category:'Panels',item:'Roof Panel',unit:'pcs'},
   {key:'wallL1',category:'Panels',item:'Wall L1',unit:'pcs'},
   {key:'wallL2',category:'Panels',item:'Wall L2',unit:'pcs'},
   {key:'wallL3',category:'Panels',item:'Wall L3',unit:'pcs'},
   {key:'wallL4',category:'Panels',item:'Wall L4',unit:'pcs'},
-  {key:'base50',category:'Panels',item:'5.0mm (Base)',unit:'pcs'},
-
+  {key:'base50',category:'Panels',item:'Base Panel',unit:'pcs'},
+  {key:'partition',category:'Panels',item:'Internal Partition',unit:'set'},
   {key:'roofTrusses',category:'Cleats / Trusses / Stays',item:'Roof Trusses (12 ft)',unit:'pcs'},
-  {key:'roofSupport8',category:'Cleats / Trusses / Stays',item:'8" Roof Support',unit:'pcs'},
+  {key:'roofSupport8',category:'Cleats / Trusses / Stays',item:'8 inch Roof Support',unit:'pcs'},
   {key:'cleatA',category:'Cleats / Trusses / Stays',item:'Type (A) Cleat',unit:'pcs'},
   {key:'cleatB',category:'Cleats / Trusses / Stays',item:'Type (B) Cleat',unit:'pcs'},
   {key:'cleatC',category:'Cleats / Trusses / Stays',item:'Type (C) Cleat',unit:'pcs'},
   {key:'cleatC1',category:'Cleats / Trusses / Stays',item:'Type (C1) Cleat',unit:'pcs'},
   {key:'ladderBracket',category:'Cleats / Trusses / Stays',item:'Ladder Brackets',unit:'pcs'},
-  {key:'angleStay67_5',category:'Cleats / Trusses / Stays',item:'67 1/2" Angle Stay',unit:'pcs'},
-  {key:'stay11_3_2',category:'Cleats / Trusses / Stays',item:'11-3/2"',unit:'pcs'},
-
-  {key:'extLadder',category:'Accessories / Fasteners',item:'Ext. Ladder',unit:'ft'},
-  {key:'intLadder',category:'Accessories / Fasteners',item:'Int. Ladder',unit:'ft'},
-  {key:'airVent',category:'Accessories / Fasteners',item:'Air-Vents',unit:'pcs'},
+  {key:'angleStay67_5',category:'Cleats / Trusses / Stays',item:'67 1/2 inch Angle Stay',unit:'pcs'},
+  {key:'stay11_3_2',category:'Cleats / Trusses / Stays',item:'11-3/2 inch Stay',unit:'pcs'},
+  {key:'extLadder',category:'Accessories / Fasteners',item:'External Ladder',unit:'ft'},
+  {key:'intLadder',category:'Accessories / Fasteners',item:'Internal Ladder',unit:'ft'},
+  {key:'airVent',category:'Accessories / Fasteners',item:'Air Vent',unit:'pcs'},
   {key:'levelIndicator',category:'Accessories / Fasteners',item:'Water Level Indicator',unit:'ft'},
-  {key:'m14BN',category:'Accessories / Fasteners',item:'M14x30 BN',unit:'pcs'},
-  {key:'m14Washer',category:'Accessories / Fasteners',item:'M14 washer',unit:'pcs'},
-  {key:'bnw58',category:'Accessories / Fasteners',item:'5/8 x 1½ BNW',unit:'set'},
-  {key:'bn38',category:'Accessories / Fasteners',item:'3/8 x 3/4 BN (set)',unit:'set'},
-  {key:'m16x40',category:'Accessories / Fasteners',item:'M16 x40mm B.N.W (set)',unit:'set'},
-
-  {key:'sealant45',category:'Sealants',item:'5x45x10m Sealant Roll',unit:'roll'},
-  {key:'sealant40',category:'Sealants',item:'3x40x10m Sealant Roll',unit:'roll'},
+  {key:'m14BN',category:'Accessories / Fasteners',item:'M14 x 30 Bolt and Nut',unit:'pcs'},
+  {key:'m14Washer',category:'Accessories / Fasteners',item:'M14 Washer',unit:'pcs'},
+  {key:'bnw58',category:'Accessories / Fasteners',item:'5/8 x 1 1/2 BNW',unit:'set'},
+  {key:'bn38',category:'Accessories / Fasteners',item:'3/8 x 3/4 BNW Set',unit:'set'},
+  {key:'m16x40',category:'Accessories / Fasteners',item:'M16 x 40mm B.N.W Set',unit:'set'},
+  {key:'sealant45',category:'Sealants',item:'5 x 45 x 10 m Sealant Roll',unit:'roll'},
+  {key:'sealant40',category:'Sealants',item:'3 x 40 x 10 m Sealant Roll',unit:'roll'},
   {key:'butyl8',category:'Sealants',item:'8mm Butyl Sealant',unit:'pcs'},
   {key:'butyl24',category:'Sealants',item:'24mm Butyl Sealant',unit:'pcs'}
 ];
 
-const DEFAULT_PRODUCT_PRICES=Object.fromEntries(BOM_CATALOGUE.map(x=>[x.key,0]));
-const DEFAULTS={
-  productPrices:DEFAULT_PRODUCT_PRICES,
-  deliveryBase:0,
-  installationBase:0,
-  markup:25,
-  sst:8,
-  currency:'MYR'
+const DEFAULTS={sst:8,markup:25,installation:0,delivery:0,other:0,currency:'MYR'};
+const PRODUCT_KEY_MAP={
+  manhole:'panel_manhole',partition:'quick_partition',
+  roofTrusses:'quick_roof_truss_12ft',roofSupport8:'quick_roof_support_8in',
+  cleatA:'cleat_rc_a',cleatB:'cleat_mc_b',cleatC:'cleat_sc_c',cleatC1:'cleat_sc1_c1',
+  ladderBracket:'ladder_bracket',angleStay67_5:'stay_67_5',stay11_3_2:'quick_stay_11_3_2',
+  extLadder:'quick_ext_ladder_ft',intLadder:'quick_int_ladder_ft',airVent:'air_vent',
+  levelIndicator:'quick_wli_ft',m14BN:'bolt_m14x30_bn',m14Washer:'washer_m14',
+  bnw58:'quick_bnw_5_8x1_5',bn38:'quick_bnw_3_8x3_4',m16x40:'quick_m16x40_bnw',
+  sealant45:'sealant_roll_5x45x10m',sealant40:'sealant_roll_3x40x10m',
+  butyl8:'quick_butyl_8mm_piece',butyl24:'quick_butyl_24mm_piece'
 };
-
 const VERIFIED_BOM_24_24_8={
-  manhole:1,roof15:35,wallL1:24,wallL2:24,wallL3:0,wallL4:0,base50:36,
+  manhole:1,roof15:35,wallL1:24,wallL2:24,wallL3:0,wallL4:0,base50:36,partition:0,
   roofTrusses:10,roofSupport8:5,cleatA:8,cleatB:45,cleatC:24,cleatC1:24,
-  ladderBracket:6,angleStay67_5:28,stay11_3_2:4,
-  extLadder:8,intLadder:8,airVent:1,levelIndicator:8,
-  m14BN:2510,m14Washer:2510,bnw58:190,bn38:260,m16x40:380,
-  sealant45:24,sealant40:10,butyl8:49,butyl24:45
+  ladderBracket:6,angleStay67_5:28,stay11_3_2:4,extLadder:8,intLadder:8,airVent:1,levelIndicator:8,
+  m14BN:2510,m14Washer:2510,bnw58:190,bn38:260,m16x40:380,sealant45:24,sealant40:10,butyl8:49,butyl24:45
 };
 
-let state={settings:loadSettings(),role:null,view:'calculator'};
+let auth={username:'',password:''};
+let state={settings:{...DEFAULTS},role:null,view:'calculator',remoteCatalogue:[],remoteByKey:{},lastPrice:null,priceSeq:0,currentBom:null,currentManualTotals:null,sharedQuotes:[]};
 
 function clone(x){return JSON.parse(JSON.stringify(x))}
-function loadSettings(){
-  try{
-    const x=JSON.parse(localStorage.getItem(STORAGE)||'{}');
-    return {...clone(DEFAULTS),...x,productPrices:{...DEFAULT_PRODUCT_PRICES,...(x.productPrices||{})}};
-  }catch{return clone(DEFAULTS)}
+async function api(action,data=null){
+  const res=await fetch(API_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:auth.username,password:auth.password,action,data})});
+  let body={};try{body=await res.json()}catch{}
+  if(!res.ok||body.ok===false)throw new Error(body.error||`Supabase request failed (${res.status})`);
+  return body;
 }
-function saveSettings(){localStorage.setItem(STORAGE,JSON.stringify(state.settings))}
-function doLogin(){
+async function loadRemoteConfig(){
+  const r=await api('quick_load');
+  state.role=r.role||state.role;
+  state.settings={...DEFAULTS,...(r.defaults||{})};
+  state.remoteCatalogue=Array.isArray(r.catalogue)?r.catalogue:[];
+  state.remoteByKey=Object.fromEntries(state.remoteCatalogue.map(x=>[x.internalKey,x]));
+  return r;
+}
+function thicknessKey(prefix,mm){
+  const n=Number(mm||0);
+  if(!Number.isFinite(n)||n<=0)return '';
+  return `panel_${prefix}_${n.toFixed(1).replace('.','_')}`;
+}
+function resolvedInternalKey(localKey){
+  if(localKey==='roof15')return thicknessKey('roof',num('roofThickness'));
+  if(['wallL1','wallL2','wallL3','wallL4'].includes(localKey)){
+    const id=localKey==='wallL1'?'wallL1Thickness':localKey==='wallL2'?'wallL2Thickness':localKey==='wallL3'?'wallL3Thickness':'wallL4Thickness';
+    return thicknessKey('wall',num(id));
+  }
+  if(localKey==='base50')return thicknessKey('base',num('baseThickness'));
+  return PRODUCT_KEY_MAP[localKey]||localKey;
+}
+async function doLogin(){
+  loginMsg.textContent='Signing in…';
   const u=loginUser.value.trim().toLowerCase(),p=loginPass.value;
-  let role=null;
-  if(u==='sales'&&p==='sales123')role='sales';
-  if(u==='main'&&p==='main123')role='main';
-  if(!role){loginMsg.textContent='Invalid username or password.';return}
-  sessionStorage.setItem(SESSION,role);start(role)
+  if(!u||!p){loginMsg.textContent='Username and password required.';return}
+  try{
+    auth={username:u,password:p};
+    const r=await api('login');
+    state.role=r.role;
+    await loadRemoteConfig();
+    sessionStorage.setItem(SESSION,JSON.stringify({username:u,role:state.role}));
+    loginMsg.textContent='';
+    start(state.role);
+  }catch(e){auth={username:'',password:''};loginMsg.textContent=e.message||'Login failed.'}
 }
 function start(role){state.role=role;loginScreen.classList.add('hidden');app.classList.remove('hidden');setView('calculator')}
-function logout(){sessionStorage.removeItem(SESSION);location.reload()}
+function logout(){sessionStorage.removeItem(SESSION);auth={username:'',password:''};location.reload()}
 function setView(v){state.view=v;renderNav();if(v==='prices')renderPrices();else if(v==='history')renderHistory();else renderCalculator()}
 function renderNav(){
   const items=[['calculator','Quick Calculator'],['history','Recent Quotes']];
@@ -138,6 +164,37 @@ function page(t,s){pageTitle.textContent=t;pageSub.textContent=s;roleTag.textCon
 function money(v){return new Intl.NumberFormat('en-MY',{style:'currency',currency:state.settings.currency||'MYR',maximumFractionDigits:2}).format(Number(v||0))}
 function num(id){return Number(document.getElementById(id)?.value||0)}
 function esc(s){return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
+
+
+function activeWallLevels(heightFt){
+  const h=Math.max(Number(heightFt)||0,0);
+  return {l1:h>0,l2:h>4,l3:h>8,l4:h>12,count:h<=0?0:Math.min(Math.ceil(h/4),4),overMax:h>16};
+}
+function syncWallLevelUi(){
+  const h=num('hei'),lv=activeWallLevels(h);
+  [['wallL1Field','l1'],['wallL2Field','l2'],['wallL3Field','l3'],['wallL4Field','l4']].forEach(([id,k])=>{
+    const el=document.getElementById(id);if(el)el.style.display=lv[k]?'grid':'none';
+  });
+}
+function syncPartitionUi(){
+  const on=document.getElementById('partitionRequired')?.value==='yes';
+  ['partitionTypeField','partitionLengthField','partitionWidthField','partitionQtyField'].forEach(id=>{
+    const el=document.getElementById(id);if(el)el.style.display=on?'grid':'none';
+  });
+}
+function thicknessLabel(key){
+  const map={
+    roof15:['roofThickness','Roof'],
+    wallL1:['wallL1Thickness','Wall L1'],
+    wallL2:['wallL2Thickness','Wall L2'],
+    wallL3:['wallL3Thickness','Wall L3'],
+    wallL4:['wallL4Thickness','Wall L4'],
+    base50:['baseThickness','Base']
+  };
+  if(!map[key])return null;
+  const [id,label]=map[key],v=Number(document.getElementById(id)?.value||0);
+  return `${v.toFixed(1)}mm (${label})`;
+}
 
 function tankBasis(l,w,h){
   const lp=l/4,wp=w/4,hp=h/4,roof=lp*wp,perimeter=2*(lp+wp),wall=perimeter*hp;
@@ -202,12 +259,27 @@ function buildBom(l,w,h){
   if(document.getElementById('ladder')?.value!=='yes'){qty.extLadder=0;qty.intLadder=0;qty.ladderBracket=0}
   if(document.getElementById('vent')?.value!=='yes')qty.airVent=0;
   if(document.getElementById('level')?.value!=='yes')qty.levelIndicator=0;
-  return {basis,exact:l===24&&w===24&&h===8,rows:BOM_CATALOGUE.map(x=>({...x,qty:Number(qty[x.key]||0),unitPrice:Number(state.settings.productPrices[x.key]||0)}))};
+  qty.partition=document.getElementById('partitionRequired')?.value==='yes'?Math.max(num('partitionQty'),0):0;
+
+  const rows=BOM_CATALOGUE.map(x=>{
+    const internalKey=resolvedInternalKey(x.key),remote=state.remoteByKey[internalKey]||{};
+    const generatedQty=Number(qty[x.key]||0);
+    const qtyOverride=remote.qtyOverride;
+    // Important: an inactive line (for example L3/L4 on an 8 ft tank) always stays zero.
+    const effectiveQty=generatedQty<=0?0:(qtyOverride===null||qtyOverride===undefined?generatedQty:Number(qtyOverride||0));
+    return {...x,internalKey,item:remote.name||x.item,unit:remote.unit||x.unit,generatedQty,qty:effectiveQty,unitPrice:state.role==='main'?Number(remote.unitPrice||0):0,remoteMissing:!state.remoteByKey[internalKey],isCustom:false};
+  });
+
+  // Main-created custom BOM products are Supabase-backed and use their default quantity.
+  state.remoteCatalogue.filter(x=>x.isCustom).forEach(x=>{
+    const q=x.qtyOverride===null||x.qtyOverride===undefined?0:Number(x.qtyOverride||0);
+    if(q>0) rows.push({key:x.internalKey,internalKey:x.internalKey,category:x.category||'Custom',item:x.name||'Custom Item',unit:x.unit||'pcs',generatedQty:q,qty:q,unitPrice:state.role==='main'?Number(x.unitPrice||0):0,remoteMissing:false,isCustom:true});
+  });
+  return {basis,exact:l===24&&w===24&&h===8,rows};
 }
-function bomCost(bom){return bom.rows.reduce((sum,r)=>sum+r.qty*r.unitPrice,0)}
 
 function renderCalculator(){
-  page('Quick Calculator','Sales sees the final selling price. Main controls every BOM product price.');
+  page('Quick Calculator','Sales sees the final selling price. BOM names, quantity overrides, prices and defaults sync from Supabase.');
   view.innerHTML=`
   <div class="grid">
     <div class="card">
@@ -217,13 +289,27 @@ function renderCalculator(){
         <div class="field"><label>Width (ft)</label><input id="wid" class="input" type="number" min="4" step="4" value="24" oninput="calc()"></div>
         <div class="field"><label>Height (ft)</label><select id="hei" onchange="calc()"><option>4</option><option selected>8</option><option>12</option><option>16</option></select></div>
         <div class="field"><label>Quantity</label><input id="qty" class="input" type="number" min="1" value="1" oninput="calc()"></div>
-        <div class="field"><label>Supply Type</label><select id="supply" onchange="calc()"><option value="supply">Supply Only</option><option value="install">Supply + Installation</option></select></div>
-        <div class="field"><label>Delivery</label><select id="delivery" onchange="calc()"><option value="no">No</option><option value="yes">Include Delivery</option></select></div>
+
+        <div class="field"><label>Roof Thickness (mm)</label><input id="roofThickness" class="input" type="number" min="0" step="0.1" value="1.5" oninput="calc()"></div>
+        <div class="field"><label>Base Thickness (mm)</label><input id="baseThickness" class="input" type="number" min="0" step="0.1" value="5.0" oninput="calc()"></div>
+        <div class="field" id="wallL1Field"><label>Wall L1 Thickness (mm)</label><input id="wallL1Thickness" class="input" type="number" min="0" step="0.1" value="5.0" oninput="calc()"></div>
+        <div class="field" id="wallL2Field"><label>Wall L2 Thickness (mm)</label><input id="wallL2Thickness" class="input" type="number" min="0" step="0.1" value="5.0" oninput="calc()"></div>
+        <div class="field" id="wallL3Field"><label>Wall L3 Thickness (mm)</label><input id="wallL3Thickness" class="input" type="number" min="0" step="0.1" value="5.0" oninput="calc()"></div>
+        <div class="field" id="wallL4Field"><label>Wall L4 Thickness (mm)</label><input id="wallL4Thickness" class="input" type="number" min="0" step="0.1" value="5.0" oninput="calc()"></div>
+
+        <div class="field"><label>Partition</label><select id="partitionRequired" onchange="syncPartitionUi();calc()"><option value="no">No Partition</option><option value="yes">Partition Required</option></select></div>
+        <div class="field" id="partitionTypeField"><label>Partition Type</label><select id="partitionType" onchange="calc()"><option>Internal panel partition</option><option>Single partition</option><option>Double partition</option><option>Custom partition</option></select></div>
+        <div class="field" id="partitionLengthField"><label>Partition Length (ft)</label><input id="partitionLength" class="input" type="number" min="0" step="0.01" value="0" oninput="calc()"></div>
+        <div class="field" id="partitionWidthField"><label>Partition Width / Height (ft)</label><input id="partitionWidth" class="input" type="number" min="0" step="0.01" value="0" oninput="calc()"></div>
+        <div class="field" id="partitionQtyField"><label>Partition Qty</label><input id="partitionQty" class="input" type="number" min="0" step="1" value="1" oninput="calc()"></div>
+
+        <div class="field"><label>Supply Type</label><select id="supply" onchange="calc()"><option value="supply">Supply Only</option><option value="install">Supply + Installation (+${money(state.settings.installation||0)})</option></select></div>
+        <div class="field"><label>Delivery</label><select id="delivery" onchange="calc()"><option value="no">No Delivery</option><option value="yes">Include Delivery (+${money(state.settings.delivery||0)})</option></select></div>
         <div class="field"><label>Ladder</label><select id="ladder" onchange="calc()"><option value="no">No</option><option value="yes">Yes</option></select></div>
         <div class="field"><label>Air Vent</label><select id="vent" onchange="calc()"><option value="no">No</option><option value="yes">Yes</option></select></div>
         <div class="field"><label>Water Level Indicator</label><select id="level" onchange="calc()"><option value="no">No</option><option value="yes">Yes</option></select></div>
         <div class="field"><label>SST</label><select id="sstOn" onchange="calc()"><option value="yes">Include</option><option value="no">Exclude</option></select></div>
-        <div class="field full"><label>Customer / Project</label><input id="customer" class="input" placeholder="Optional"></div>
+        <div class="field"><label>Customer</label><input id="customer" class="input" placeholder="Customer name"></div><div class="field"><label>Project</label><input id="project" class="input" placeholder="Project / site"></div>
       </div>
     </div>
 
@@ -253,113 +339,238 @@ function renderCalculator(){
     <div id="bomDetail" style="margin-top:14px"></div>
     <div id="bomMethod" class="bomNote"></div>
   </div>`;
-  calc()
+  syncWallLevelUi();syncPartitionUi();calc()
 }
 
+function rowDisplayName(r){
+  if(r.isCustom)return r.item;
+  const thick=thicknessLabel(r.key);
+  if(thick)return `${thick} — ${r.item}`;
+  if(r.key==='partition'&&document.getElementById('partitionRequired')?.value==='yes')return `${document.getElementById('partitionType')?.value||'Internal panel partition'} — ${num('partitionLength')} ft × ${num('partitionWidth')} ft`;
+  return r.item;
+}
+function renderBomTableOnly(bom){
+  state.currentBom=bom;
+  const rows=bom.rows.filter(r=>Number(r.qty||0)>0 && !r.removed);
+  bomDetail.innerHTML=`<div class="tableWrap"><table><thead><tr><th>Category</th><th>BOM Product</th><th>Qty</th>${state.role==='main'?'<th>Unit Price</th><th>Amount</th><th>Action</th>':''}</tr></thead><tbody>
+    ${rows.map((r,i)=>{
+      r._visibleIndex=i;
+      const name=rowDisplayName(r);
+      if(state.role==='main'){
+        return `<tr><td>${esc(r.category)}</td><td><input class="input" value="${esc(name)}" onchange="editCurrentBomName('${esc(r.key)}',this.value)"></td><td><input class="input" style="width:100px" type="number" min="0" step="0.01" value="${r.qty}" onchange="editCurrentBomQty('${esc(r.key)}',this.value)"> ${esc(r.unit)}</td><td>${money(r.unitPrice)}</td><td><b>${money(r.qty*r.unitPrice)}</b></td><td><button class="btn danger" onclick="removeCurrentBomItem('${esc(r.key)}')">Remove</button></td></tr>`;
+      }
+      return `<tr><td>${esc(r.category)}</td><td><b>${esc(name)}</b></td><td>${r.qty} ${esc(r.unit)}</td></tr>`;
+    }).join('')}
+  </tbody></table></div>
+  ${state.role==='main'?`<div class="toolbar" style="margin-top:10px"><button class="btn primary" onclick="addCurrentBomItem()">+ Add Item</button><button class="btn" onclick="saveCurrentBomAsDefaults()">Save Current BOM Name/Qty as Defaults</button></div>`:''}`;
+}
+function addCurrentBomItem(){
+  if(state.role!=='main'||!state.currentBom)return;
+  const name=prompt('Item name:','Additional Item');if(!name)return;
+  const qty=Math.max(0,Number(prompt('Quantity:','1'))||0);if(qty<=0)return;
+  const unit=prompt('Unit:','pcs')||'pcs';
+  const price=Math.max(0,Number(prompt('Unit price (RM):','0'))||0);
+  const key='manual_'+Date.now();
+  state.currentBom.rows.push({
+    key,internalKey:key,category:'Manual',item:name,unit,
+    generatedQty:qty,qty,unitPrice:price,remoteMissing:false,isCustom:true,isManualCurrent:true
+  });
+  recalcMainManualBom();
+  renderBomTableOnly(state.currentBom);
+}
+function removeCurrentBomItem(key){
+  if(state.role!=='main'||!state.currentBom)return;
+  const r=state.currentBom.rows.find(x=>x.key===key);if(!r)return;
+  r.qty=0;r.removed=true;
+  recalcMainManualBom();
+  renderBomTableOnly(state.currentBom);
+}
+function editCurrentBomName(key,value){
+  const r=state.currentBom?.rows?.find(x=>x.key===key);if(!r)return;r.item=String(value||'').trim()||r.item;recalcMainManualBom();
+}
+function editCurrentBomQty(key,value){
+  const r=state.currentBom?.rows?.find(x=>x.key===key);if(!r)return;r.qty=Math.max(0,Number(value)||0);recalcMainManualBom();renderBomTableOnly(state.currentBom);
+}
+function recalcMainManualBom(){
+  if(state.role!=='main'||!state.currentBom)return null;
+  const tankQty=Math.max(1,num('qty'));
+  const material=state.currentBom.rows.reduce((a,r)=>a+(Number(r.qty)||0)*(Number(r.unitPrice)||0),0)*tankQty;
+  const installation=document.getElementById('supply')?.value==='install'?Number(state.settings.installation||0)*tankQty:0;
+  const delivery=document.getElementById('delivery')?.value==='yes'?Number(state.settings.delivery||0)*tankQty:0;
+  const other=Number(state.settings.other||0)*tankQty;
+  const costBeforeMarkup=material+installation+delivery+other,markupRate=Number(state.settings.markup||0),markupAmount=costBeforeMarkup*markupRate/100,subtotal=costBeforeMarkup+markupAmount,sstRate=document.getElementById('sstOn')?.value==='yes'?Number(state.settings.sst||0):0,taxAmount=subtotal*sstRate/100,finalTotal=Math.round((subtotal+taxAmount+Number.EPSILON)*100)/100;
+  state.currentManualTotals={material,installation,delivery,other,costBeforeMarkup,markupRate,markupAmount,subtotal,sstRate,taxAmount,finalTotal,currency:'MYR'};
+  if(document.getElementById('sellPrice'))sellPrice.textContent=money(finalTotal);
+  if(document.getElementById('taxLine'))taxLine.textContent=sstRate?`Includes ${sstRate}% SST`:'SST excluded';
+  if(document.getElementById('mainBreakdown'))mainBreakdown.innerHTML=`Material: <b>${money(material)}</b><br>Installation: <b>${money(installation)}</b><br>Delivery: <b>${money(delivery)}</b><br>Other: <b>${money(other)}</b><br>Markup: <b>${markupRate}% (${money(markupAmount)})</b><br>Before SST: <b>${money(subtotal)}</b><br>SST: <b>${money(taxAmount)}</b>`;
+  return state.currentManualTotals;
+}
+async function saveCurrentBomAsDefaults(){
+  if(state.role!=='main'||!state.currentBom)return;
+  try{
+    const edits=Object.fromEntries(state.currentBom.rows.map(r=>[r.internalKey,r]));
+    const items=state.remoteCatalogue.map(x=>{
+      const r=edits[x.internalKey];
+      return {internalKey:x.internalKey,isCustom:!!x.isCustom,category:x.category,unit:x.unit,name:r?.item||x.name,qtyOverride:r&&r.generatedQty>0?Number(r.qty):x.qtyOverride,unitPrice:Number(x.unitPrice||0)};
+    });
+    await api('quick_save',{items,defaults:state.settings});await loadRemoteConfig();alert('Current BOM name/quantity defaults saved to Supabase.');calc();
+  }catch(e){alert(e.message||'Unable to save BOM defaults')}
+}
 function renderBom(l,w,h){
   const bom=buildBom(l,w,h),b=bom.basis;
-  if(!validGrid(b)){
-    bomPanels.textContent='Invalid';bomRoofBase.textContent='-';bomWall.textContent='-';bomStay.textContent='-';bomDetail.innerHTML='';bomMethod.textContent='Dimensions must use 4 ft panel modules.';return null;
-  }
-  bomPanels.textContent=Math.round(b.total);
-  bomRoofBase.textContent=`Roof ${Math.round(b.roof)} / Base ${Math.round(b.roof)}`;
-  bomWall.textContent=Math.round(b.wall);
-  bomStay.textContent=bom.rows.find(x=>x.key==='angleStay67_5')?.qty||0;
-
-  bomDetail.innerHTML=`<div class="tableWrap"><table><thead><tr><th>Category</th><th>BOM Product</th><th>Qty</th>${state.role==='main'?'<th>Unit Price</th><th>Amount</th>':''}</tr></thead><tbody>
-    ${bom.rows.filter(r=>r.qty>0).map(r=>`<tr><td>${esc(r.category)}</td><td><b>${esc(r.item)}</b></td><td>${r.qty} ${esc(r.unit)}</td>${state.role==='main'?`<td>${money(r.unitPrice)}</td><td><b>${money(r.qty*r.unitPrice)}</b></td>`:''}</tr>`).join('')}
-  </tbody></table></div>`;
-
-  bomMethod.textContent=bom.exact
-    ? 'Verified 24×24×8 reference BOM is applied.'
-    : 'Original Excel-style formulas are used where available; wall panels are split by active 4 ft levels.';
+  const levels=activeWallLevels(h);
+  [['wallL1','l1'],['wallL2','l2'],['wallL3','l3'],['wallL4','l4']].forEach(([rowKey,levelKey])=>{
+    const row=bom.rows.find(x=>x.key===rowKey);
+    if(row && !levels[levelKey]){row.generatedQty=0;row.qty=0;row.removed=true}
+  });
+  if(!validGrid(b)){bomPanels.textContent='Invalid';bomRoofBase.textContent='-';bomWall.textContent='-';bomDetail.innerHTML='';bomMethod.textContent='Dimensions must use 4 ft panel modules.';return null}
+  bomPanels.textContent=Math.round(b.total);bomRoofBase.textContent=`Roof ${Math.round(b.roof)} / Base ${Math.round(b.roof)}`;bomWall.textContent=Math.round(b.wall);
+  renderBomTableOnly(bom);
+  const lv=activeWallLevels(h);
+  const thickParts=[`Roof ${num('roofThickness').toFixed(1)}mm`,`Base ${num('baseThickness').toFixed(1)}mm`,`L1 ${num('wallL1Thickness').toFixed(1)}mm`,lv.l2?`L2 ${num('wallL2Thickness').toFixed(1)}mm`:null,lv.l3?`L3 ${num('wallL3Thickness').toFixed(1)}mm`:null,lv.l4?`L4 ${num('wallL4Thickness').toFixed(1)}mm`:null].filter(Boolean).join(' · ');
+  const part=document.getElementById('partitionRequired')?.value==='yes'?` Partition: ${document.getElementById('partitionType')?.value||'Internal panel partition'}, ${num('partitionLength')} ft × ${num('partitionWidth')} ft × Qty ${num('partitionQty')}.`:' Partition: None.';
+  const missing=bom.rows.filter(r=>r.qty>0&&r.remoteMissing).length;
+  bomMethod.textContent=(bom.exact?'Verified 24×24×8 reference BOM is applied. ':'Original Excel-style formulas are used where available; wall panels are split by active 4 ft levels. ')+`Thickness: ${thickParts}.${part}`+(missing?` ${missing} active item(s) are not mapped in Supabase.`:' Supabase BOM sync active.');
   return bom;
 }
 
 function calc(){
-  const l=num('len'),w=num('wid'),h=num('hei'),q=Math.max(1,num('qty'));
-  const bom=renderBom(l,w,h);
-  const perTank=bom?bomCost(bom):0;
-
-  let cost=perTank*q;
-  if(document.getElementById('delivery')?.value==='yes')cost+=Number(state.settings.deliveryBase||0)*q;
-  if(document.getElementById('supply')?.value==='install')cost+=Number(state.settings.installationBase||0)*q;
-
-  const sell=cost*(1+Number(state.settings.markup||0)/100);
-  const tax=document.getElementById('sstOn')?.value==='yes'?sell*(Number(state.settings.sst||0)/100):0;
-  const total=sell+tax;
-
-  sizeText.textContent=`${l}' × ${w}' × ${h}'`;
-  panelText.textContent=bom?Math.round(bom.basis.total):0;
-  qtyText.textContent=q;
-  sellPrice.textContent=money(total);
-  taxLine.textContent=tax?`Includes ${state.settings.sst}% SST`:'SST excluded';
-
-  if(state.role==='main'&&document.getElementById('mainBreakdown')){
-    mainBreakdown.innerHTML=`BOM Cost / Tank: <b>${money(perTank)}</b><br>Total Internal Cost: <b>${money(cost)}</b><br>Markup: <b>${state.settings.markup}%</b><br>Before SST: <b>${money(sell)}</b><br>SST: <b>${money(tax)}</b>`;
+  syncWallLevelUi();syncPartitionUi();
+  const l=num('len'),w=num('wid'),h=num('hei'),q=Math.max(1,num('qty')),bom=renderBom(l,w,h);
+  sizeText.textContent=`${l}' × ${w}' × ${h}'`;panelText.textContent=bom?Math.round(bom.basis.total):0;qtyText.textContent=q;
+  if(!bom){sellPrice.textContent='—';return {l,w,h,q,total:0,bom:null}}
+  sellPrice.textContent='Calculating…';scheduleRemotePrice(bom,q);
+  return {l,w,h,q,total:Number(state.lastPrice?.totals?.finalTotal||0),bom};
+}
+let priceTimer=null;
+function scheduleRemotePrice(bom,q){
+  clearTimeout(priceTimer);const seq=++state.priceSeq;priceTimer=setTimeout(()=>remotePrice(bom,q,seq),180);
+}
+async function remotePrice(bom,q,seq=++state.priceSeq){
+  try{
+    const r=await api('quick_price',{
+      rows:bom.rows.filter(x=>x.generatedQty>0||x.qty>0).map(x=>({internalKey:x.internalKey,quantity:x.generatedQty})),
+      tankQty:q,
+      includeInstallation:document.getElementById('supply')?.value==='install',
+      includeDelivery:document.getElementById('delivery')?.value==='yes',
+      includeTax:document.getElementById('sstOn')?.value==='yes'
+    });
+    if(seq!==state.priceSeq)return r;
+    state.lastPrice=r;const t=r.totals||{};
+    sellPrice.textContent=money(t.finalTotal||0);taxLine.textContent=t.sstRate?`Includes ${Number(t.sstRate)}% SST`:'SST excluded';
+    if(state.role==='main'&&document.getElementById('mainBreakdown'))mainBreakdown.innerHTML=`Material: <b>${money(t.material||0)}</b><br>Installation: <b>${money(t.installation||0)}</b><br>Delivery: <b>${money(t.delivery||0)}</b><br>Other: <b>${money(t.other||0)}</b><br>Markup: <b>${Number(t.markupRate||0)}% (${money(t.markupAmount||0)})</b><br>Before SST: <b>${money(t.subtotal||0)}</b><br>SST: <b>${money(t.taxAmount||0)}</b>`;
+    const qmap=Object.fromEntries((r.rows||[]).map(x=>[x.internalKey,Number(x.quantity||0)]));
+    bom.rows.forEach(x=>{
+      if(Number(x.generatedQty||0)<=0 && !x.isCustom){x.qty=0;return}
+      if(qmap[x.internalKey]!==undefined)x.qty=qmap[x.internalKey];
+    });
+    renderBomTableOnly(bom);
+    return r;
+  }catch(e){if(seq!==state.priceSeq)return null;sellPrice.textContent='Sync error';taxLine.textContent=e.message||'Unable to calculate from Supabase';return null}
+}
+async function saveQuote(){
+  const r=calc();if(!r.bom)return;
+  let totals,bom;
+  if(state.role==='main'){
+    totals=recalcMainManualBom()||state.lastPrice?.totals;
+    bom=state.currentBom.rows.filter(x=>x.qty>0).map(x=>({internalKey:x.internalKey,name:rowDisplayName(x),quantity:Number(x.qty||0),unit:x.unit,category:x.category,unitPrice:Number(x.unitPrice||0)}));
+  }else{
+    const priced=await remotePrice(r.bom,r.q);if(!priced?.totals)return alert('Unable to save quote until Supabase pricing is available.');
+    totals=priced.totals;
+    const qmap=Object.fromEntries((priced.rows||[]).map(x=>[x.internalKey,Number(x.quantity||0)]));
+    bom=r.bom.rows.filter(x=>(qmap[x.internalKey]??x.qty)>0).map(x=>({internalKey:x.internalKey,name:rowDisplayName(x),quantity:Number(qmap[x.internalKey]??x.qty),unit:x.unit,category:x.category}));
   }
-  return {l,w,h,q,total,bomCost:perTank}
+  const quote=await api('quick_quote_save',{
+    customer:customer.value.trim(),project:document.getElementById('project')?.value.trim()||'',
+    size:`${r.l}' × ${r.w}' × ${r.h}'`,qty:r.q,bom,totals,status:'Sales Quote',
+    tank:{length:r.l,width:r.w,height:r.h,roofThickness:num('roofThickness'),baseThickness:num('baseThickness'),wallL1Thickness:num('wallL1Thickness'),wallL2Thickness:num('wallL2Thickness'),wallL3Thickness:num('wallL3Thickness'),wallL4Thickness:num('wallL4Thickness'),partitionRequired:document.getElementById('partitionRequired')?.value,partitionType:document.getElementById('partitionType')?.value,partitionLength:num('partitionLength'),partitionWidth:num('partitionWidth'),partitionQty:num('partitionQty'),includeInstallation:document.getElementById('supply')?.value==='install',includeDelivery:document.getElementById('delivery')?.value==='yes',includeTax:document.getElementById('sstOn')?.value==='yes'}
+  });
+  alert(`Sales quote saved to Supabase${quote.quote?.customer?' for '+quote.quote.customer:''}.`);
 }
 
-function saveQuote(){
-  const r=calc(),arr=JSON.parse(sessionStorage.getItem('winko_calc_history')||'[]');
-  arr.unshift({date:new Date().toISOString(),customer:customer.value.trim(),size:`${r.l}' × ${r.w}' × ${r.h}'`,qty:r.q,total:r.total});
-  sessionStorage.setItem('winko_calc_history',JSON.stringify(arr.slice(0,30)));
-  alert('Estimate saved.')
+async function renderHistory(){
+  page('Sales Quotes','Shared Supabase sales quotes. Main edits are visible to Sales after refresh.');
+  view.innerHTML='<div class="card"><h2>Sales Quotes</h2><div class="muted">Loading from Supabase…</div></div>';
+  try{
+    const r=await api('quick_quotes_list'),quotes=r.quotes||[];
+    state.sharedQuotes=quotes;
+    if(!quotes.length){view.innerHTML='<div class="card"><h2>Sales Quotes</h2><div class="muted">No sales quotes yet.</div></div>';return}
+    view.innerHTML=`<div class="card"><div class="toolbar" style="justify-content:space-between"><h2 style="margin:0">Sales Quotes</h2><button class="btn" onclick="renderHistory()">Refresh</button></div>
+      ${quotes.map((q,i)=>quoteCard(q,i)).join('')}</div>`;
+  }catch(e){view.innerHTML=`<div class="card"><h2>Sales Quotes</h2><div class="notice">${esc(e.message||'Unable to load quotes')}</div></div>`}
 }
+function quoteCard(q,index){
+  const editable=state.role==='main';
+  return `<div style="border:1px solid var(--border);border-radius:10px;padding:14px;margin-top:12px">
+    <div class="toolbar" style="justify-content:space-between"><div><b>${esc(q.customer||'Unnamed customer')}</b> · ${esc(q.project||'No project')}<div class="muted">${new Date(q.updatedAt||q.createdAt).toLocaleString()} · ${esc(q.size||'')} · Qty ${Number(q.qty||1)} · ${esc(q.status||'Sales Quote')}</div></div><div><b>${money(q.totals?.finalTotal||0)}</b></div></div>
+    <div class="tableWrap" style="margin-top:10px"><table><thead><tr><th>BOM Product</th><th>Qty</th><th>Unit</th></tr></thead><tbody>
+      ${(q.bom||[]).map((b,i)=>`<tr><td>${editable?`<input class="input" id="qname_${q.id}_${i}" value="${esc(b.name||'')}">`:`<b>${esc(b.name||'')}</b>`}</td><td>${editable?`<input class="input" style="width:100px" type="number" min="0" step="0.01" id="qqty_${q.id}_${i}" value="${Number(b.quantity||0)}">`:Number(b.quantity||0)}</td><td>${esc(b.unit||'')}</td></tr>`).join('')}
+    </tbody></table></div>
+    ${editable?`<div class="toolbar" style="margin-top:10px"><button class="btn primary" onclick="saveQuoteEditsByIndex(${index})">Save Quote BOM Changes</button></div>`:''}
+  </div>`;
+}
+async function saveQuoteEditsByIndex(index){
+  const q=state.sharedQuotes[index];
+  if(!q)return;
 
-function renderHistory(){
-  page('Recent Quotes','Temporary estimates saved in this browser session.');
-  let arr=[];try{arr=JSON.parse(sessionStorage.getItem('winko_calc_history')||'[]')}catch{}
-  view.innerHTML=`<div class="card"><h2>Recent Estimates</h2>${arr.length?`<div class="tableWrap"><table><thead><tr><th>Date</th><th>Customer / Project</th><th>Tank Size</th><th>Qty</th><th>Selling Price</th></tr></thead><tbody>${arr.map(x=>`<tr><td>${new Date(x.date).toLocaleString()}</td><td>${esc(x.customer||'—')}</td><td>${esc(x.size)}</td><td>${x.qty}</td><td><b>${money(x.total)}</b></td></tr>`).join('')}</tbody></table></div>`:'<div class="muted">No saved estimates yet.</div>'}</div>`
+  try{
+    const bom=(q.bom||[]).map((b,i)=>({...b,name:document.getElementById(`qname_${q.id}_${i}`)?.value||b.name,quantity:Math.max(0,Number(document.getElementById(`qqty_${q.id}_${i}`)?.value)||0)}));
+    const remote=state.remoteByKey;
+    const tankQty=Math.max(1,Number(q.qty||1));
+    const material=bom.reduce((a,b)=>a+(Number(b.quantity)||0)*Number(remote[b.internalKey]?.unitPrice||b.unitPrice||0),0)*tankQty;
+    const installation=q.tank?.includeInstallation?Number(state.settings.installation||0)*tankQty:0;
+    const delivery=q.tank?.includeDelivery?Number(state.settings.delivery||0)*tankQty:0;
+    const other=Number(state.settings.other||0)*tankQty;
+    const costBeforeMarkup=material+installation+delivery+other,markupRate=Number(state.settings.markup||0),markupAmount=costBeforeMarkup*markupRate/100,subtotal=costBeforeMarkup+markupAmount,sstRate=q.tank?.includeTax!==false?Number(state.settings.sst||0):0,taxAmount=subtotal*sstRate/100,finalTotal=Math.round((subtotal+taxAmount+Number.EPSILON)*100)/100;
+    const totals={material,installation,delivery,other,costBeforeMarkup,markupRate,markupAmount,subtotal,sstRate,taxAmount,finalTotal,currency:'MYR'};
+    await api('quick_quote_update',{id:q.id,bom,totals,status:q.status||'Sales Quote'});alert('Sales quote updated. Sales will see the edited BOM after refresh.');renderHistory();
+  }catch(e){alert(e.message||'Unable to update sales quote')}
 }
 
 function renderPrices(){
   if(state.role!=='main'){setView('calculator');return}
-  page('BOM Product Price Control','Main controls every BOM product unit price and selling rule.');
-
+  page('BOM Product & Pricing Control','Supabase is the source of truth for BOM names, quantity overrides and quick-sales prices.');
+  const d=state.settings||DEFAULTS;
   view.innerHTML=`<div class="card">
-    <h2>Full BOM Product Price Database</h2>
-    <div class="notice">Every generated BOM line is priced from this table. Sales users cannot access this page or see these internal prices.</div>
-    <div class="toolbar" style="margin-bottom:12px"><input id="priceSearch" class="input" style="max-width:340px" placeholder="Search product or category..." oninput="filterPriceRows()"></div>
-    <div class="tableWrap"><table><thead><tr><th>Category</th><th>BOM Product</th><th>Unit</th><th>Unit Price (MYR)</th></tr></thead><tbody>
-      ${BOM_CATALOGUE.map(x=>`<tr class="priceRow"><td>${esc(x.category)}</td><td><b>${esc(x.item)}</b></td><td>${esc(x.unit)}</td><td><input id="price_${x.key}" class="input priceInput" type="number" min="0" step="0.01" value="${Number(state.settings.productPrices[x.key]||0).toFixed(2)}"></td></tr>`).join('')}
+    <h2>Supabase BOM Control</h2>
+    <div class="notice">Quantity Override is optional. Leave it blank to use the generated BOM formula. Custom items can be added or removed. Sales cannot see unit prices.</div>
+    <div class="toolbar" style="margin-bottom:12px"><input id="priceSearch" class="input" style="max-width:340px" placeholder="Search BOM product..." oninput="filterPriceRows()"><button class="btn primary" onclick="addBomProduct()">+ Add BOM Product</button><button class="btn" onclick="refreshRemote()">Refresh Supabase</button></div>
+    <div class="tableWrap"><table><thead><tr><th>Category</th><th>BOM Name</th><th>Unit</th><th>Qty Override</th><th>Unit Price (RM)</th><th>Action</th></tr></thead><tbody>
+      ${state.remoteCatalogue.map(x=>`<tr class="priceRow"><td>${esc(x.category||'')}</td><td><input id="name_${esc(x.internalKey)}" class="input" value="${esc(x.name||'')}"></td><td>${esc(x.unit||'')}</td><td><input id="qty_${esc(x.internalKey)}" class="input" type="number" min="0" step="0.01" placeholder="Formula" value="${x.qtyOverride===null||x.qtyOverride===undefined?'':Number(x.qtyOverride)}"></td><td><input id="price_${esc(x.internalKey)}" class="input priceInput" type="number" min="0" step="0.01" value="${Number(x.unitPrice||0).toFixed(2)}"></td><td>${x.isCustom?`<button class="btn danger" onclick="removeBomProduct('${esc(x.internalKey)}')">Remove</button>`:'<span class="muted">System</span>'}</td></tr>`).join('')}
     </tbody></table></div>
-
-    <div class="sectionTitle">Selling Rules</div>
+    <div class="sectionTitle">Default Selling Settings</div>
     <div class="formGrid">
-      <div class="field"><label>Delivery Base / Tank (MYR)</label><input id="deliveryBaseP" class="input" type="number" min="0" step="0.01" value="${Number(state.settings.deliveryBase||0)}"></div>
-      <div class="field"><label>Installation Base / Tank (MYR)</label><input id="installationBaseP" class="input" type="number" min="0" step="0.01" value="${Number(state.settings.installationBase||0)}"></div>
-      <div class="field"><label>Markup %</label><input id="markupP" class="input" type="number" min="0" step="0.01" value="${Number(state.settings.markup||0)}"></div>
-      <div class="field"><label>SST %</label><input id="sstP" class="input" type="number" min="0" step="0.01" value="${Number(state.settings.sst||0)}"></div>
+      <div class="field"><label>Installation / Tank (RM)</label><input id="installationP" class="input" type="number" min="0" step="0.01" value="${Number(d.installation||0)}"></div>
+      <div class="field"><label>Delivery / Tank (RM)</label><input id="deliveryP" class="input" type="number" min="0" step="0.01" value="${Number(d.delivery||0)}"></div>
+      <div class="field"><label>Other / Tank (RM)</label><input id="otherP" class="input" type="number" min="0" step="0.01" value="${Number(d.other||0)}"></div>
+      <div class="field"><label>Markup %</label><input id="markupP" class="input" type="number" min="0" step="0.01" value="${Number(d.markup||0)}"></div>
+      <div class="field"><label>SST %</label><input id="sstP" class="input" type="number" min="0" step="0.01" value="${Number(d.sst||0)}"></div>
     </div>
-
-    <div class="toolbar" style="margin-top:16px"><button class="btn primary" onclick="savePrices()">Save All Prices</button><button class="btn" onclick="resetPrices()">Reset All Prices</button></div>
-  </div>`
+    <div class="toolbar" style="margin-top:16px"><button class="btn primary" onclick="savePrices()">Save to Supabase</button></div>
+  </div>`;
 }
-function filterPriceRows(){
-  const q=(document.getElementById('priceSearch')?.value||'').toLowerCase();
-  document.querySelectorAll('.priceRow').forEach(row=>row.hidden=!!q&&!row.textContent.toLowerCase().includes(q));
+async function addBomProduct(){
+  if(state.role!=='main')return;
+  const name=prompt('BOM product name:','Custom Item');if(!name)return;
+  const unit=prompt('Unit:','pcs')||'pcs';
+  const category=prompt('Category:','Custom')||'Custom';
+  const qty=Math.max(0,Number(prompt('Default quantity:','1'))||0);
+  const price=Math.max(0,Number(prompt('Unit price (RM):','0'))||0);
+  try{await api('quick_add_item',{name,unit,category,qtyOverride:qty,unitPrice:price});await loadRemoteConfig();renderPrices()}catch(e){alert(e.message||'Unable to add BOM product')}
 }
-function savePrices(){
-  BOM_CATALOGUE.forEach(x=>state.settings.productPrices[x.key]=Number(document.getElementById('price_'+x.key)?.value||0));
-  state.settings.deliveryBase=num('deliveryBaseP');
-  state.settings.installationBase=num('installationBaseP');
-  state.settings.markup=num('markupP');
-  state.settings.sst=num('sstP');
-  saveSettings();
-  alert('All BOM product prices saved.');
-  renderPrices()
+async function removeBomProduct(key){
+  if(!confirm('Remove this custom BOM product?'))return;
+  try{await api('quick_remove_item',{internalKey:key});await loadRemoteConfig();renderPrices()}catch(e){alert(e.message||'Unable to remove BOM product')}
 }
-function resetPrices(){
-  if(!confirm('Reset all BOM product prices and selling rules to zero/default values?'))return;
-  state.settings=clone(DEFAULTS);
-  saveSettings();
-  renderPrices()
+function filterPriceRows(){const q=(document.getElementById('priceSearch')?.value||'').toLowerCase();document.querySelectorAll('.priceRow').forEach(row=>row.hidden=!!q&&!row.textContent.toLowerCase().includes(q))}
+async function refreshRemote(){try{await loadRemoteConfig();renderPrices()}catch(e){alert(e.message||'Unable to refresh Supabase')}}
+async function savePrices(){
+  try{
+    const items=state.remoteCatalogue.map(x=>({internalKey:x.internalKey,isCustom:!!x.isCustom,category:x.category,unit:x.unit,name:document.getElementById('name_'+x.internalKey)?.value||x.name,qtyOverride:(document.getElementById('qty_'+x.internalKey)?.value??'')===''?null:Number(document.getElementById('qty_'+x.internalKey).value),unitPrice:Number(document.getElementById('price_'+x.internalKey)?.value||0)}));
+    const defaults={installation:num('installationP'),delivery:num('deliveryP'),other:num('otherP'),markup:num('markupP'),sst:num('sstP'),currency:'MYR'};
+    await api('quick_save',{items,defaults});await loadRemoteConfig();alert('BOM names, quantities, prices and defaults saved to Supabase.');renderPrices();
+  }catch(e){alert(e.message||'Unable to save to Supabase')}
 }
-
-const existing=sessionStorage.getItem(SESSION);
-if(existing==='sales'||existing==='main')start(existing);
 </script>
 </body>
 </html>
