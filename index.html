@@ -228,6 +228,18 @@ button:disabled,.disabledAction{
   font-size:9px;font-weight:800;text-transform:uppercase;background:#edf3f7;color:var(--navy)
 }
 
+
+.fixedCostField .fixedCostValue{
+  min-height:46px;display:flex;align-items:center;padding:10px 12px;
+  border:1px solid #cfe0d5;border-radius:10px;background:#f2faf5;
+  color:#245d38;font-size:13px;font-weight:800
+}
+.fixedPricingNote{
+  grid-column:1/-1;padding:10px 12px;border-radius:10px;
+  background:#eef5f9;border:1px solid #d6e4ed;color:var(--navy);
+  font-size:11px;line-height:1.4
+}
+
 </style>
 </head>
 <body>
@@ -263,6 +275,7 @@ const API_URL='https://yzequtnkzuyayydpqayf.supabase.co/functions/v1/factory-sim
 const ADMIN_API_URL='https://yzequtnkzuyayydpqayf.supabase.co/functions/v1/factory-admin-api';
 const NOTIFY_API_URL='https://yzequtnkzuyayydpqayf.supabase.co/functions/v1/factory-notification-api';
 const QUOTES_API_URL='https://yzequtnkzuyayydpqayf.supabase.co/functions/v1/factory-quotes-api';
+const PRICING_API_URL='https://yzequtnkzuyayydpqayf.supabase.co/functions/v1/factory-pricing-api';
 
 const BOM_CATALOGUE=[
   {key:'manhole',category:'Panels',item:'Manhole',unit:'pcs'},
@@ -342,6 +355,12 @@ async function quotesApi(action='quotes_list',data=null){
   const res=await fetch(QUOTES_API_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:auth.username,password:auth.password,action,data})});
   let body={};try{body=await res.json()}catch{}
   if(!res.ok||body.ok===false)throw new Error(body.error||`Quote request failed (${res.status})`);
+  return body;
+}
+async function pricingApi(action='quick_price',data=null){
+  const res=await fetch(PRICING_API_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:auth.username,password:auth.password,action,data})});
+  let body={};try{body=await res.json()}catch{}
+  if(!res.ok||body.ok===false)throw new Error(body.error||`Pricing request failed (${res.status})`);
   return body;
 }
 function recordActivity(action,details={}){
@@ -558,8 +577,9 @@ function renderCalculator(){
 
         
       <div class="stepDivider full"><span>3</span><b>Supply & Options</b></div>
-      <div class="field"><label>Supply Type</label><select id="supply" onchange="calc()"><option value="supply">Supply Only</option><option value="install">Supply + Installation (+${money(state.settings.installation||0)})</option></select></div>
-        <div class="field"><label>Delivery</label><select id="delivery" onchange="calc()"><option value="no">No Delivery</option><option value="yes">Include Transport / Crane (+${money(state.settings.transport||state.settings.delivery||0)})</option></select></div>
+      <div class="fixedPricingNote"><b>Fixed cost rule:</b> Fabrication Labour, Installation, Transport / Crane and Other Cost are automatically included for every tank. Tank quantity multiplies these RM amounts.</div>
+      <div class="field fixedCostField"><label>Installation</label><div class="fixedCostValue">Included · ${money(state.settings.installation||0)} / tank</div><input type="hidden" id="supply" value="install"></div>
+        <div class="field fixedCostField"><label>Transport / Crane</label><div class="fixedCostValue">Included · ${money(state.settings.transport||state.settings.delivery||0)} / tank</div><input type="hidden" id="delivery" value="yes"></div>
         <div class="field"><label>Ladder</label><select id="ladder" onchange="calc()"><option value="no">No</option><option value="yes">Yes</option></select></div>
         <div class="field"><label>Air Vent</label><select id="vent" onchange="calc()"><option value="no">No</option><option value="yes">Yes</option></select></div>
         <div class="field"><label>Water Level Indicator</label><select id="level" onchange="calc()"><option value="no">No</option><option value="yes">Yes</option></select></div>
@@ -717,20 +737,34 @@ function recalcMainManualBom(){
   const material=state.currentBom.rows.reduce((a,r)=>a+(Number(r.qty)||0)*(Number(r.unitPrice)||0),0)*tankQty;
   const wasteRate=Number(state.settings.waste||0),wasteAmount=material*wasteRate/100;
   const fabrication=Number(state.settings.fabrication||0)*tankQty;
-  const installation=document.getElementById('supply')?.value==='install'?Number(state.settings.installation||0)*tankQty:0;
-  const transport=document.getElementById('delivery')?.value==='yes'?Number(state.settings.transport||state.settings.delivery||0)*tankQty:0;
+  const installation=Number(state.settings.installation||0)*tankQty;
+  const transport=Number(state.settings.transport||state.settings.delivery||0)*tankQty;
   const other=Number(state.settings.other||0)*tankQty;
   const costBeforeSelling=material+wasteAmount+fabrication+installation+transport+other;
   const overheadRate=Number(state.settings.overhead||0),overheadAmount=costBeforeSelling*overheadRate/100;
   const profitMarginRate=Number(state.settings.profitMargin||0),profitAmount=(costBeforeSelling+overheadAmount)*profitMarginRate/100;
   const discount=Number(state.settings.discount||0)*tankQty;
   const subtotal=Math.max(0,costBeforeSelling+overheadAmount+profitAmount-discount);
-  const sstRate=document.getElementById('sstOn')?.value==='yes'?Number(state.settings.sst||0):0,taxAmount=subtotal*sstRate/100;
+  const sstRate=document.getElementById('sstOn')?.value==='yes'?Number(state.settings.sst||0):0;
+  const taxAmount=subtotal*sstRate/100;
   const finalTotal=Math.round((subtotal+taxAmount+Number.EPSILON)*100)/100;
   state.currentManualTotals={material,wasteRate,wasteAmount,fabrication,installation,transport,other,costBeforeSelling,overheadRate,overheadAmount,profitMarginRate,profitAmount,discount,subtotal,sstRate,taxAmount,finalTotal,currency:'MYR'};
-  if(document.getElementById('sellPrice'))sellPrice.textContent=money(finalTotal);if(document.getElementById('mobileSellPrice'))mobileSellPrice.textContent=money(finalTotal);
+  if(document.getElementById('sellPrice'))sellPrice.textContent=money(finalTotal);
+  if(document.getElementById('mobileSellPrice'))mobileSellPrice.textContent=money(finalTotal);
   if(document.getElementById('taxLine'))taxLine.textContent=sstRate?`Includes ${sstRate}% SST`:'SST excluded';
-  if(document.getElementById('mainBreakdown'))mainBreakdown.innerHTML=`Material: <b>${money(material)}</b><br>Waste ${wasteRate}%: <b>${money(wasteAmount)}</b><br>Fabrication Labour: <b>${money(fabrication)}</b><br>Installation: <b>${money(installation)}</b><br>Transport / Crane: <b>${money(transport)}</b><br>Other: <b>${money(other)}</b><br>Overhead ${overheadRate}%: <b>${money(overheadAmount)}</b><br>Profit Margin ${profitMarginRate}%: <b>${money(profitAmount)}</b><br>Discount: <b>-${money(discount)}</b><br>Before SST: <b>${money(subtotal)}</b><br>SST: <b>${money(taxAmount)}</b>`;
+  if(document.getElementById('mainBreakdown'))mainBreakdown.innerHTML=
+    `<b>Fixed default costs included for every tank</b><br><br>`+
+    `Material: <b>${money(material)}</b><br>`+
+    `Waste ${wasteRate}%: <b>${money(wasteAmount)}</b><br>`+
+    `Fabrication Labour: <b>${money(fabrication)}</b><br>`+
+    `Installation: <b>${money(installation)}</b><br>`+
+    `Transport / Crane: <b>${money(transport)}</b><br>`+
+    `Other Cost: <b>${money(other)}</b><br>`+
+    `Overhead ${overheadRate}%: <b>${money(overheadAmount)}</b><br>`+
+    `Profit Margin ${profitMarginRate}%: <b>${money(profitAmount)}</b><br>`+
+    `Discount: <b>-${money(discount)}</b><br>`+
+    `Before SST: <b>${money(subtotal)}</b><br>`+
+    `SST ${sstRate}%: <b>${money(taxAmount)}</b>`;
   return state.currentManualTotals;
 }
 async function saveCurrentBomAsDefaults(){
@@ -817,17 +851,29 @@ function scheduleRemotePrice(bom,q){
 }
 async function remotePrice(bom,q,seq=++state.priceSeq){
   try{
-    const r=await api('quick_price',{
+    const r=await pricingApi('quick_price',{
       rows:bom.rows.filter(x=>x.generatedQty>0||x.qty>0).map(x=>({internalKey:x.internalKey,quantity:x.generatedQty})),
       tankQty:q,
-      includeInstallation:document.getElementById('supply')?.value==='install',
-      includeDelivery:document.getElementById('delivery')?.value==='yes',
       includeTax:document.getElementById('sstOn')?.value==='yes'
     });
     if(seq!==state.priceSeq)return r;
     state.lastPrice=r;const t=r.totals||{};
-    sellPrice.textContent=money(t.finalTotal||0);taxLine.textContent=t.sstRate?`Includes ${Number(t.sstRate)}% SST`:'SST excluded';
-    if(state.role==='main'&&document.getElementById('mainBreakdown'))mainBreakdown.innerHTML=`Material: <b>${money(t.material||0)}</b><br>Installation: <b>${money(t.installation||0)}</b><br>Delivery: <b>${money(t.delivery||0)}</b><br>Other: <b>${money(t.other||0)}</b><br>Markup: <b>${Number(t.markupRate||0)}% (${money(t.markupAmount||0)})</b><br>Before SST: <b>${money(t.subtotal||0)}</b><br>SST: <b>${money(t.taxAmount||0)}</b>`;
+    sellPrice.textContent=money(t.finalTotal||0);
+    if(document.getElementById('mobileSellPrice'))mobileSellPrice.textContent=money(t.finalTotal||0);
+    taxLine.textContent=t.sstRate?`Includes ${Number(t.sstRate)}% SST`:'SST excluded';
+    if(state.role==='main'&&document.getElementById('mainBreakdown'))mainBreakdown.innerHTML=
+      `<b>Fixed default costs included for every tank</b><br><br>`+
+      `Material: <b>${money(t.material||0)}</b><br>`+
+      `Waste ${Number(t.wasteRate||0)}%: <b>${money(t.wasteAmount||0)}</b><br>`+
+      `Fabrication Labour: <b>${money(t.fabrication||0)}</b><br>`+
+      `Installation: <b>${money(t.installation||0)}</b><br>`+
+      `Transport / Crane: <b>${money(t.transport||0)}</b><br>`+
+      `Other Cost: <b>${money(t.other||0)}</b><br>`+
+      `Overhead ${Number(t.overheadRate||0)}%: <b>${money(t.overheadAmount||0)}</b><br>`+
+      `Profit Margin ${Number(t.profitMarginRate||0)}%: <b>${money(t.profitAmount||0)}</b><br>`+
+      `Discount: <b>-${money(t.discount||0)}</b><br>`+
+      `Before SST: <b>${money(t.subtotal||0)}</b><br>`+
+      `SST ${Number(t.sstRate||0)}%: <b>${money(t.taxAmount||0)}</b>`;
     const qmap=Object.fromEntries((r.rows||[]).map(x=>[x.internalKey,Number(x.quantity||0)]));
     bom.rows.forEach(x=>{
       if(Number(x.generatedQty||0)<=0 && !x.isCustom){x.qty=0;return}
@@ -835,7 +881,13 @@ async function remotePrice(bom,q,seq=++state.priceSeq){
     });
     renderBomTableOnly(bom);
     return r;
-  }catch(e){if(seq!==state.priceSeq)return null;sellPrice.textContent='Sync error';taxLine.textContent=e.message||'Unable to calculate from Supabase';return null}
+  }catch(e){
+    if(seq!==state.priceSeq)return null;
+    sellPrice.textContent='Sync error';
+    if(document.getElementById('mobileSellPrice'))mobileSellPrice.textContent='Sync error';
+    taxLine.textContent=e.message||'Unable to calculate from Supabase';
+    return null
+  }
 }
 async function saveQuote(){
   if(!requireCustomerProject())return;
@@ -853,7 +905,7 @@ async function saveQuote(){
   const quote=await api('quick_quote_save',{
     customer:customer.value.trim(),project:document.getElementById('project')?.value.trim()||'',
     size:`${r.l}' × ${r.w}' × ${r.h}'`,qty:r.q,bom,totals,status:'Sales Quote',
-    tank:{length:r.l,width:r.w,height:r.h,roofThickness:num('roofThickness'),baseThickness:num('baseThickness'),wallL1Thickness:num('wallL1Thickness'),wallL2Thickness:num('wallL2Thickness'),wallL3Thickness:num('wallL3Thickness'),wallL4Thickness:num('wallL4Thickness'),partitionRequired:document.getElementById('partitionRequired')?.value,partitionType:document.getElementById('partitionType')?.value,partitionLength:num('partitionLength'),partitionWidth:num('partitionWidth'),partitionQty:num('partitionQty'),includeInstallation:document.getElementById('supply')?.value==='install',includeDelivery:document.getElementById('delivery')?.value==='yes',includeTax:document.getElementById('sstOn')?.value==='yes'}
+    tank:{length:r.l,width:r.w,height:r.h,roofThickness:num('roofThickness'),baseThickness:num('baseThickness'),wallL1Thickness:num('wallL1Thickness'),wallL2Thickness:num('wallL2Thickness'),wallL3Thickness:num('wallL3Thickness'),wallL4Thickness:num('wallL4Thickness'),partitionRequired:document.getElementById('partitionRequired')?.value,partitionType:document.getElementById('partitionType')?.value,partitionLength:num('partitionLength'),partitionWidth:num('partitionWidth'),partitionQty:num('partitionQty'),includeInstallation:true,includeDelivery:true,includeTax:document.getElementById('sstOn')?.value==='yes'}
   });
   recordActivity('quote_saved',{customer:customer.value.trim(),project:document.getElementById('project')?.value.trim()||''});
   try{
@@ -966,8 +1018,8 @@ async function saveQuoteEditsByIndex(index){
     const material=bom.reduce((a,b)=>a+(Number(b.quantity)||0)*(Number(b.unitPrice)||0),0)*tankQty;
     const wasteRate=Number(state.settings.waste||0),wasteAmount=material*wasteRate/100;
     const fabrication=Number(state.settings.fabrication||0)*tankQty;
-    const installation=q.tank?.includeInstallation?Number(state.settings.installation||0)*tankQty:0;
-    const transport=q.tank?.includeDelivery?Number(state.settings.transport||state.settings.delivery||0)*tankQty:0;
+    const installation=Number(state.settings.installation||0)*tankQty;
+    const transport=Number(state.settings.transport||state.settings.delivery||0)*tankQty;
     const other=Number(state.settings.other||0)*tankQty;
     const costBeforeSelling=material+wasteAmount+fabrication+installation+transport+other;
     const overheadRate=Number(state.settings.overhead||0),overheadAmount=costBeforeSelling*overheadRate/100;
