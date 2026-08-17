@@ -1,1330 +1,704 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>WINKO Quick Sales Calculator</title>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>JUTARAMA 2D Tank Planner V20</title>
 <style>
-:root{--navy:#17324d;--blue:#2f5d7c;--bg:#f6f8fb;--text:#1f2937;--muted:#6b7280;--border:#d8e0e7;--white:#fff;--green:#e8f5ea;--greenT:#27623a;--amber:#fff4cf;--amberT:#805d00}
-*{box-sizing:border-box}body{margin:0;font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif;background:var(--bg);color:var(--text)}button,input,select{font:inherit}.hidden{display:none!important}
-.login{min-height:100vh;display:grid;place-items:center;padding:20px;background:#eef3f7}.loginCard{width:min(420px,100%);background:#fff;border:1px solid var(--border);border-radius:14px;padding:28px;box-shadow:0 18px 50px rgba(23,50,77,.12)}
-.loginCard h1{margin:0;color:var(--navy);font-size:24px}.loginCard p{margin:6px 0 18px;color:var(--muted);font-size:13px}
-.field{display:grid;gap:6px;margin-bottom:12px}.field label{font-size:11px;font-weight:800;color:#475569}.input,select{width:100%;border:1px solid var(--border);border-radius:8px;padding:10px 11px;background:#fff;color:var(--text)}
-.btn{border:1px solid var(--border);background:#fff;padding:9px 12px;border-radius:8px;font-weight:800;cursor:pointer}.btn.primary{background:var(--navy);color:#fff;border-color:var(--navy)}
-.app{display:grid;grid-template-columns:225px 1fr;min-height:100vh}.side{background:var(--navy);color:#fff;padding:20px 14px}.brand{padding:4px 8px 22px}.brand b{display:block;font-size:18px}.brand small{opacity:.72}.nav{display:grid;gap:6px}.nav button{border:0;background:transparent;color:#dce7f0;padding:11px 12px;text-align:left;border-radius:8px;font-weight:800;cursor:pointer}.nav button.active,.nav button:hover{background:rgba(255,255,255,.14);color:#fff}
-.main{padding:24px}.top{display:flex;justify-content:space-between;gap:12px;margin-bottom:18px}.top h1{margin:0;font-size:25px}.sub{margin-top:4px;color:var(--muted);font-size:13px}.toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
-.grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}.card{background:#fff;border:1px solid var(--border);border-radius:12px;padding:18px}.card h2{margin:0 0 14px;font-size:17px;color:var(--navy)}.formGrid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}.full{grid-column:1/-1}
-.kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px}.kpi{border:1px solid var(--border);border-radius:10px;padding:14px}.kpi span{display:block;color:var(--muted);font-size:10px;font-weight:800;text-transform:uppercase}.kpi b{display:block;font-size:23px;margin-top:6px;color:var(--navy)}
-.result{font-size:34px;font-weight:900;color:var(--navy)}.muted{font-size:12px;color:var(--muted)}.tag{display:inline-block;padding:4px 7px;border-radius:999px;background:var(--green);color:var(--greenT);font-size:10px;font-weight:900}
-.notice{padding:10px 12px;border-radius:8px;background:var(--amber);color:var(--amberT);font-size:12px;margin-bottom:14px;line-height:1.45}
-.tableWrap{overflow:auto;border:1px solid var(--border);border-radius:9px}table{width:100%;border-collapse:collapse;min-width:820px}th,td{padding:9px 10px;border-bottom:1px solid #edf1f5;text-align:left;font-size:12px;vertical-align:top}th{background:#f1f5f8;color:#456175;font-size:10px;text-transform:uppercase;position:sticky;top:0;z-index:1}
-.bomGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:14px}.bomCard{border:1px solid var(--border);border-radius:10px;padding:12px;background:#fff}.bomCard b{display:block;color:var(--navy);font-size:12px;margin-bottom:6px}.bomCard span{font-size:12px;color:var(--muted)}
-.priceInput{min-width:120px}.sectionTitle{font-weight:900;color:var(--navy);margin:16px 0 8px}.bomNote{margin-top:10px;font-size:11px;color:var(--muted);line-height:1.45}
-@media(max-width:950px){.app{grid-template-columns:1fr}.nav{grid-template-columns:repeat(3,1fr)}.grid,.formGrid,.kpis,.bomGrid{grid-template-columns:1fr}.full{grid-column:auto}.main{padding:14px}}
-
-/* Modern responsive UI */
-:root{
-  --navy:#18324a;
-  --blue:#315f7d;
-  --bg:#f3f6f9;
-  --text:#17283a;
-  --muted:#687786;
-  --border:#d9e2e9;
-  --white:#fff;
-  --green:#e8f5ec;
-  --greenT:#22613b;
-  --amber:#fff6d9;
-  --amberT:#765a00;
-  --shadow:0 8px 28px rgba(20,42,62,.07);
-}
-body{-webkit-font-smoothing:antialiased}
-.card{box-shadow:var(--shadow);border-color:#e1e8ee;border-radius:16px}
-.input,select{min-height:44px;border-radius:10px;outline:none;transition:border-color .15s,box-shadow .15s}
-.input:focus,select:focus{border-color:#7899b0;box-shadow:0 0 0 3px rgba(49,95,125,.10)}
-.btn{min-height:42px;border-radius:10px;transition:transform .12s,box-shadow .12s,background .12s}
-.btn:active{transform:translateY(1px)}
-.btn.primary{box-shadow:0 5px 14px rgba(23,50,77,.18)}
-.aiBtn{background:#edf4f8;border-color:#c8d8e4;color:var(--navy)}
-.top{align-items:center}
-.mobileActionBar{display:none}
-.bomTools{margin-top:12px}
-.quoteHead:hover{background:#f8fafc!important}
-.tableWrap{-webkit-overflow-scrolling:touch}
-@media(max-width:768px){
-  body{background:#f5f7f9}
-  .app{display:block;min-height:100vh}
-  .side{
-    position:fixed;z-index:50;left:0;right:0;bottom:0;height:68px;
-    padding:7px 8px calc(7px + env(safe-area-inset-bottom));
-    background:rgba(24,50,74,.98);
-    box-shadow:0 -8px 30px rgba(15,35,52,.16)
+  :root{
+    --bg:#0b1220; --panel:#121b2d; --panel2:#172338; --line:#2a3952; --text:#e8f1fb; --muted:#96a8c0;
+    --accent:#38bdf8; --green:#22c55e; --amber:#f59e0b; --red:#ef4444; --violet:#a855f7;
+    --shadow:0 16px 40px rgba(0,0,0,.28); --radius:18px;
   }
-  .brand{display:none}
-  .nav{height:100%;display:grid;grid-template-columns:repeat(auto-fit,minmax(0,1fr));gap:5px}
-  .nav button{
-    min-width:0;padding:7px 4px;border-radius:10px;text-align:center;
-    font-size:11px;line-height:1.15;display:grid;place-items:center
-  }
-  .nav button.active{background:#fff;color:var(--navy);box-shadow:0 2px 10px rgba(0,0,0,.12)}
-  .main{padding:0 12px 154px}
-  .top{
-    position:sticky;top:0;z-index:35;margin:0 -12px 12px;padding:12px 14px 10px;
-    background:rgba(245,247,249,.94);backdrop-filter:blur(14px);
-    border-bottom:1px solid rgba(217,226,233,.8)
-  }
-  .top h1{font-size:20px;line-height:1.15}
-  .sub{font-size:11px;line-height:1.3;max-width:250px}
-  .top .toolbar{gap:5px;flex-wrap:nowrap}
-  .top .toolbar .btn{font-size:11px;min-height:34px;padding:6px 8px}
-  .tag{font-size:9px;padding:4px 6px}
-  .grid{grid-template-columns:1fr;gap:12px}
-  .card{padding:14px;border-radius:15px;margin-left:0!important;margin-right:0!important}
-  .card h2{font-size:16px;margin-bottom:12px}
-  .formGrid{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px 10px}
-  .field{margin-bottom:0;gap:5px}
-  .field label{font-size:10px;line-height:1.2;min-height:24px;display:flex;align-items:flex-end}
-  .input,select{font-size:16px;min-height:46px;padding:10px}
-  .full{grid-column:1/-1}
-  .kpis{grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;margin-bottom:12px}
-  .kpi{padding:10px 8px;border-radius:11px;background:#f8fafc}
-  .kpi span{font-size:8px;line-height:1.1}
-  .kpi b{font-size:16px;margin-top:5px;overflow-wrap:anywhere}
-  .result{font-size:30px;line-height:1.05}
-  .notice{font-size:11px;padding:10px}
-  .toolbar{gap:7px}
-  .toolbar .btn{flex:1;white-space:nowrap}
-  .bomGrid{grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}
-  .bomCard{padding:10px 8px;border-radius:11px}
-  .bomCard b{font-size:10px;line-height:1.2}
-  .bomCard span{font-size:11px}
-  .tableWrap{margin-left:-3px;margin-right:-3px;border-radius:11px}
-  table{min-width:680px}
-  th,td{padding:8px;font-size:11px}
-  th{font-size:9px}
-  td .input{font-size:14px;min-height:38px;padding:7px}
-  .sectionTitle{font-size:14px;margin-top:18px}
-  .quoteCard{box-shadow:none;background:#fff}
-  .quoteHead{padding:11px!important}
-  .quoteHead .toolbar{flex-wrap:nowrap!important}
-  .quoteHead b{font-size:12px}
-  .quoteHead .muted{font-size:10px;line-height:1.25;margin-top:3px}
-  .mobileActionBar{
-    position:fixed;z-index:45;left:10px;right:10px;bottom:76px;
-    display:flex;align-items:center;justify-content:space-between;gap:10px;
-    background:rgba(255,255,255,.97);backdrop-filter:blur(12px);
-    border:1px solid #dbe4eb;border-radius:14px;padding:9px 10px 9px 13px;
-    box-shadow:0 10px 32px rgba(20,42,62,.18)
-  }
-  .mobileActionBar>div{min-width:0}
-  .mobileActionBar span{display:block;font-size:9px;text-transform:uppercase;font-weight:800;color:var(--muted)}
-  .mobileActionBar b{display:block;font-size:18px;color:var(--navy);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .mobileActionBar .btn{min-height:42px;padding:8px 15px}
-  .login{padding:14px}
-  .loginCard{padding:22px 18px;border-radius:18px}
-  .loginCard h1{font-size:22px}
-}
-@media(max-width:420px){
-  .main{padding-left:9px;padding-right:9px}
-  .top{margin-left:-9px;margin-right:-9px}
-  .formGrid{gap:8px}
-  .field label{font-size:9.5px}
-  .kpi b{font-size:14px}
-  .bomGrid{grid-template-columns:1fr 1fr 1fr}
-}
+  *{box-sizing:border-box}
+  body{margin:0;font-family:Inter,Segoe UI,Arial,sans-serif;color:var(--text);background:linear-gradient(180deg,#08101c,#0c1524 48%,#0a1220)}
+  .wrap{max-width:1460px;margin:0 auto;padding:24px}
+  .hero{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap;margin-bottom:18px}
+  .title h1{margin:0;font-size:30px;letter-spacing:.2px}
+  .title p{margin:8px 0 0;color:var(--muted);max-width:920px;line-height:1.55}
+  .toolbar{display:flex;gap:10px;flex-wrap:wrap}
+  button{border:1px solid rgba(255,255,255,.08);background:linear-gradient(180deg,rgba(255,255,255,.08),rgba(255,255,255,.03));color:var(--text);border-radius:12px;padding:11px 14px;font-weight:700;cursor:pointer}
+  button.primary{background:linear-gradient(180deg,#0ea5e9,#0284c7);border-color:#38bdf8;color:#fff}
+  button.danger{border-color:rgba(239,68,68,.4);color:#ffe2e2}
+  button:hover{transform:translateY(-1px)} button:active{transform:scale(.97)}
+  .summary{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:18px}
+  .kpi{padding:16px;border-radius:16px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06)}
+  .kpi strong{display:block;font-size:28px;line-height:1}.kpi span{display:block;margin-top:8px;color:var(--muted);font-size:13px}
+  .layout2{display:grid;grid-template-columns:1.3fr .95fr;gap:18px}
+  .layout3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:18px}
+  .card{background:linear-gradient(180deg,rgba(255,255,255,.05),rgba(255,255,255,.025));border:1px solid rgba(255,255,255,.07);border-radius:var(--radius);box-shadow:var(--shadow)}
+  .cardHead{padding:18px 20px 0}.cardHead h2,.cardHead h3{margin:0 0 6px}.cardHead p{margin:0;color:var(--muted);line-height:1.5}
+  .cardBody{padding:18px 20px 20px}
+  .inline{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+  .field{margin-top:10px}.field label{display:block;font-size:12px;color:var(--muted);margin-bottom:6px}
+  input,select,textarea{width:100%;padding:11px 12px;border-radius:12px;border:1px solid rgba(255,255,255,.08);background:#0d1525;color:var(--text);font:inherit}
+  textarea{min-height:78px;resize:vertical}
+  input:focus,select:focus,textarea:focus{outline:none;border-color:rgba(56,189,248,.55);box-shadow:0 0 0 3px rgba(56,189,248,.10)}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+  .muted{color:var(--muted)} .small{font-size:12px;color:var(--muted);line-height:1.45} .tiny{font-size:11px;color:var(--muted)}
 
+  .previewBar{display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:14px}
+  .seg{display:inline-flex;gap:6px;flex-wrap:wrap}
+  .seg button{padding:8px 12px;border-radius:999px}.seg button.active{background:rgba(56,189,248,.15);border-color:rgba(56,189,248,.35);color:#dff7ff}
+  .reorderHint{color:#bfe9ff;font-size:12px}
+  .flowCanvasBox{background:linear-gradient(180deg,#0b1423,#0d1728);border:1px solid rgba(255,255,255,.06);border-radius:20px;padding:18px;overflow:auto}
+  .flowRow{min-width:960px;display:grid;grid-auto-flow:column;grid-auto-columns:minmax(180px,1fr);gap:26px;align-items:stretch;position:relative;padding:14px 10px 24px}
+  .flowStep{position:relative;min-height:235px;border-radius:20px;border:1px solid rgba(255,255,255,.08);background:linear-gradient(180deg,rgba(255,255,255,.06),rgba(255,255,255,.025));padding:16px;display:flex;flex-direction:column;justify-content:space-between;cursor:grab;transition:transform .22s cubic-bezier(.2,.8,.2,1),box-shadow .22s ease,border-color .22s ease,opacity .22s ease;will-change:transform,opacity}
+  .flowStep:hover{transform:translateY(-5px);border-color:rgba(56,189,248,.28);box-shadow:0 16px 30px rgba(0,0,0,.22)}
+  .flowStep.dragging{opacity:.35!important;transform:scale(.96)!important;box-shadow:0 22px 44px rgba(0,0,0,.32)}
+  .flowStep.dragover{outline:2px solid rgba(56,189,248,.9);outline-offset:4px;transform:translateY(-4px) scale(1.015)}
+  .flowStep::after{content:"";position:absolute;top:50%;right:-20px;width:18px;height:18px;border-top:3px solid #4cc9ff;border-right:3px solid #4cc9ff;transform:translateY(-50%) rotate(45deg);opacity:.95;animation:arrowFlow 1.25s ease-in-out infinite}
+  .flowStep:last-child::after{display:none}
+  .stepNo{display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:999px;background:rgba(56,189,248,.14);border:1px solid rgba(56,189,248,.34);color:#dff6ff;font-weight:800;font-size:14px;position:relative;overflow:hidden}
+  .stepNo::after{content:"";position:absolute;inset:-2px;border-radius:999px;border:1px solid rgba(56,189,248,.35);animation:ringPulse 1.8s ease-out infinite}
+  .stepTop{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}.stepMain h3{margin:12px 0 6px;font-size:22px}.stepMain p{margin:0;color:var(--muted);line-height:1.45;font-size:13px}
+  .statusTag{padding:6px 10px;border-radius:999px;font-size:12px;font-weight:800;letter-spacing:.2px;border:1px solid rgba(255,255,255,.07)}
+  .running{background:rgba(34,197,94,.16);color:#d8ffe5;animation:runningPulse 1.65s ease-in-out infinite}
+  .ready{background:rgba(56,189,248,.15);color:#dcf6ff}
+  .blocked{background:rgba(239,68,68,.16);color:#ffe1e1;animation:blockedPulse 1.15s ease-in-out infinite}
+  .warn{background:rgba(245,158,11,.16);color:#fff1d5}
+  .timeBox{margin-top:14px;padding:12px 13px;border-radius:14px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.06)}
+  .timeBox strong{display:block;font-size:24px}.timeBox span{display:block;margin-top:6px;color:var(--muted);font-size:12px}
+  .stepFoot{display:flex;justify-content:space-between;align-items:flex-end;gap:10px;margin-top:12px;color:var(--muted);font-size:12px}.machineTag{padding:6px 9px;border-radius:999px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.06)}
+  .appliesTags{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}.typeTag{padding:4px 8px;border-radius:999px;background:rgba(168,85,247,.13);border:1px solid rgba(168,85,247,.25);font-size:11px;color:#eadcff}
 
-.aiPanel{max-width:900px;margin:0 auto}
-.aiCommand{width:100%;resize:vertical;min-height:110px;line-height:1.45}
-.aiQuick{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:12px}
-.aiResult{margin-top:16px;padding:16px;border:1px solid var(--border);border-radius:12px;background:#f8fafc;line-height:1.55}
-@media(max-width:768px){
-  .aiQuick{grid-template-columns:repeat(2,minmax(0,1fr))}
-  .aiQuick .btn{font-size:11px;padding:8px}
-  .aiResult{font-size:12px;padding:12px}
-}
+  .timeline{display:flex;flex-direction:column;gap:14px}.timeLineItem{display:grid;grid-template-columns:40px 1fr;gap:12px;align-items:start}.timeDot{width:40px;height:40px;border-radius:999px;display:flex;align-items:center;justify-content:center;font-weight:800;background:rgba(56,189,248,.14);border:1px solid rgba(56,189,248,.35);color:#dff6ff}.timeBody{padding:13px 14px;border-radius:16px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06)}.timeBody .top{display:flex;justify-content:space-between;gap:12px;align-items:center}.timeBody h4{margin:0;font-size:16px}.timeBody p{margin:8px 0 0;color:var(--muted);font-size:13px;line-height:1.5}
 
+  .breakdown{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:12px}.breakItem{padding:12px;border-radius:14px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06)}.breakItem b{display:block;font-size:20px}.breakItem span{display:block;margin-top:6px;color:var(--muted);font-size:12px}
+  .estimateKpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:14px}.estimateKpi{padding:14px;border-radius:14px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06)}.estimateKpi strong{display:block;font-size:24px}.estimateKpi span{display:block;margin-top:6px;font-size:12px;color:var(--muted)}
+  .bottleneckCard{margin-top:14px;padding:16px;border-radius:16px;background:linear-gradient(180deg,rgba(245,158,11,.12),rgba(245,158,11,.05));border:1px solid rgba(245,158,11,.28)}.bottleneckCard strong{font-size:18px}.bottleneckCard span{display:block;margin-top:6px;color:#f7d89b;font-size:12px;line-height:1.45}
+  .goodCard{margin-top:14px;padding:16px;border-radius:16px;background:linear-gradient(180deg,rgba(34,197,94,.12),rgba(34,197,94,.05));border:1px solid rgba(34,197,94,.28)}
+  .capacityTable{margin-top:14px;border:1px solid rgba(255,255,255,.06);border-radius:14px;overflow:hidden}.capRow{display:grid;grid-template-columns:1.1fr .65fr .9fr .65fr .8fr .95fr 1fr;gap:8px;padding:10px 12px;border-top:1px solid rgba(255,255,255,.05);font-size:12px;align-items:center}.capRow:first-child{border-top:0;background:rgba(255,255,255,.035);color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.04em}.capRow.bottleneck{background:rgba(245,158,11,.08)}.capRow b{color:#eff8ff}
+.formulaBox{margin-top:12px;padding:14px;border-radius:14px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06)}.ganttWrap{margin-top:14px}.ganttAxis{position:relative;height:28px;margin-left:170px;border-bottom:1px solid rgba(255,255,255,.08)}.ganttTick{position:absolute;top:0;bottom:0;width:1px;background:rgba(255,255,255,.08)}.ganttTick span{position:absolute;top:4px;left:4px;font-size:10px;color:var(--muted)}.ganttRow{display:grid;grid-template-columns:160px 1fr;gap:10px;align-items:center;margin-top:10px}.ganttLabel{font-size:12px;color:#dff6ff}.ganttTrack{position:relative;height:42px;border-radius:14px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);overflow:hidden}.ganttBar{position:absolute;top:7px;height:28px;border-radius:10px;display:flex;align-items:center;padding:0 10px;font-size:11px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;border:1px solid rgba(255,255,255,.12)}.ganttBar.running{background:linear-gradient(180deg,rgba(34,197,94,.42),rgba(34,197,94,.22));color:#eafff2}.ganttBar.ready{background:linear-gradient(180deg,rgba(56,189,248,.42),rgba(56,189,248,.22));color:#e2f8ff}.ganttBar.blocked{background:linear-gradient(180deg,rgba(239,68,68,.42),rgba(239,68,68,.22));color:#ffe7e7}.ganttBar.warn{background:linear-gradient(180deg,rgba(245,158,11,.42),rgba(245,158,11,.22));color:#fff4dd}.utilGrid{display:flex;flex-direction:column;gap:12px;margin-top:14px}.utilRow{display:grid;grid-template-columns:180px 1fr 64px;gap:10px;align-items:center}.utilName{font-size:12px;color:#dff6ff}.utilTrack{height:22px;border-radius:999px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.06);overflow:hidden}.utilBar{height:100%;border-radius:999px;background:linear-gradient(90deg,#0ea5e9,#38bdf8)}.utilBar.warn{background:linear-gradient(90deg,#f59e0b,#fbbf24)}.utilBar.bad{background:linear-gradient(90deg,#ef4444,#fb7185)}
+  .editorGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}.editCard{padding:14px;border-radius:16px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06)}.editCard h4{margin:0 0 10px;font-size:15px}.stepMoveBtns{display:flex;gap:6px;margin-top:10px}.stepMoveBtns button{padding:7px 9px;border-radius:9px;font-size:12px}
+  .checkGrid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:8px}.checkItem{display:flex;gap:8px;align-items:center;padding:8px 10px;border-radius:12px;background:rgba(255,255,255,.025);border:1px solid rgba(255,255,255,.05);font-size:12px}.checkItem input{width:auto;margin:0}
+  .presetRow{display:grid;grid-template-columns:1fr auto auto;gap:10px;align-items:center;padding:10px 12px;border-radius:14px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);margin-top:10px}
+  .motionToast{position:fixed;right:22px;bottom:22px;z-index:999;padding:10px 14px;border-radius:12px;background:rgba(7,18,31,.94);border:1px solid rgba(56,189,248,.28);color:#dff6ff;font-size:12px;font-weight:700;box-shadow:0 14px 30px rgba(0,0,0,.28);animation:toastIn .25s ease both}
 
-@media(max-width:768px){
-  .customerFirst,.projectFirst{grid-column:1/-1}
-  .customerFirst{order:-20}
-  .projectFirst{order:-19}
-}
+  @keyframes runningPulse{0%,100%{box-shadow:0 0 0 0 rgba(34,197,94,.05)}50%{box-shadow:0 0 0 5px rgba(34,197,94,.10)}}
+  @keyframes blockedPulse{0%,100%{box-shadow:0 0 0 0 rgba(239,68,68,.04)}50%{box-shadow:0 0 0 5px rgba(239,68,68,.12)}}
+  @keyframes arrowFlow{0%,100%{opacity:.45;transform:translateY(-50%) translateX(-2px) rotate(45deg)}50%{opacity:1;transform:translateY(-50%) translateX(3px) rotate(45deg)}}
+  @keyframes ringPulse{0%{opacity:.75;transform:scale(.72)}80%,100%{opacity:0;transform:scale(1.45)}}
+  @keyframes toastIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
 
-
-/* Required-gate and guided workflow */
-.stepHeader{
-  display:flex;align-items:center;gap:10px;margin:2px 0 12px;padding:11px 12px;
-  background:#f7fafc;border:1px solid #e0e8ef;border-radius:12px
-}
-.stepHeader>span,.stepDivider>span{
-  display:grid;place-items:center;width:28px;height:28px;border-radius:50%;
-  background:var(--navy);color:#fff;font-size:12px;font-weight:800;flex:0 0 auto
-}
-.stepHeader b{display:block;font-size:13px;color:var(--navy)}
-.stepHeader small{display:block;font-size:10px;color:var(--muted);margin-top:2px}
-.stepDivider{
-  grid-column:1/-1;display:flex;align-items:center;gap:8px;
-  margin:8px 0 0;padding-top:12px;border-top:1px solid #e5ebf0;color:var(--navy)
-}
-.stepDivider>span{width:24px;height:24px;font-size:10px}
-.stepDivider b{font-size:12px}
-.bomStep{margin-top:18px}
-.requiredGate{
-  display:flex;align-items:center;gap:9px;margin:-2px 0 14px;padding:10px 12px;
-  border:1px solid #f0c7c7;background:#fff5f5;border-radius:11px;color:#7c2929
-}
-.requiredGate b{font-size:11px;text-transform:uppercase;letter-spacing:.04em}
-.requiredGate span{font-size:11px}
-.requiredGate.ready{border-color:#bfe2ca;background:#f1faf4;color:#205d37}
-.requiredInput.invalid{border-color:#d55b5b!important;box-shadow:0 0 0 3px rgba(213,91,91,.10)!important}
-.requiredInput.valid{border-color:#72a985}
-.fieldError{font-size:10px;color:#b33434;margin-top:3px;font-weight:600}
-button:disabled,.disabledAction{
-  opacity:.45!important;cursor:not-allowed!important;box-shadow:none!important;transform:none!important
-}
-.customerFirst,.projectFirst{
-  background:#fbfcfd;padding:10px;border:1px solid #e4ebf1;border-radius:12px
-}
-.customerFirst label,.projectFirst label{color:var(--navy);font-weight:800}
-@media(max-width:768px){
-  .stepHeader{margin-top:0;padding:10px}
-  .customerFirst,.projectFirst{padding:9px}
-  .requiredGate{position:relative;margin-bottom:10px}
-  .stepDivider{margin-top:4px}
-}
-
-
-.adminGrid{display:grid;grid-template-columns:minmax(0,420px) minmax(0,1fr);gap:14px}
-.userRow{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:11px 0;border-bottom:1px solid var(--border)}
-.userRow:last-child{border-bottom:0}
-.userRole{display:inline-block;margin-left:7px;padding:2px 6px;border-radius:999px;background:#edf3f7;color:var(--navy);font-size:9px;font-weight:800;text-transform:uppercase}
-.activityRow{display:grid;grid-template-columns:10px 1fr;gap:10px;padding:10px 0;border-bottom:1px solid var(--border)}
-.activityRow:last-child{border-bottom:0}
-.activityDot{width:8px;height:8px;border-radius:50%;background:var(--blue);margin-top:5px}
-.activityDetails{margin-top:4px;font-size:10px;color:var(--muted)}
-@media(max-width:900px){.adminGrid{grid-template-columns:1fr}}
-@media(max-width:768px){.userRow{align-items:flex-start}.userRow .btn{font-size:10px;padding:7px 8px}.activityRow{font-size:11px}}
-
-
-.notificationRow{width:100%;display:grid;grid-template-columns:10px 1fr;gap:10px;text-align:left;border:0;border-bottom:1px solid var(--border);background:transparent;padding:12px 6px;cursor:pointer;color:var(--text)}
-.notificationRow:hover{background:#f8fafc}
-.notificationRow.unread{background:#f1f7fb}
-.notificationDot{width:8px;height:8px;border-radius:50%;background:#b7c4ce;margin-top:5px}
-.notificationRow.unread .notificationDot{background:#2d739f;box-shadow:0 0 0 4px rgba(45,115,159,.1)}
-.priceHistoryBox{margin-top:12px;border:1px solid var(--border);border-radius:10px;overflow:hidden}
-.priceHistoryToggle{width:100%;border:0;background:#f8fafc;padding:10px 12px;display:flex;justify-content:space-between;align-items:center;font-weight:800;color:var(--navy);cursor:pointer}
-.pricingHistoryList{padding:0 12px}
-.pricingHistoryRow{display:flex;justify-content:space-between;gap:12px;padding:10px 0;border-bottom:1px solid var(--border)}
-.pricingHistoryRow:last-child{border-bottom:0}
-.pricingHistoryRow b{color:var(--navy)}
-@media(max-width:768px){
-  .notificationRow{padding:11px 4px}
-  .pricingHistoryRow{align-items:flex-start}
-}
-
-
-.notificationRole{
-  display:inline-block;margin-left:6px;padding:2px 6px;border-radius:999px;
-  font-size:9px;font-weight:800;text-transform:uppercase;background:#edf3f7;color:var(--navy)
-}
-
-
-.fixedCostField .fixedCostValue{
-  min-height:46px;display:flex;align-items:center;padding:10px 12px;
-  border:1px solid #cfe0d5;border-radius:10px;background:#f2faf5;
-  color:#245d38;font-size:13px;font-weight:800
-}
-.fixedPricingNote{
-  grid-column:1/-1;padding:10px 12px;border-radius:10px;
-  background:#eef5f9;border:1px solid #d6e4ed;color:var(--navy);
-  font-size:11px;line-height:1.4
-}
-
+  @media (max-width:1200px){.summary{grid-template-columns:repeat(3,1fr)}.layout2,.layout3{grid-template-columns:1fr}.estimateKpis,.breakdown,.editorGrid,.grid4{grid-template-columns:repeat(2,1fr)}.capRow{grid-template-columns:1.2fr .65fr .9fr .65fr .8fr .95fr 1fr}}
+  @media (max-width:720px){.wrap{padding:16px}.summary,.estimateKpis,.breakdown,.editorGrid,.grid4,.grid3,.grid2{grid-template-columns:1fr}.title h1{font-size:24px}.capRow{grid-template-columns:1fr 1fr}}
+  @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important;scroll-behavior:auto!important}}
 </style>
 </head>
 <body>
-
-<div id="loginScreen" class="login">
-  <div class="loginCard">
-    <h1>WINKO Quick Calculator</h1>
-    <p>Supabase-synced sales calculator with Main-only BOM control.</p>
-    <div class="field"><label>Username</label><input id="loginUser" class="input"></div>
-    <div class="field"><label>Password</label><input id="loginPass" class="input" type="password" onkeydown="if(event.key==='Enter')doLogin()"></div>
-    <button class="btn primary" style="width:100%" onclick="doLogin()">Login</button>
-    <div id="loginMsg" class="muted" style="margin-top:10px;color:#a12626"></div>
-  </div>
-</div>
-
-<div id="app" class="app hidden">
-  <aside class="side">
-    <div class="brand"><b>WINKO</b><small>Quick Sales Calculator</small></div>
-    <div id="nav" class="nav"></div>
-  </aside>
-  <main class="main">
-    <div class="top">
-      <div><h1 id="pageTitle"></h1><div id="pageSub" class="sub"></div></div>
-      <div class="toolbar"><span id="roleTag" class="tag"></span><button class="btn" onclick="logout()">Sign out</button></div>
+<div class="wrap">
+  <div class="hero">
+    <div class="title">
+      <h1>JUTARAMA 2D Tank Planner V20</h1>
+      <p>Full 2D planning version with <b>editable workflow arrangement</b>, <b>Gantt chart schedule</b>, <b>machine utilization chart</b>, and a more accurate <b>BOM-style tank preset formula</b> using length, width, height, wall levels, and roof deduction logic.</p>
     </div>
-    <div id="view"></div>
-  </main>
+    <div class="toolbar">
+      <button class="primary" id="resetBtn">Reset Default</button>
+      <button id="runningAllBtn">Set All Running</button>
+      <button id="readyAllBtn">Set All Ready</button>
+      <button id="blockedAllBtn">Set All Blocked</button>
+    </div>
+  </div>
+
+  <div class="summary" id="summary"></div>
+
+  <div class="layout2">
+    <section class="card">
+      <div class="cardHead">
+        <h2>2D Workflow Diagram</h2>
+        <p>Preview one panel type at a time. Drag workflow cards left/right to rearrange the process order. Each card can be assigned to Wall / Roof / Base / Stay.</p>
+      </div>
+      <div class="cardBody">
+        <div class="previewBar">
+          <div class="seg" id="previewTypeSeg"></div>
+          <div class="reorderHint">Drag cards to reorder workflow arrangement.</div>
+        </div>
+        <div class="flowCanvasBox"><div class="flowRow" id="flowRow"></div></div>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="cardHead">
+        <h2>Step Timeline</h2>
+        <p>Timeline and stage metrics for the selected panel type route.</p>
+      </div>
+      <div class="cardBody">
+        <div class="timeline" id="timeline"></div>
+        <div class="small" style="margin-top:14px">Cycle per panel = process time divided by active machines and efficiency, with setup and transfer amortized by batch size.</div>
+      </div>
+    </section>
+  </div>
+
+  <section class="card" style="margin-top:18px">
+    <div class="cardHead">
+      <h3>Tank Input, Calendar & Target</h3>
+      <p>Set tank breakdown, shift configuration, and target completion. The estimate updates automatically.</p>
+    </div>
+    <div class="cardBody">
+      <div class="layout2">
+        <div>
+          <div class="grid2">
+            <div class="field"><label>Tank size preset</label><select id="tankPreset"></select></div>
+            <div class="field"><label>Tank quantity</label><input id="tankQty" type="number" min="1" step="1" value="1"></div>
+          </div>
+          <div class="grid2">
+            <div class="field"><label><input id="useFormula" type="checkbox" checked style="width:auto;margin-right:8px">Use BOM formula by dimension</label></div>
+            <div class="field"><label>Roof deduction / opening panels</label><input id="roofDeduct" type="number" min="0" step="1" value="1"></div>
+          </div>
+          <div class="grid4">
+            <div class="field"><label>Length (ft)</label><input id="lengthFt" type="number" min="4" step="4" value="24"></div>
+            <div class="field"><label>Width (ft)</label><input id="widthFt" type="number" min="4" step="4" value="24"></div>
+            <div class="field"><label>Height (ft)</label><input id="heightFt" type="number" min="4" step="4" value="8"></div>
+            <div class="field"><label>Panel size (ft)</label><input id="panelSizeFt" type="number" min="1" step="1" value="4"></div>
+          </div>
+          <div class="breakdown">
+            <div class="breakItem"><b id="wallQty">0</b><span>Wall Panels</span></div>
+            <div class="breakItem"><b id="roofQty">0</b><span>Roof Panels</span></div>
+            <div class="breakItem"><b id="baseQty">0</b><span>Base Panels</span></div>
+            <div class="breakItem"><b id="stayQty">0</b><span>Stay / Accessory</span></div>
+          </div>
+          <div id="formulaNote" class="formulaBox small"></div>
+          <div class="grid4">
+            <div class="field"><label>Custom wall panels</label><input id="customWall" type="number" min="0" step="1" value="48"></div>
+            <div class="field"><label>Custom roof panels</label><input id="customRoof" type="number" min="0" step="1" value="35"></div>
+            <div class="field"><label>Custom base panels</label><input id="customBase" type="number" min="0" step="1" value="36"></div>
+            <div class="field"><label>Custom stay / accessory</label><input id="customStay" type="number" min="0" step="1" value="12"></div>
+          </div>
+          <div class="grid2">
+            <div class="field"><label><input id="includeStay" type="checkbox" checked style="width:auto;margin-right:8px">Include stay / accessory</label></div>
+            <div class="field"><label>Efficiency factor (%)</label><input id="efficiency" type="number" min="1" max="100" step="1" value="100"></div>
+          </div>
+        </div>
+        <div>
+          <div class="grid2">
+            <div class="field"><label>Production start date & time</label><input id="startDate" type="datetime-local"></div>
+            <div class="field"><label>Target completion (working days)</label><input id="targetDays" type="number" min="0" step="0.1" value="0"></div>
+          </div>
+          <div class="grid4">
+            <div class="field"><label>Hours / shift</label><input id="hoursPerShift" type="number" min="1" step="0.5" value="8"></div>
+            <div class="field"><label>Shifts / day</label><input id="shiftsPerDay" type="number" min="1" step="1" value="1"></div>
+            <div class="field"><label>Break min / shift</label><input id="breakMin" type="number" min="0" step="1" value="0"></div>
+            <div class="field"><label>Workdays / week</label><input id="workdaysPerWeek" type="number" min="1" max="7" step="1" value="6"></div>
+          </div>
+          <div class="estimateKpis" id="estimateKpis"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="layout2" style="margin-top:18px">
+    <section class="card">
+      <div class="cardHead">
+        <h3>Panel Type Estimate</h3>
+        <p>Separate workflow estimate for Wall, Roof, Base, and Stay.</p>
+      </div>
+      <div class="cardBody"><div class="capacityTable" id="panelTypeTable"></div></div>
+    </section>
+
+    <section class="card">
+      <div class="cardHead">
+        <h3>Capacity, Bottleneck & Recommendation</h3>
+        <p>Machine-specific capacity using machine count, workers per machine, and available workers.</p>
+      </div>
+      <div class="cardBody">
+        <div id="bottleneckCard" class="bottleneckCard"></div>
+        <div id="recommendationCard" class="goodCard"></div>
+        <div class="capacityTable" id="capacityTable"></div>
+      </div>
+    </section>
+  </div>
+
+  <div class="layout2" style="margin-top:18px">
+    <section class="card">
+      <div class="cardHead">
+        <h3>Gantt Chart Style Schedule</h3>
+        <p>Shows an overlapped schedule by panel type. Each bar starts when the first batch can move to the step and ends when that step finishes the last required panel.</p>
+      </div>
+      <div class="cardBody"><div id="ganttChart" class="ganttWrap"></div></div>
+    </section>
+
+    <section class="card">
+      <div class="cardHead">
+        <h3>Machine Utilization % Chart</h3>
+        <p>Utilization is based on each stage workload divided by the total estimated completion window for the selected tank job.</p>
+      </div>
+      <div class="cardBody"><div id="utilChart" class="utilGrid"></div></div>
+    </section>
+  </div>
+
+  <div class="layout2" style="margin-top:18px">
+    <section class="card">
+      <div class="cardHead">
+        <h3>Actual vs Estimated</h3>
+        <p>Record actual production and compare with the estimate.</p>
+      </div>
+      <div class="cardBody">
+        <div class="grid3">
+          <div class="field"><label>Actual start</label><input id="actualStart" type="datetime-local"></div>
+          <div class="field"><label>Actual finish</label><input id="actualFinish" type="datetime-local"></div>
+          <div class="field"><label>Actual tanks completed</label><input id="actualQty" type="number" min="1" step="1" value="1"></div>
+        </div>
+        <div class="estimateKpis" id="actualKpis"></div>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="cardHead">
+        <h3>Scenario Presets</h3>
+        <p>Save and compare different production scenarios such as normal mode, OT mode, low manpower, or machine breakdown.</p>
+      </div>
+      <div class="cardBody">
+        <div class="grid2">
+          <div class="field"><label>Preset name</label><input id="scenarioName" type="text" placeholder="e.g. Normal 1 Shift"></div>
+          <div class="field" style="display:flex;align-items:end"><button class="primary" id="saveScenarioBtn">Save Current Scenario</button></div>
+        </div>
+        <div id="presetList"></div>
+      </div>
+    </section>
+  </div>
+
+  <section class="card" style="margin-top:18px">
+    <div class="cardHead">
+      <h3>Workflow Editor</h3>
+      <p>Edit step arrangement, panel-type applicability, machine IDs, batch size, setup time, transfer time, worker limit, and notes.</p>
+    </div>
+    <div class="cardBody"><div class="editorGrid" id="editorGrid"></div></div>
+  </section>
 </div>
 
 <script>
-const SESSION='winko_quick_calc_session';
-const API_URL='https://yzequtnkzuyayydpqayf.supabase.co/functions/v1/factory-simple-api';
-const ADMIN_API_URL='https://yzequtnkzuyayydpqayf.supabase.co/functions/v1/factory-admin-api';
-const NOTIFY_API_URL='https://yzequtnkzuyayydpqayf.supabase.co/functions/v1/factory-notification-api';
-const QUOTES_API_URL='https://yzequtnkzuyayydpqayf.supabase.co/functions/v1/factory-quotes-api';
-const PRICING_API_URL='https://yzequtnkzuyayydpqayf.supabase.co/functions/v1/factory-pricing-api';
-
-const BOM_CATALOGUE=[
-  {key:'manhole',category:'Panels',item:'Manhole',unit:'pcs'},
-  {key:'roof15',category:'Panels',item:'Roof Panel',unit:'pcs'},
-  {key:'wallL1',category:'Panels',item:'Wall L1',unit:'pcs'},
-  {key:'wallL2',category:'Panels',item:'Wall L2',unit:'pcs'},
-  {key:'wallL3',category:'Panels',item:'Wall L3',unit:'pcs'},
-  {key:'wallL4',category:'Panels',item:'Wall L4',unit:'pcs'},
-  {key:'base50',category:'Panels',item:'Base Panel',unit:'pcs'},
-  {key:'partition',category:'Panels',item:'Internal Partition',unit:'set'},
-  {key:'roofTrusses',category:'Cleats / Trusses / Stays',item:'Roof Trusses (12 ft)',unit:'pcs'},
-  {key:'roofSupport8',category:'Cleats / Trusses / Stays',item:'8 inch Roof Support',unit:'pcs'},
-  {key:'cleatA',category:'Cleats / Trusses / Stays',item:'Type (A) Cleat',unit:'pcs'},
-  {key:'cleatB',category:'Cleats / Trusses / Stays',item:'Type (B) Cleat',unit:'pcs'},
-  {key:'cleatC',category:'Cleats / Trusses / Stays',item:'Type (C) Cleat',unit:'pcs'},
-  {key:'cleatC1',category:'Cleats / Trusses / Stays',item:'Type (C1) Cleat',unit:'pcs'},
-  {key:'ladderBracket',category:'Cleats / Trusses / Stays',item:'Ladder Brackets',unit:'pcs'},
-  {key:'angleStay67_5',category:'Cleats / Trusses / Stays',item:'67 1/2 inch Angle Stay',unit:'pcs'},
-  {key:'stay11_3_2',category:'Cleats / Trusses / Stays',item:'11-3/2 inch Stay',unit:'pcs'},
-  {key:'extLadder',category:'Accessories / Fasteners',item:'External Ladder',unit:'ft'},
-  {key:'intLadder',category:'Accessories / Fasteners',item:'Internal Ladder',unit:'ft'},
-  {key:'airVent',category:'Accessories / Fasteners',item:'Air Vent',unit:'pcs'},
-  {key:'levelIndicator',category:'Accessories / Fasteners',item:'Water Level Indicator',unit:'ft'},
-  {key:'m14BN',category:'Accessories / Fasteners',item:'M14 x 30 Bolt and Nut',unit:'pcs'},
-  {key:'m14Washer',category:'Accessories / Fasteners',item:'M14 Washer',unit:'pcs'},
-  {key:'bnw58',category:'Accessories / Fasteners',item:'5/8 x 1 1/2 BNW',unit:'set'},
-  {key:'bn38',category:'Accessories / Fasteners',item:'3/8 x 3/4 BNW Set',unit:'set'},
-  {key:'m16x40',category:'Accessories / Fasteners',item:'M16 x 40mm B.N.W Set',unit:'set'},
-  {key:'sealant45',category:'Sealants',item:'5 x 45 x 10 m Sealant Roll',unit:'roll'},
-  {key:'sealant40',category:'Sealants',item:'3 x 40 x 10 m Sealant Roll',unit:'roll'},
-  {key:'butyl8',category:'Sealants',item:'8mm Butyl Sealant',unit:'pcs'},
-  {key:'butyl24',category:'Sealants',item:'24mm Butyl Sealant',unit:'pcs'}
+const STORAGE_KEY='jutarama_2d_tank_planner_v19';
+const TYPE_META={wall:'Wall',roof:'Roof',base:'Base',stay:'Stay'};
+const DEFAULT_STEPS=[
+  {id:'laser',name:'Laser Cutting',machineIds:'LC1',machineCount:1,workersPerMachine:1,availableWorkers:1,time:12,setup:10,transfer:2,batchSize:10,status:'running',note:'Cut raw sheet to required panel shape and size.',applies:{wall:true,roof:true,base:true,stay:true}},
+  {id:'punch',name:'Punching',machineIds:'PR1',machineCount:1,workersPerMachine:1,availableWorkers:1,time:8,setup:6,transfer:1,batchSize:10,status:'ready',note:'Punch holes and fixing points.',applies:{wall:true,roof:true,base:true,stay:false}},
+  {id:'notch',name:'Notching',machineIds:'N01',machineCount:1,workersPerMachine:1,availableWorkers:1,time:12,setup:5,transfer:1,batchSize:8,status:'ready',note:'Create notch / trimming detail for panel joints.',applies:{wall:true,roof:false,base:false,stay:false}},
+  {id:'weld',name:'Welding',machineIds:'WL1',machineCount:1,workersPerMachine:1,availableWorkers:1,time:18,setup:8,transfer:2,batchSize:6,status:'ready',note:'Weld panel details, stays or local joint work.',applies:{wall:true,roof:false,base:true,stay:true}},
+  {id:'finish',name:'Finish',machineIds:'FN1',machineCount:1,workersPerMachine:1,availableWorkers:1,time:12,setup:4,transfer:1,batchSize:12,status:'ready',note:'Final finish, checking, touch-up, and preparation.',applies:{wall:true,roof:true,base:true,stay:true}}
 ];
-
-const DEFAULTS={waste:3,fabrication:1000,installation:1000,transport:1000,other:100,overhead:5,profitMargin:20,discount:0,sst:5,currency:'MYR'};
-const PRODUCT_KEY_MAP={
-  manhole:'panel_manhole',partition:'quick_partition',
-  roofTrusses:'quick_roof_truss_12ft',roofSupport8:'quick_roof_support_8in',
-  cleatA:'cleat_rc_a',cleatB:'cleat_mc_b',cleatC:'cleat_sc_c',cleatC1:'cleat_sc1_c1',
-  ladderBracket:'ladder_bracket',angleStay67_5:'stay_67_5',stay11_3_2:'quick_stay_11_3_2',
-  extLadder:'quick_ext_ladder_ft',intLadder:'quick_int_ladder_ft',airVent:'air_vent',
-  levelIndicator:'quick_wli_ft',m14BN:'bolt_m14x30_bn',m14Washer:'washer_m14',
-  bnw58:'quick_bnw_5_8x1_5',bn38:'quick_bnw_3_8x3_4',m16x40:'quick_m16x40_bnw',
-  sealant45:'sealant_roll_5x45x10m',sealant40:'sealant_roll_3x40x10m',
-  butyl8:'quick_butyl_8mm_piece',butyl24:'quick_butyl_24mm_piece'
+const TANK_PRESETS={
+  '16×16×16':{L:16,W:16,H:16,roofDeduct:0,stay:16},
+  '24×24×8':{L:24,W:24,H:8,roofDeduct:1,stay:12},
+  '40×12×16':{L:40,W:12,H:16,roofDeduct:0,stay:24},
+  '44×20×16':{L:44,W:20,H:16,roofDeduct:0,stay:30},
+  'Custom':{L:24,W:24,H:8,roofDeduct:1,stay:12}
 };
-const VERIFIED_BOM_24_24_8={
-  manhole:1,roof15:35,wallL1:24,wallL2:24,wallL3:0,wallL4:0,base50:36,partition:0,
-  roofTrusses:10,roofSupport8:5,cleatA:8,cleatB:45,cleatC:24,cleatC1:24,
-  ladderBracket:6,angleStay67_5:28,stay11_3_2:4,extLadder:8,intLadder:8,airVent:1,levelIndicator:8,
-  m14BN:2510,m14Washer:2510,bnw58:190,bn38:260,m16x40:380,sealant45:24,sealant40:10,butyl8:49,butyl24:45
-};
+let state=loadState();
 
-let auth={username:'',password:''};
-let state={settings:{...DEFAULTS},role:null,view:'calculator',remoteCatalogue:[],remoteByKey:{},lastPrice:null,priceSeq:0,currentBom:null,currentManualTotals:null,sharedQuotes:[],unreadNotifications:0};
-
-function clone(x){return JSON.parse(JSON.stringify(x))}
-async function api(action,data=null){
-  const res=await fetch(API_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:auth.username,password:auth.password,action,data})});
-  let body={};try{body=await res.json()}catch{}
-  if(!res.ok||body.ok===false)throw new Error(body.error||`Supabase request failed (${res.status})`);
-  return body;
-}
-async function adminApi(action,data=null){
-  const res=await fetch(ADMIN_API_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:auth.username,password:auth.password,action,data})});
-  let body={};try{body=await res.json()}catch{}
-  if(!res.ok||body.ok===false)throw new Error(body.error||`Admin request failed (${res.status})`);
-  return body;
-}
-async function notifyApi(action,data=null){
-  const res=await fetch(NOTIFY_API_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:auth.username,password:auth.password,action,data})});
-  let body={};try{body=await res.json()}catch{}
-  if(!res.ok||body.ok===false)throw new Error(body.error||`Notification request failed (${res.status})`);
-  return body;
-}
-async function quotesApi(action='quotes_list',data=null){
-  const res=await fetch(QUOTES_API_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:auth.username,password:auth.password,action,data})});
-  let body={};try{body=await res.json()}catch{}
-  if(!res.ok||body.ok===false)throw new Error(body.error||`Quote request failed (${res.status})`);
-  return body;
-}
-async function pricingApi(action='quick_price',data=null){
-  const res=await fetch(PRICING_API_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:auth.username,password:auth.password,action,data})});
-  let body={};try{body=await res.json()}catch{}
-  if(!res.ok||body.ok===false)throw new Error(body.error||`Pricing request failed (${res.status})`);
-  return body;
-}
-function recordActivity(action,details={}){
-  if(!auth.username)return;
-  adminApi('record',{action,details}).catch(()=>{});
-}
-async function loadRemoteConfig(){
-  const r=await api('quick_load');
-  state.role=r.role||state.role;
-  state.settings={...DEFAULTS,...(r.defaults||{})};
-  state.remoteCatalogue=Array.isArray(r.catalogue)?r.catalogue:[];
-  state.remoteByKey=Object.fromEntries(state.remoteCatalogue.map(x=>[x.internalKey,x]));
-  return r;
-}
-function thicknessKey(prefix,mm){
-  const n=Number(mm||0);
-  if(!Number.isFinite(n)||n<=0)return '';
-  return `panel_${prefix}_${n.toFixed(1).replace('.','_')}`;
-}
-function resolvedInternalKey(localKey){
-  if(localKey==='roof15')return thicknessKey('roof',num('roofThickness'));
-  if(['wallL1','wallL2','wallL3','wallL4'].includes(localKey)){
-    const id=localKey==='wallL1'?'wallL1Thickness':localKey==='wallL2'?'wallL2Thickness':localKey==='wallL3'?'wallL3Thickness':'wallL4Thickness';
-    return thicknessKey('wall',num(id));
-  }
-  if(localKey==='base50')return thicknessKey('base',num('baseThickness'));
-  return PRODUCT_KEY_MAP[localKey]||localKey;
-}
-async function doLogin(){
-  loginMsg.textContent='Signing in…';
-  const u=loginUser.value.trim().toLowerCase(),p=loginPass.value;
-  if(!u||!p){loginMsg.textContent='Username and password required.';return}
-  try{
-    auth={username:u,password:p};
-    const r=await api('login');
-    state.role=r.role;
-    await loadRemoteConfig();
-    sessionStorage.setItem(SESSION,JSON.stringify({username:u,role:state.role}));
-    loginMsg.textContent='';
-    recordActivity('login');
-    start(state.role);
-  }catch(e){auth={username:'',password:''};loginMsg.textContent=e.message||'Login failed.'}
-}
-function start(role){
-  state.role=role;loginScreen.classList.add('hidden');app.classList.remove('hidden');setView('calculator');
-  refreshNotificationBadge();
-  window._notifyTimer=setInterval(refreshNotificationBadge,60000);
-}
-function logout(){sessionStorage.removeItem(SESSION);auth={username:'',password:''};location.reload()}
-function setView(v){
-  state.view=v;renderNav();
-  if(v==='history')return renderHistory();
-  if(v==='prices')return renderPrices();
-  if(v==='ai')return renderAiControl();
-  if(v==='users')return renderUsers();
-  if(v==='notifications')return renderNotifications();
-  return renderCalculator();
-}
-function renderNav(){
-  const items=[['calculator','Quick Calculator'],['history','Sales Quotes']];
-  items.push(['notifications',`Notifications${state.unreadNotifications?` (${state.unreadNotifications})`:''}`]);
-  if(state.role==='main')items.push(['prices','BOM Price Control'],['users','Users']);
-  nav.innerHTML=items.map(([k,l])=>`<button class="${state.view===k?'active':''}" onclick="setView('${k}')">${l}</button>`).join('')
-}
-function page(t,s){pageTitle.textContent=t;pageSub.textContent=s;roleTag.textContent=state.role==='main'?'MAIN CONTROL':'SALES'}
-function money(v){return new Intl.NumberFormat('en-MY',{style:'currency',currency:state.settings.currency||'MYR',maximumFractionDigits:2}).format(Number(v||0))}
-function num(id){return Number(document.getElementById(id)?.value||0)}
-function esc(s){return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
-
-
-function activeWallLevels(heightFt){
-  const h=Math.max(Number(heightFt)||0,0);
-  return {l1:h>0,l2:h>4,l3:h>8,l4:h>12,count:h<=0?0:Math.min(Math.ceil(h/4),4),overMax:h>16};
-}
-function syncWallLevelUi(){
-  const h=num('hei'),lv=activeWallLevels(h);
-  [['wallL1Field','l1'],['wallL2Field','l2'],['wallL3Field','l3'],['wallL4Field','l4']].forEach(([id,k])=>{
-    const el=document.getElementById(id);if(el)el.style.display=lv[k]?'grid':'none';
-  });
-}
-function syncPartitionUi(){
-  const on=document.getElementById('partitionRequired')?.value==='yes';
-  ['partitionTypeField','partitionLengthField','partitionWidthField','partitionQtyField'].forEach(id=>{
-    const el=document.getElementById(id);if(el)el.style.display=on?'grid':'none';
-  });
-}
-function thicknessLabel(key){
-  const map={
-    roof15:['roofThickness','Roof'],
-    wallL1:['wallL1Thickness','Wall L1'],
-    wallL2:['wallL2Thickness','Wall L2'],
-    wallL3:['wallL3Thickness','Wall L3'],
-    wallL4:['wallL4Thickness','Wall L4'],
-    base50:['baseThickness','Base']
-  };
-  if(!map[key])return null;
-  const [id,label]=map[key],v=Number(document.getElementById(id)?.value||0);
-  return `${v.toFixed(1)}mm (${label})`;
-}
-
-function tankBasis(l,w,h){
-  const lp=l/4,wp=w/4,hp=h/4,roof=lp*wp,perimeter=2*(lp+wp),wall=perimeter*hp;
-  return {lp,wp,hp,roof,perimeter,wall,total:roof*2+wall};
-}
-function validGrid(b){return [b.lp,b.wp,b.hp].every(x=>Number.isInteger(x)&&x>=1)}
-
-function originalBom(l,w,h){
-  if(l===24&&w===24&&h===8)return clone(VERIFIED_BOM_24_24_8);
-
-  const s=tankBasis(l,w,h),lp=s.lp,wp=s.wp,hp=s.hp;
-  const cleatA=Math.max(0,(wp-1)*2);
-  const cleatB=Math.ceil(Math.max(0,(lp-1)*(wp-1)))+Math.ceil(Math.max(0,lp-1))*2+Math.ceil(Math.max(0,wp-1))*2;
-  const cleatC=Math.ceil(Math.max(0,(lp-1)*2+(wp-1)*2))+Math.ceil(Math.max(0,hp-1))*4;
-
-  const bn58=cleatB*4+(cleatC*2)*2;
-  const roofJoint=Math.ceil(lp+1)*wp+Math.ceil(wp+1)*lp;
-  const wallJoint=Math.ceil(lp-1)*hp*2+Math.ceil(wp-1)*hp*2;
-  const m14=Math.ceil(roofJoint)*17+Math.ceil(wallJoint)*17+hp*4*17;
-  const bn38=Math.ceil((lp*Math.ceil(wp+1)+Math.ceil(lp+1)*wp+(lp+wp)*2)*10*1.03);
-  const seal45=Math.round(Math.ceil(((hp*Math.ceil(lp-1)+lp*Math.ceil(hp))*2*1.35+((hp*Math.ceil(wp-1)+wp*Math.ceil(hp))*2*1.35))+Math.ceil(roofJoint*1.35)+hp*4*1.22)/10);
-  const seal40=Math.ceil(Math.ceil(roofJoint*1.35)/10);
-
+function deepClone(x){return JSON.parse(JSON.stringify(x));}
+function defaultState(){
   return {
-    manhole:1,
-    roof15:Math.max(0,Math.round(lp*wp-1)),
-    wallL1:hp>=1?Math.round(s.perimeter):0,
-    wallL2:hp>=2?Math.round(s.perimeter):0,
-    wallL3:hp>=3?Math.round(s.perimeter):0,
-    wallL4:hp>=4?Math.round(s.perimeter):0,
-    base50:Math.round(lp*wp),
-
-    roofTrusses:Math.max(0,Math.round(lp-1)),
-    roofSupport8:Math.max(0,Math.round((lp+wp)*2)),
-    cleatA:Math.round(cleatA),
-    cleatB:Math.round(cleatB),
-    cleatC:Math.round(cleatC),
-    cleatC1:Math.round(cleatC),
-    ladderBracket:Math.max(0,Math.round(3*hp)),
-    angleStay67_5:Math.max(0,Math.round(Math.ceil(lp-1)*2+Math.ceil(wp-1)*2+hp*4)),
-    stay11_3_2:Math.max(0,Math.round(2*hp)),
-
-    extLadder:h,
-    intLadder:h,
-    airVent:1,
-    levelIndicator:h,
-    m14BN:Math.round(m14),
-    m14Washer:Math.round(m14),
-    bnw58:Math.round(bn58),
-    bn38:Math.round(bn38),
-    m16x40:Math.round(2*bn58),
-
-    sealant45:Math.max(0,seal45),
-    sealant40:Math.max(0,seal40),
-    butyl8:Math.max(0,Math.round(cleatC*2+1)),
-    butyl24:Math.max(0,Math.round(cleatB))
+    previewType:'wall',
+    steps:deepClone(DEFAULT_STEPS),
+    estimate:{preset:'24×24×8',qty:1,includeStay:true,useFormula:true,efficiency:100,lengthFt:24,widthFt:24,heightFt:8,panelSizeFt:4,roofDeduct:1,custom:{wall:48,roof:35,base:36,stay:12},startDate:'',targetDays:0,hoursPerShift:8,shiftsPerDay:1,breakMin:0,workdaysPerWeek:6},
+    actual:{start:'',finish:'',qty:1},
+    scenarios:[]
   };
 }
-
-function buildBom(l,w,h){
-  const basis=tankBasis(l,w,h),qty=originalBom(l,w,h);
-  if(document.getElementById('ladder')?.value!=='yes'){qty.extLadder=0;qty.intLadder=0;qty.ladderBracket=0}
-  if(document.getElementById('vent')?.value!=='yes')qty.airVent=0;
-  if(document.getElementById('level')?.value!=='yes')qty.levelIndicator=0;
-  qty.partition=document.getElementById('partitionRequired')?.value==='yes'?Math.max(num('partitionQty'),0):0;
-
-  const rows=BOM_CATALOGUE.map(x=>{
-    const internalKey=resolvedInternalKey(x.key),remote=state.remoteByKey[internalKey]||{};
-    const generatedQty=Number(qty[x.key]||0);
-    const qtyOverride=remote.qtyOverride;
-    // Important: an inactive line (for example L3/L4 on an 8 ft tank) always stays zero.
-    const effectiveQty=generatedQty<=0?0:(qtyOverride===null||qtyOverride===undefined?generatedQty:Number(qtyOverride||0));
-    return {...x,internalKey,item:remote.name||x.item,unit:remote.unit||x.unit,generatedQty,qty:effectiveQty,unitPrice:state.role==='main'?Number(remote.unitPrice||0):0,remoteMissing:!state.remoteByKey[internalKey],isCustom:false};
-  });
-
-  // Main-created custom BOM products are Supabase-backed and use their default quantity.
-  state.remoteCatalogue.filter(x=>x.isCustom).forEach(x=>{
-    const q=x.qtyOverride===null||x.qtyOverride===undefined?0:Number(x.qtyOverride||0);
-    if(q>0) rows.push({key:x.internalKey,internalKey:x.internalKey,category:x.category||'Custom',item:x.name||'Custom Item',unit:x.unit||'pcs',generatedQty:q,qty:q,unitPrice:state.role==='main'?Number(x.unitPrice||0):0,remoteMissing:false,isCustom:true});
-  });
-  return {basis,exact:l===24&&w===24&&h===8,rows};
-}
-
-function renderCalculator(){
-  page('Quick Calculator','Configure tank, review BOM and save a sales quote.');
-  view.innerHTML=`
-  <div class="grid">
-    <div class="card">
-      <h2>Quick Sales Calculator</h2>
-    <div id="requiredGate" class="requiredGate"><b>Required</b><span>Enter Customer and Project to continue.</span></div>
-      
-    <div class="stepHeader"><span>1</span><div><b>Customer & Project</b><small>Required before continuing</small></div></div>
-<div class="formGrid">
-      <div class="field customerFirst"><label>Customer</label><input id="customer" class="input requiredInput" placeholder="Customer name" required oninput="validateCustomerProject(false)"><div id="customerError" class="fieldError hidden">Customer name is required.</div></div>
-      <div class="field projectFirst"><label>Project</label><input id="project" class="input requiredInput" placeholder="Project / site" required oninput="validateCustomerProject(false)"><div id="projectError" class="fieldError hidden">Project name is required.</div></div>
-        
-      <div class="stepDivider full"><span>2</span><b>Tank Details</b></div>
-      <div class="field"><label>Length (ft)</label><input id="len" class="input" type="number" min="4" step="4" value="24" oninput="calc()"></div>
-        <div class="field"><label>Width (ft)</label><input id="wid" class="input" type="number" min="4" step="4" value="24" oninput="calc()"></div>
-        <div class="field"><label>Height (ft)</label><select id="hei" onchange="calc()"><option>4</option><option selected>8</option><option>12</option><option>16</option></select></div>
-        <div class="field"><label>Quantity</label><input id="qty" class="input" type="number" min="1" value="1" oninput="calc()"></div>
-
-        <div class="field"><label>Roof Thickness (mm)</label><input id="roofThickness" class="input" type="number" min="0" step="0.1" value="1.5" oninput="calc()"></div>
-        <div class="field"><label>Base Thickness (mm)</label><input id="baseThickness" class="input" type="number" min="0" step="0.1" value="5.0" oninput="calc()"></div>
-        <div class="field" id="wallL1Field"><label>Wall L1 Thickness (mm)</label><input id="wallL1Thickness" class="input" type="number" min="0" step="0.1" value="5.0" oninput="calc()"></div>
-        <div class="field" id="wallL2Field"><label>Wall L2 Thickness (mm)</label><input id="wallL2Thickness" class="input" type="number" min="0" step="0.1" value="5.0" oninput="calc()"></div>
-        <div class="field" id="wallL3Field"><label>Wall L3 Thickness (mm)</label><input id="wallL3Thickness" class="input" type="number" min="0" step="0.1" value="5.0" oninput="calc()"></div>
-        <div class="field" id="wallL4Field"><label>Wall L4 Thickness (mm)</label><input id="wallL4Thickness" class="input" type="number" min="0" step="0.1" value="5.0" oninput="calc()"></div>
-
-        <div class="field"><label>Partition</label><select id="partitionRequired" onchange="syncPartitionUi();calc()"><option value="no">No Partition</option><option value="yes">Partition Required</option></select></div>
-        <div class="field" id="partitionTypeField"><label>Partition Type</label><select id="partitionType" onchange="calc()"><option>Internal panel partition</option><option>Single partition</option><option>Double partition</option><option>Custom partition</option></select></div>
-        <div class="field" id="partitionLengthField"><label>Partition Length (ft)</label><input id="partitionLength" class="input" type="number" min="0" step="0.01" value="0" oninput="calc()"></div>
-        <div class="field" id="partitionWidthField"><label>Partition Width / Height (ft)</label><input id="partitionWidth" class="input" type="number" min="0" step="0.01" value="0" oninput="calc()"></div>
-        <div class="field" id="partitionQtyField"><label>Partition Qty</label><input id="partitionQty" class="input" type="number" min="0" step="1" value="1" oninput="calc()"></div>
-
-        
-      <div class="stepDivider full"><span>3</span><b>Supply & Options</b></div>
-      <div class="fixedPricingNote"><b>Fixed cost rule:</b> Fabrication Labour, Installation, Transport / Crane and Other Cost are automatically included for every tank. Tank quantity multiplies these RM amounts.</div>
-      <div class="field fixedCostField"><label>Installation</label><div class="fixedCostValue">Included · ${money(state.settings.installation||0)} / tank</div><input type="hidden" id="supply" value="install"></div>
-        <div class="field fixedCostField"><label>Transport / Crane</label><div class="fixedCostValue">Included · ${money(state.settings.transport||state.settings.delivery||0)} / tank</div><input type="hidden" id="delivery" value="yes"></div>
-        <div class="field"><label>Ladder</label><select id="ladder" onchange="calc()"><option value="no">No</option><option value="yes">Yes</option></select></div>
-        <div class="field"><label>Air Vent</label><select id="vent" onchange="calc()"><option value="no">No</option><option value="yes">Yes</option></select></div>
-        <div class="field"><label>Water Level Indicator</label><select id="level" onchange="calc()"><option value="no">No</option><option value="yes">Yes</option></select></div>
-        <div class="field"><label>SST</label><select id="sstOn" onchange="calc()"><option value="yes">Include</option><option value="no">Exclude</option></select></div>
-        
-      </div>
-    </div>
-
-    <div class="card">
-      <h2>Sales Result</h2>
-      <div class="kpis">
-        <div class="kpi"><span>Tank Size</span><b id="sizeText">-</b></div>
-        <div class="kpi"><span>Total Panels</span><b id="panelText">0</b></div>
-        <div class="kpi"><span>Quantity</span><b id="qtyText">1</b></div>
-      </div>
-      <div class="muted">Estimated Selling Price</div>
-      <div id="sellPrice" class="result">RM0.00</div>
-      <div id="taxLine" class="muted" style="margin-top:6px"></div>
-      ${state.role==='main'?'<div id="mainBreakdown" class="notice" style="margin-top:16px"></div>':''}
-      <div class="toolbar" style="margin-top:18px"><button class="btn primary" data-requires-project="1" onclick="saveQuote()">Save Estimate</button><button class="btn" onclick="renderCalculator()">Reset</button></div>
-    </div>
-  </div>
-
-  <div class="card" style="margin-top:16px">
-    <h2>BOM</h2>
-    <div class="bomGrid">
-      <div class="bomCard"><b>Total Steel Panels</b><span id="bomPanels">0</span></div>
-      <div class="bomCard"><b>Roof / Base</b><span id="bomRoofBase">-</span></div>
-      <div class="bomCard"><b>Wall Panels</b><span id="bomWall">0</span></div>
-    </div>
-    <div id="bomDetail" style="margin-top:14px"></div>
-    ${state.role==='main'?'<div class="toolbar bomTools"><button class="btn aiBtn" data-requires-project="1" onclick="generateAiBom()">AI Generate BOM</button></div>':''}
-    <div id="bomMethod" class="bomNote hidden"></div>
-  </div>
-  <div class="mobileActionBar">
-    <div><span>Estimated Price</span><b id="mobileSellPrice">RM0.00</b></div>
-    <button class="btn primary" data-requires-project="1" onclick="saveQuote()">Save Quote</button>
-  </div>`;
-  syncWallLevelUi();syncPartitionUi();calc()
-}
-
-function rowDisplayName(r){
-  if(r.isCustom)return r.item;
-  const thick=thicknessLabel(r.key);
-  if(thick)return `${thick} — ${r.item}`;
-  if(r.key==='partition'&&document.getElementById('partitionRequired')?.value==='yes')return `${document.getElementById('partitionType')?.value||'Internal panel partition'} — ${num('partitionLength')} ft × ${num('partitionWidth')} ft`;
-  return r.item;
-}
-function renderBomTableOnly(bom){
-  state.currentBom=bom;
-  const rows=bom.rows.filter(r=>Number(r.qty||0)>0 && !r.removed);
-  bomDetail.innerHTML=`<div class="tableWrap"><table><thead><tr><th>Category</th><th>BOM Product</th><th>Qty</th>${state.role==='main'?'<th>Source</th><th>Unit Price</th><th>Amount</th><th>Action</th>':''}</tr></thead><tbody>
-    ${rows.map((r,i)=>{
-      r._visibleIndex=i;
-      const name=rowDisplayName(r);
-      if(state.role==='main'){
-        return `<tr><td>${esc(r.category)}</td><td><input class="input" value="${esc(name)}" onchange="editCurrentBomName('${esc(r.key)}',this.value)"></td><td><input class="input" style="width:100px" type="number" min="0" step="0.01" value="${r.qty}" onchange="editCurrentBomQty('${esc(r.key)}',this.value)"> ${esc(r.unit)}</td><td>${r.aiSuggested?'<span class="muted">AI Suggested</span>':'<span class="muted">Formula / Main</span>'}</td><td><input class="input" style="width:120px" type="number" min="0" step="0.01" value="${Number(r.unitPrice||0).toFixed(2)}" onchange="editCurrentBomPrice('${esc(r.key)}',this.value)"></td><td><b>${money(r.qty*r.unitPrice)}</b></td><td><button class="btn danger" onclick="removeCurrentBomItem('${esc(r.key)}')">Remove</button></td></tr>`;
-      }
-      return `<tr><td>${esc(r.category)}</td><td><b>${esc(name)}</b></td><td>${r.qty} ${esc(r.unit)}</td></tr>`;
-    }).join('')}
-  </tbody></table></div>
-  ${state.role==='main'?`<div class="toolbar" style="margin-top:10px"><button class="btn primary" onclick="addCurrentBomItem()">+ Add Item</button><button class="btn" onclick="saveCurrentBomAsDefaults()">Save Current BOM Name/Qty as Defaults</button></div>`:''}`;
-}
-
-function generateAiBom(){
-  if(!requireCustomerProject())return;
-  if(state.role!=='main')return;
-  const l=num('len'),w=num('wid'),h=num('hei');
-  let bom=buildBom(l,w,h);
-  const levels=activeWallLevels(h);
-
-  // Hard wall-level constraints: inactive levels can never be created.
-  [['wallL1','l1'],['wallL2','l2'],['wallL3','l3'],['wallL4','l4']].forEach(([rowKey,levelKey])=>{
-    const row=bom.rows.find(x=>x.key===rowKey);
-    if(row && !levels[levelKey]){row.generatedQty=0;row.qty=0;row.removed=true}
-  });
-
-  // AI-assisted gap suggestions only. Verified/generated rows remain authoritative.
-  const addSuggested=(name,qty,unit,category,priceKey=null)=>{
-    if(!(qty>0))return;
-    const internalKey=priceKey||('ai_'+Date.now()+'_'+Math.random().toString(36).slice(2,7));
-    const remote=state.remoteByKey[internalKey]||{};
-    bom.rows.push({
-      key:internalKey,internalKey,category,item:remote.name||name,unit,
-      generatedQty:qty,qty,unitPrice:Number(remote.unitPrice||0),
-      remoteMissing:!state.remoteByKey[internalKey],isCustom:true,aiSuggested:true
+function loadState(){
+  const def=defaultState();
+  try{
+    const raw=localStorage.getItem(STORAGE_KEY);
+    if(!raw) return def;
+    const parsed=JSON.parse(raw);
+    const merged={...def,...parsed};
+    merged.estimate={...def.estimate,...(parsed.estimate||{})};
+    ['lengthFt','widthFt','heightFt','panelSizeFt','roofDeduct'].forEach(k=>{ if(!Number.isFinite(+merged.estimate[k])) merged.estimate[k]=def.estimate[k]; });
+    merged.estimate.custom={...def.estimate.custom,...(parsed.estimate?.custom||{})};
+    merged.actual={...def.actual,...(parsed.actual||{})};
+    merged.steps=(parsed.steps||def.steps).map((step,idx)=>{
+      const ref=DEFAULT_STEPS.find(d=>d.id===step.id)||DEFAULT_STEPS[idx]||{};
+      return {...ref,...step,applies:{...(ref.applies||{}),...(step.applies||{})}};
     });
+    merged.scenarios=Array.isArray(parsed.scenarios)?parsed.scenarios:[];
+    if(!TYPE_META[merged.previewType]) merged.previewType='wall';
+    return merged;
+  }catch(e){return def;}
+}
+function saveState(){ localStorage.setItem(STORAGE_KEY,JSON.stringify(state)); }
+function fmt(n,d=1){ return Number.isFinite(n)?n.toFixed(d):'—'; }
+function statusClass(s){ return s==='blocked'?'blocked':s==='running'?'running':s==='ready'?'ready':'warn'; }
+function statusText(s){ return s==='blocked'?'BLOCKED':s==='running'?'RUNNING':s==='ready'?'READY':String(s||'').toUpperCase(); }
+function showMotionToast(msg){ const old=document.querySelector('.motionToast'); if(old) old.remove(); const d=document.createElement('div'); d.className='motionToast'; d.textContent=msg; document.body.appendChild(d); setTimeout(()=>{d.style.opacity='0';d.style.transform='translateY(8px)'; setTimeout(()=>d.remove(),220)},1000); }
+
+function getFormulaBreakdown(){
+  const panel=Math.max(1,+state.estimate.panelSizeFt||4);
+  const L=Math.max(panel,+state.estimate.lengthFt||24);
+  const W=Math.max(panel,+state.estimate.widthFt||24);
+  const H=Math.max(panel,+state.estimate.heightFt||8);
+  const roofDeduct=Math.max(0,Math.floor(+state.estimate.roofDeduct||0));
+  const lenPanels=Math.max(1,Math.round(L/panel));
+  const widthPanels=Math.max(1,Math.round(W/panel));
+  const levels=Math.max(1,Math.round(H/panel));
+  const wall=2*(lenPanels+widthPanels)*levels;
+  const base=lenPanels*widthPanels;
+  const roof=Math.max(0,base-roofDeduct);
+  const stay=state.estimate.includeStay ? Math.max(0,+state.estimate.custom.stay||0) : 0;
+  return {wall,roof,base,stay,meta:{panel,L,W,H,lenPanels,widthPanels,levels,roofDeduct}};
+}
+function getBreakdown(){
+  if(state.estimate.useFormula) return getFormulaBreakdown();
+  return {
+    wall:Math.max(0,+state.estimate.custom.wall||0),
+    roof:Math.max(0,+state.estimate.custom.roof||0),
+    base:Math.max(0,+state.estimate.custom.base||0),
+    stay:state.estimate.includeStay?Math.max(0,+state.estimate.custom.stay||0):0,
+    meta:null
   };
-
-  // Partition-specific suggestions.
-  if(document.getElementById('partitionRequired')?.value==='yes'){
-    const plen=num('partitionLength'),pheight=num('partitionWidth'),pqty=Math.max(1,num('partitionQty'));
-    if(plen>0 && pheight>0){
-      const panelQty=Math.ceil(plen/4)*Math.ceil(pheight/4)*pqty;
-      addSuggested('Partition Panel',panelQty,'pcs','Partition');
-      addSuggested('Partition Cleat',Math.max(2,Math.ceil(plen/4)*2*pqty),'pcs','Partition');
-      addSuggested('Partition Angle Stay',Math.max(2,Math.ceil(pheight/4)*2*pqty),'pcs','Partition','stay_partition');
-    }
-  }
-
-  // Add gap suggestions only when a common active item is missing.
-  const activeKeys=new Set(bom.rows.filter(r=>r.qty>0&&!r.removed).map(r=>r.key));
-  if(document.getElementById('ladder')?.value==='yes' && !activeKeys.has('ladderBracket')){
-    addSuggested('Ladder Brackets',Math.max(2,Math.ceil(h/4)*3),'pcs','Accessories','ladder_bracket');
-  }
-  if(document.getElementById('vent')?.value==='yes' && !activeKeys.has('airVent')){
-    addSuggested('Air Vent',1,'pcs','Accessories','air_vent');
-  }
-  if(document.getElementById('level')?.value==='yes' && !activeKeys.has('levelIndicator')){
-    addSuggested('Water Level Indicator',h,'ft','Accessories','quick_wli_ft');
-  }
-
-  state.currentBom=bom;
-  renderBomTableOnly(bom);
-  recalcMainManualBom();
-  bomMethod.textContent='AI-assisted BOM generated. Verified/formula rows are retained; AI Suggested rows are additions for Main review.';
 }
-
-function addCurrentBomItem(){
-  if(state.role!=='main'||!state.currentBom)return;
-  const name=prompt('Item name:','Additional Item');if(!name)return;
-  const qty=Math.max(0,Number(prompt('Quantity:','1'))||0);if(qty<=0)return;
-  const unit=prompt('Unit:','pcs')||'pcs';
-  const price=Math.max(0,Number(prompt('Unit price (RM):','0'))||0);
-  const key='manual_'+Date.now();
-  state.currentBom.rows.push({
-    key,internalKey:key,category:'Manual',item:name,unit,
-    generatedQty:qty,qty,unitPrice:price,remoteMissing:false,isCustom:true,isManualCurrent:true
+function activeMachines(step){
+  if(step.status==='blocked') return 0;
+  const machines=Math.max(0,Math.floor(+step.machineCount||0));
+  const wpm=Math.max(1,+step.workersPerMachine||1);
+  const avail=Math.max(0,+step.availableWorkers||0);
+  const workerLimited=Math.floor(avail/wpm);
+  return Math.max(0, Math.min(machines, workerLimited));
+}
+function idsCount(ids){ return String(ids||'').split(',').map(s=>s.trim()).filter(Boolean).length; }
+function routeForType(type){ return state.steps.filter(step=>step.applies?.[type]); }
+function stageMetrics(step){
+  const eff=Math.max(0.01,(+state.estimate.efficiency||100)/100);
+  const active=activeMachines(step);
+  const pTime=Math.max(0,+step.time||0);
+  const setup=Math.max(0,+step.setup||0);
+  const transfer=Math.max(0,+step.transfer||0);
+  const batch=Math.max(1,Math.floor(+step.batchSize||1));
+  const processCycle=active>0 ? pTime/active/eff : Infinity;
+  const amortized=active>0 ? processCycle + (setup+transfer)/batch : Infinity;
+  const leadOne=active>0 ? processCycle + setup + transfer : Infinity;
+  const capHour=Number.isFinite(amortized)&&amortized>0 ? 60/amortized : 0;
+  return {active,pTime,setup,transfer,batch,processCycle,amortized,leadOne,capHour};
+}
+function panelTypeEstimate(type, qtyPanels){
+  const route=routeForType(type);
+  const rows=route.map(step=>({step,...stageMetrics(step)}));
+  const blocked=rows.some(r=>r.active<=0);
+  const leadMin=blocked?Infinity:rows.reduce((sum,r)=>sum+r.leadOne,0);
+  const bottleneck=rows.reduce((best,row)=>!best||row.amortized>best.amortized?row:best,null);
+  const totalMin=(blocked||qtyPanels<=0)?(qtyPanels<=0?0:Infinity):(leadMin + Math.max(0,qtyPanels-1)*(bottleneck?.amortized||0));
+  return {type,qtyPanels,route,rows,blocked,leadMin,bottleneck,totalMin};
+}
+function overallEstimate(){
+  const breakdown=getBreakdown();
+  const tankQty=Math.max(1,Math.floor(+state.estimate.qty||1));
+  const typeResults={};
+  Object.keys(TYPE_META).forEach(type=>{ typeResults[type]=panelTypeEstimate(type, breakdown[type]*tankQty); });
+  const stepRows=state.steps.map(step=>{
+    const metric=stageMetrics(step);
+    const appliesTypes=Object.keys(TYPE_META).filter(t=>step.applies?.[t]);
+    const totalPieces=appliesTypes.reduce((sum,t)=>sum+breakdown[t]*tankQty,0);
+    const workloadMin=(metric.active>0)?totalPieces*metric.amortized:Infinity;
+    return {step,appliesTypes,totalPieces,...metric,workloadMin};
   });
-  recalcMainManualBom();
-  renderBomTableOnly(state.currentBom);
+  const bottleneck=stepRows.reduce((best,row)=>!best||row.workloadMin>best.workloadMin?row:best,null);
+  const longestLeadMin=Math.max(...Object.values(typeResults).map(r=>Number.isFinite(r.leadMin)?r.leadMin:0),0);
+  const completionMin=(stepRows.some(r=>r.totalPieces>0 && !Number.isFinite(r.workloadMin)))?Infinity:(longestLeadMin + Math.max(...stepRows.map(r=>Number.isFinite(r.workloadMin)?r.workloadMin:0),0));
+  const workHoursPerDay=Math.max(0.25,(+state.estimate.hoursPerShift||8)-(+state.estimate.breakMin||0)/60) * Math.max(1,+state.estimate.shiftsPerDay||1);
+  const completionHr=completionMin/60;
+  const perTankHr=completionHr/Math.max(1,tankQty);
+  const finishDate=state.estimate.startDate?addWorkingHours(new Date(state.estimate.startDate),completionHr,workHoursPerDay,Math.max(1,Math.min(7,+state.estimate.workdaysPerWeek||6))):null;
+  return {breakdown,tankQty,typeResults,stepRows,bottleneck,longestLeadMin,completionMin,completionHr,perTankHr,workHoursPerDay,finishDate};
 }
-function removeCurrentBomItem(key){
-  if(state.role!=='main'||!state.currentBom)return;
-  const r=state.currentBom.rows.find(x=>x.key===key);if(!r)return;
-  r.qty=0;r.removed=true;
-  recalcMainManualBom();
-  renderBomTableOnly(state.currentBom);
-}
-function editCurrentBomName(key,value){
-  const r=state.currentBom?.rows?.find(x=>x.key===key);if(!r)return;r.item=String(value||'').trim()||r.item;recalcMainManualBom();
-}
-function editCurrentBomQty(key,value){
-  const r=state.currentBom?.rows?.find(x=>x.key===key);if(!r)return;r.qty=Math.max(0,Number(value)||0);recalcMainManualBom();renderBomTableOnly(state.currentBom);
-}
-function editCurrentBomPrice(key,value){
-  const r=state.currentBom?.rows?.find(x=>x.key===key);if(!r)return;
-  r.unitPrice=Math.max(0,Number(value)||0);
-  recalcMainManualBom();
-  renderBomTableOnly(state.currentBom);
-}
-function recalcMainManualBom(){
-  if(state.role!=='main'||!state.currentBom)return null;
-  const tankQty=Math.max(1,num('qty'));
-  const material=state.currentBom.rows.reduce((a,r)=>a+(Number(r.qty)||0)*(Number(r.unitPrice)||0),0)*tankQty;
-  const wasteRate=Number(state.settings.waste||0),wasteAmount=material*wasteRate/100;
-  const fabrication=Number(state.settings.fabrication||0)*tankQty;
-  const installation=Number(state.settings.installation||0)*tankQty;
-  const transport=Number(state.settings.transport||state.settings.delivery||0)*tankQty;
-  const other=Number(state.settings.other||0)*tankQty;
-  const costBeforeSelling=material+wasteAmount+fabrication+installation+transport+other;
-  const overheadRate=Number(state.settings.overhead||0),overheadAmount=costBeforeSelling*overheadRate/100;
-  const profitMarginRate=Number(state.settings.profitMargin||0),profitAmount=(costBeforeSelling+overheadAmount)*profitMarginRate/100;
-  const discount=Number(state.settings.discount||0)*tankQty;
-  const subtotal=Math.max(0,costBeforeSelling+overheadAmount+profitAmount-discount);
-  const sstRate=document.getElementById('sstOn')?.value==='yes'?Number(state.settings.sst||0):0;
-  const taxAmount=subtotal*sstRate/100;
-  const finalTotal=Math.round((subtotal+taxAmount+Number.EPSILON)*100)/100;
-  state.currentManualTotals={material,wasteRate,wasteAmount,fabrication,installation,transport,other,costBeforeSelling,overheadRate,overheadAmount,profitMarginRate,profitAmount,discount,subtotal,sstRate,taxAmount,finalTotal,currency:'MYR'};
-  if(document.getElementById('sellPrice'))sellPrice.textContent=money(finalTotal);
-  if(document.getElementById('mobileSellPrice'))mobileSellPrice.textContent=money(finalTotal);
-  if(document.getElementById('taxLine'))taxLine.textContent=sstRate?`Includes ${sstRate}% SST`:'SST excluded';
-  if(document.getElementById('mainBreakdown'))mainBreakdown.innerHTML=
-    `<b>Fixed default costs included for every tank</b><br><br>`+
-    `Material: <b>${money(material)}</b><br>`+
-    `Waste ${wasteRate}%: <b>${money(wasteAmount)}</b><br>`+
-    `Fabrication Labour: <b>${money(fabrication)}</b><br>`+
-    `Installation: <b>${money(installation)}</b><br>`+
-    `Transport / Crane: <b>${money(transport)}</b><br>`+
-    `Other Cost: <b>${money(other)}</b><br>`+
-    `Overhead ${overheadRate}%: <b>${money(overheadAmount)}</b><br>`+
-    `Profit Margin ${profitMarginRate}%: <b>${money(profitAmount)}</b><br>`+
-    `Discount: <b>-${money(discount)}</b><br>`+
-    `Before SST: <b>${money(subtotal)}</b><br>`+
-    `SST ${sstRate}%: <b>${money(taxAmount)}</b>`;
-  return state.currentManualTotals;
-}
-async function saveCurrentBomAsDefaults(){
-  if(state.role!=='main'||!state.currentBom)return;
-  try{
-    const edits=Object.fromEntries(state.currentBom.rows.map(r=>[r.internalKey,r]));
-    const items=state.remoteCatalogue.map(x=>{
-      const r=edits[x.internalKey];
-      return {internalKey:x.internalKey,isCustom:!!x.isCustom,category:x.category,unit:x.unit,name:r?.item||x.name,qtyOverride:r&&r.generatedQty>0?Number(r.qty):x.qtyOverride,unitPrice:Number(x.unitPrice||0)};
-    });
-    await api('quick_save',{items,defaults:state.settings});await loadRemoteConfig();alert('Current BOM name/quantity defaults saved to Supabase.');calc();
-  }catch(e){alert(e.message||'Unable to save BOM defaults')}
-}
-function renderBom(l,w,h){
-  const bom=buildBom(l,w,h),b=bom.basis;
-  const levels=activeWallLevels(h);
-  [['wallL1','l1'],['wallL2','l2'],['wallL3','l3'],['wallL4','l4']].forEach(([rowKey,levelKey])=>{
-    const row=bom.rows.find(x=>x.key===rowKey);
-    if(row && !levels[levelKey]){row.generatedQty=0;row.qty=0;row.removed=true}
-  });
-  if(!validGrid(b)){bomPanels.textContent='Invalid';bomRoofBase.textContent='-';bomWall.textContent='-';bomDetail.innerHTML='';bomMethod.textContent='Dimensions must use 4 ft panel modules.';return null}
-  bomPanels.textContent=Math.round(b.total);bomRoofBase.textContent=`Roof ${Math.round(b.roof)} / Base ${Math.round(b.roof)}`;bomWall.textContent=Math.round(b.wall);
-  renderBomTableOnly(bom);
-  const lv=activeWallLevels(h);
-  const thickParts=[`Roof ${num('roofThickness').toFixed(1)}mm`,`Base ${num('baseThickness').toFixed(1)}mm`,`L1 ${num('wallL1Thickness').toFixed(1)}mm`,lv.l2?`L2 ${num('wallL2Thickness').toFixed(1)}mm`:null,lv.l3?`L3 ${num('wallL3Thickness').toFixed(1)}mm`:null,lv.l4?`L4 ${num('wallL4Thickness').toFixed(1)}mm`:null].filter(Boolean).join(' · ');
-  const part=document.getElementById('partitionRequired')?.value==='yes'?` Partition: ${document.getElementById('partitionType')?.value||'Internal panel partition'}, ${num('partitionLength')} ft × ${num('partitionWidth')} ft × Qty ${num('partitionQty')}.`:' Partition: None.';
-  const missing=bom.rows.filter(r=>r.qty>0&&r.remoteMissing).length;
-  bomMethod.textContent=(bom.exact?'Verified 24×24×8 reference BOM is applied. ':'Original Excel-style formulas are used where available; wall panels are split by active 4 ft levels. ')+`Thickness: ${thickParts}.${part}`+(missing?` ${missing} active item(s) are not mapped in Supabase.`:' Supabase BOM sync active.');
-  return bom;
-}
-
-
-function validateCustomerProject(showErrors=true){
-  const c=document.getElementById('customer'),p=document.getElementById('project');
-  const cv=(c?.value||'').trim(),pv=(p?.value||'').trim();
-  const cOk=!!cv,pOk=!!pv;
-  if(c){
-    c.classList.toggle('invalid',!cOk&&showErrors);
-    c.classList.toggle('valid',cOk);
+function addWorkingHours(startDate,hoursToAdd,workHoursPerDay,workdaysPerWeek){
+  if(!(startDate instanceof Date) || isNaN(startDate) || !Number.isFinite(hoursToAdd)) return null;
+  let current=new Date(startDate);
+  const startHour=current.getHours()+current.getMinutes()/60;
+  const startMinTemplate={h:Math.floor(startHour),m:current.getMinutes()};
+  let remaining=hoursToAdd;
+  while(remaining>1e-9){
+    if(dayIndex(current)>=workdaysPerWeek){ current=nextWorkDay(current, workdaysPerWeek, startMinTemplate); continue; }
+    const dayStart=new Date(current); dayStart.setHours(startMinTemplate.h,startMinTemplate.m,0,0);
+    const dayEnd=new Date(dayStart.getTime()+workHoursPerDay*3600000);
+    if(current<dayStart) current=new Date(dayStart);
+    if(current>=dayEnd){ current=nextWorkDay(current, workdaysPerWeek, startMinTemplate); continue; }
+    const available=(dayEnd-current)/3600000;
+    const use=Math.min(remaining,available);
+    current=new Date(current.getTime()+use*3600000); remaining-=use;
+    if(remaining>1e-9) current=nextWorkDay(current, workdaysPerWeek, startMinTemplate);
   }
-  if(p){
-    p.classList.toggle('invalid',!pOk&&showErrors);
-    p.classList.toggle('valid',pOk);
-  }
-  document.getElementById('customerError')?.classList.toggle('hidden',cOk||!showErrors);
-  document.getElementById('projectError')?.classList.toggle('hidden',pOk||!showErrors);
-
-  document.querySelectorAll('[data-requires-project="1"]').forEach(btn=>{
-    btn.disabled=!(cOk&&pOk);
-    btn.classList.toggle('disabledAction',!(cOk&&pOk));
-  });
-
-  const gate=document.getElementById('requiredGate');
-  if(gate){
-    gate.classList.toggle('ready',cOk&&pOk);
-    gate.innerHTML=cOk&&pOk
-      ? '<b>Ready</b><span>Customer and project confirmed.</span>'
-      : '<b>Required</b><span>Enter Customer and Project to continue.</span>';
-  }
-  return cOk&&pOk;
+  return current;
 }
-function requireCustomerProject(){
-  const ok=validateCustomerProject(true);
-  if(!ok){
-    document.getElementById('customer')?.scrollIntoView({behavior:'smooth',block:'center'});
-    document.getElementById('customer')?.focus();
-  }
-  return ok;
+function dayIndex(d){ return (d.getDay()+6)%7; } // Monday=0
+function nextWorkDay(current, workdaysPerWeek, start){
+  const d=new Date(current); do { d.setDate(d.getDate()+1); d.setHours(start.h,start.m,0,0);} while(dayIndex(d)>=workdaysPerWeek); return d;
 }
 
-function calc(){
-  const projectReady=validateCustomerProject(false);
-
-  syncWallLevelUi();syncPartitionUi();
-  const l=num('len'),w=num('wid'),h=num('hei'),q=Math.max(1,num('qty')),bom=renderBom(l,w,h);
-  sizeText.textContent=`${l}' × ${w}' × ${h}'`;panelText.textContent=bom?Math.round(bom.basis.total):0;qtyText.textContent=q;
-  if(!bom){sellPrice.textContent='—';return {l,w,h,q,total:0,bom:null}}
-  sellPrice.textContent='Calculating…';scheduleRemotePrice(bom,q);
-  return {l,w,h,q,total:Number(state.lastPrice?.totals?.finalTotal||0),bom};
-}
-let priceTimer=null;
-function scheduleRemotePrice(bom,q){
-  clearTimeout(priceTimer);const seq=++state.priceSeq;priceTimer=setTimeout(()=>remotePrice(bom,q,seq),180);
-}
-async function remotePrice(bom,q,seq=++state.priceSeq){
-  try{
-    const r=await pricingApi('quick_price',{
-      rows:bom.rows.filter(x=>x.generatedQty>0||x.qty>0).map(x=>({internalKey:x.internalKey,quantity:x.generatedQty})),
-      tankQty:q,
-      includeTax:document.getElementById('sstOn')?.value==='yes'
-    });
-    if(seq!==state.priceSeq)return r;
-    state.lastPrice=r;const t=r.totals||{};
-    sellPrice.textContent=money(t.finalTotal||0);
-    if(document.getElementById('mobileSellPrice'))mobileSellPrice.textContent=money(t.finalTotal||0);
-    taxLine.textContent=t.sstRate?`Includes ${Number(t.sstRate)}% SST`:'SST excluded';
-    if(state.role==='main'&&document.getElementById('mainBreakdown'))mainBreakdown.innerHTML=
-      `<b>Fixed default costs included for every tank</b><br><br>`+
-      `Material: <b>${money(t.material||0)}</b><br>`+
-      `Waste ${Number(t.wasteRate||0)}%: <b>${money(t.wasteAmount||0)}</b><br>`+
-      `Fabrication Labour: <b>${money(t.fabrication||0)}</b><br>`+
-      `Installation: <b>${money(t.installation||0)}</b><br>`+
-      `Transport / Crane: <b>${money(t.transport||0)}</b><br>`+
-      `Other Cost: <b>${money(t.other||0)}</b><br>`+
-      `Overhead ${Number(t.overheadRate||0)}%: <b>${money(t.overheadAmount||0)}</b><br>`+
-      `Profit Margin ${Number(t.profitMarginRate||0)}%: <b>${money(t.profitAmount||0)}</b><br>`+
-      `Discount: <b>-${money(t.discount||0)}</b><br>`+
-      `Before SST: <b>${money(t.subtotal||0)}</b><br>`+
-      `SST ${Number(t.sstRate||0)}%: <b>${money(t.taxAmount||0)}</b>`;
-    const qmap=Object.fromEntries((r.rows||[]).map(x=>[x.internalKey,Number(x.quantity||0)]));
-    bom.rows.forEach(x=>{
-      if(Number(x.generatedQty||0)<=0 && !x.isCustom){x.qty=0;return}
-      if(qmap[x.internalKey]!==undefined)x.qty=qmap[x.internalKey];
-    });
-    renderBomTableOnly(bom);
-    return r;
-  }catch(e){
-    if(seq!==state.priceSeq)return null;
-    sellPrice.textContent='Sync error';
-    if(document.getElementById('mobileSellPrice'))mobileSellPrice.textContent='Sync error';
-    taxLine.textContent=e.message||'Unable to calculate from Supabase';
-    return null
+function bottleneckRecommendation(est){
+  const targetDays=Math.max(0,+state.estimate.targetDays||0);
+  const workHoursPerDay=est.workHoursPerDay;
+  if(!est.bottleneck) return 'No bottleneck information.';
+  const step=est.bottleneck.step;
+  const active=est.bottleneck.active;
+  const machineCount=Math.max(0,+step.machineCount||0);
+  const workersNeeded=Math.max(1,+step.workersPerMachine||1);
+  if(active===0){
+    if(step.status==='blocked') return `Unblock ${step.name}. It is currently stopped and prevents a valid completion estimate.`;
+    return `Add workers or activate machines for ${step.name}. Active machines are 0 because available workers are insufficient.`;
   }
-}
-async function saveQuote(){
-  if(!requireCustomerProject())return;
-  const r=calc();if(!r.bom)return;
-  let totals,bom;
-  if(state.role==='main'){
-    totals=recalcMainManualBom()||state.lastPrice?.totals;
-    bom=state.currentBom.rows.filter(x=>x.qty>0&&!x.removed).map(x=>({internalKey:x.internalKey,name:rowDisplayName(x),quantity:Number(x.qty||0),unit:x.unit,category:x.category,unitPrice:Number(x.unitPrice||0),source:x.aiSuggested?'AI Suggested':'Formula / Main'}));
-  }else{
-    const priced=await remotePrice(r.bom,r.q);if(!priced?.totals)return alert('Unable to save quote until Supabase pricing is available.');
-    totals=priced.totals;
-    const qmap=Object.fromEntries((priced.rows||[]).map(x=>[x.internalKey,Number(x.quantity||0)]));
-    bom=r.bom.rows.filter(x=>(qmap[x.internalKey]??x.qty)>0).map(x=>({internalKey:x.internalKey,name:rowDisplayName(x),quantity:Number(qmap[x.internalKey]??x.qty),unit:x.unit,category:x.category}));
+  if(active < machineCount) return `Add ${Math.max(1,machineCount-active)*workersNeeded} more worker(s) to fully use all configured ${machineCount} machine(s) on ${step.name}.`;
+  if(targetDays<=0) return `To shorten completion time, add 1 more machine/station to ${step.name} first. It is currently the limiting stage.`;
+  const targetHours=targetDays*workHoursPerDay;
+  if(!Number.isFinite(est.completionHr)) return `Fix blocked or unstaffed stages first, then compare against target ${targetDays} day(s).`;
+  if(est.completionHr<=targetHours) return `Current setup can meet the target of ${targetDays} working day(s).`;
+  const clone=deepClone(state.steps);
+  const idx=clone.findIndex(s=>s.id===step.id);
+  let extra=0, newHours=est.completionHr;
+  while(extra<10 && newHours>targetHours){
+    extra++; clone[idx].machineCount+=1; clone[idx].availableWorkers+=workersNeeded;
+    const prevSteps=state.steps; state.steps=clone;
+    newHours=overallEstimate().completionHr;
+    state.steps=prevSteps;
   }
-  const quote=await api('quick_quote_save',{
-    customer:customer.value.trim(),project:document.getElementById('project')?.value.trim()||'',
-    size:`${r.l}' × ${r.w}' × ${r.h}'`,qty:r.q,bom,totals,status:'Sales Quote',
-    tank:{length:r.l,width:r.w,height:r.h,roofThickness:num('roofThickness'),baseThickness:num('baseThickness'),wallL1Thickness:num('wallL1Thickness'),wallL2Thickness:num('wallL2Thickness'),wallL3Thickness:num('wallL3Thickness'),wallL4Thickness:num('wallL4Thickness'),partitionRequired:document.getElementById('partitionRequired')?.value,partitionType:document.getElementById('partitionType')?.value,partitionLength:num('partitionLength'),partitionWidth:num('partitionWidth'),partitionQty:num('partitionQty'),includeInstallation:true,includeDelivery:true,includeTax:document.getElementById('sstOn')?.value==='yes'}
-  });
-  recordActivity('quote_saved',{customer:customer.value.trim(),project:document.getElementById('project')?.value.trim()||''});
-  try{
-    await notifyApi('quote_history_seed',{quoteId:quote.quote?.id});
-    if(state.role==='sales')await notifyApi('sales_quote_created',{
-      quoteId:quote.quote?.id,
-      customer:customer.value.trim(),
-      project:document.getElementById('project')?.value.trim()||'',
-      finalTotal:quote.quote?.totals?.finalTotal||0
-    });
-  }catch{}
-  alert(`Sales quote saved to Supabase${quote.quote?.customer?' for '+quote.quote.customer:''}.`);
+  if(newHours<=targetHours) return `To meet ${targetDays} day(s), add about ${extra} more machine/station(s) to ${step.name} (and corresponding workers). New estimate ≈ ${fmt(newHours,2)} hr.`;
+  return `Even with +10 extra machines on ${step.name}, the target may still be tight. Review multiple stages or increase shifts.`;
 }
 
-async function renderHistory(){
-  page('Sales Quotes',state.role==='main'?'All Main and Sales quotes.':'Only quotes created by your Sales account.');
-  view.innerHTML='<div class="card"><h2>Sales Quotes</h2><div class="muted">Loading from Supabase…</div></div>';
-  try{
-    const r=await quotesApi('quotes_list'),quotes=r.quotes||[];
-    state.sharedQuotes=quotes;
-    if(!quotes.length){view.innerHTML='<div class="card"><h2>Sales Quotes</h2><div class="muted">No sales quotes yet.</div></div>';return}
-    view.innerHTML=`<div class="card"><div class="toolbar" style="justify-content:space-between"><h2 style="margin:0">Sales Quotes</h2><button class="btn" onclick="renderHistory()">Refresh</button></div>
-      ${quotes.map((q,i)=>quoteCard(q,i)).join('')}</div>`;
-  }catch(e){view.innerHTML=`<div class="card"><h2>Sales Quotes</h2><div class="notice">${esc(e.message||'Unable to load quotes')}</div></div>`}
+function renderSummary(){
+  const est=overallEstimate();
+  const previewCount=routeForType(state.previewType).length;
+  const blocked=state.steps.filter(s=>activeMachines(s)===0 && Object.values(s.applies||{}).some(Boolean)).length;
+  const bottleneckName=est.bottleneck?.step?.name || '—';
+  document.getElementById('summary').innerHTML=`
+    <div class="kpi"><strong>${state.steps.length}</strong><span>Total Workflow Steps</span></div>
+    <div class="kpi"><strong>${previewCount}</strong><span>${TYPE_META[state.previewType]} Route Steps</span></div>
+    <div class="kpi"><strong>${fmt(est.completionHr,2)}</strong><span>Estimated Tank Hours</span></div>
+    <div class="kpi"><strong>${blocked}</strong><span>Blocked / Unstaffed Stages</span></div>
+    <div class="kpi"><strong>${bottleneckName}</strong><span>Current Bottleneck</span></div>`;
 }
-function quoteCard(q,index){
-  const editable=state.role==='main';
-  const total=money(q.totals?.finalTotal||0);
-  return `<div class="quoteCard" style="border:1px solid var(--border);border-radius:10px;margin-top:12px;overflow:hidden">
-    <button class="quoteHead" onclick="toggleQuote(${index})" style="width:100%;border:0;background:transparent;padding:14px;text-align:left;cursor:pointer">
-      <div class="toolbar" style="justify-content:space-between;gap:12px">
-        <div style="min-width:0"><b>${esc(q.customer||'Unnamed customer')}</b> · ${esc(q.project||'No project')}
-          <div class="muted">${new Date(q.updatedAt||q.createdAt).toLocaleString()} · ${esc(q.size||'')} · Qty ${Number(q.qty||1)} · ${esc(q.status||'Sales Quote')}</div>
-        </div>
-        <div style="display:flex;align-items:center;gap:10px"><b>${total}</b><span id="quoteChevron_${index}">▼</span></div>
+function renderPreviewTypeSeg(){
+  const el=document.getElementById('previewTypeSeg');
+  el.innerHTML=Object.entries(TYPE_META).map(([k,v])=>`<button class="${state.previewType===k?'active':''}" data-preview="${k}">${v}</button>`).join('');
+  el.querySelectorAll('[data-preview]').forEach(btn=>btn.onclick=()=>{state.previewType=btn.dataset.preview; saveState(); renderAll();});
+}
+function renderFlow(){
+  const route=routeForType(state.previewType);
+  document.getElementById('flowRow').innerHTML = route.length?route.map((step, i)=>{
+    const m=stageMetrics(step);
+    return `<div class="flowStep" draggable="true" data-step-id="${step.id}">
+      <div>
+        <div class="stepTop"><span class="stepNo">${i+1}</span><span class="statusTag ${statusClass(step.status)}">${statusText(step.status)}</span></div>
+        <div class="stepMain"><h3>${step.name}</h3><p>${step.note||''}</p></div>
+        <div class="appliesTags">${Object.keys(TYPE_META).filter(t=>step.applies?.[t]).map(t=>`<span class="typeTag">${TYPE_META[t]}</span>`).join('')}</div>
+        <div class="timeBox"><strong>${fmt(step.time,1)} min</strong><span>Proc/panel · setup ${fmt(step.setup,0)} min · transfer ${fmt(step.transfer,0)} min · batch ${Math.max(1,+step.batchSize||1)}</span></div>
       </div>
-    </button>
-    <div id="quoteBody_${index}" class="hidden" style="padding:0 14px 14px">
-      <div class="tableWrap"><table><thead><tr><th>BOM Product</th><th>Qty</th><th>Unit</th>${editable?'<th>Unit Price</th><th>Action</th>':''}</tr></thead><tbody id="quoteBomBody_${index}">
-        ${(q.bom||[]).map((b,i)=>quoteBomRow(q,index,b,i,editable)).join('')}
-      </tbody></table></div>
-      <div class="priceHistoryBox">
-        <button class="priceHistoryToggle" onclick="togglePricingHistory(${index})">Project Pricing History <span id="priceHistoryChevron_${index}">▼</span></button>
-        <div id="priceHistory_${index}" class="hidden">${renderPricingHistory(q)}</div>
+      <div class="stepFoot"><div><div class="machineTag">${step.machineIds||'—'}</div><div class="tiny" style="margin-top:6px">Configured ${Math.max(0,+step.machineCount||0)} · Active ${m.active}</div></div><div class="tiny">${Number.isFinite(m.capHour)?fmt(m.capHour,1):'0.0'} /hr</div></div>
+    </div>`;
+  }).join(''):`<div class="small">No steps are assigned to ${TYPE_META[state.previewType]}.</div>`;
+  enableFlowDragging();
+}
+function renderTimeline(){
+  const res=panelTypeEstimate(state.previewType, getBreakdown()[state.previewType] * Math.max(1,+state.estimate.qty||1));
+  document.getElementById('timeline').innerHTML = res.route.length?res.rows.map((row,i)=>`
+    <div class="timeLineItem">
+      <div class="timeDot">${i+1}</div>
+      <div class="timeBody">
+        <div class="top"><h4>${row.step.name}</h4><span class="statusTag ${statusClass(row.step.status)}">${statusText(row.step.status)}</span></div>
+        <p>Machine IDs: <b>${row.step.machineIds||'—'}</b><br>
+        Configured/Active: <b>${Math.max(0,+row.step.machineCount||0)} / ${row.active}</b> · Workers/Machine: <b>${Math.max(1,+row.step.workersPerMachine||1)}</b> · Available Workers: <b>${Math.max(0,+row.step.availableWorkers||0)}</b><br>
+        Process: <b>${fmt(row.pTime,1)} min</b> · Setup: <b>${fmt(row.setup,0)} min</b> · Transfer: <b>${fmt(row.transfer,0)} min</b> · Batch: <b>${row.batch}</b><br>
+        Effective cycle: <b>${Number.isFinite(row.amortized)?fmt(row.amortized,2):'Blocked'}</b> min/panel · Capacity: <b>${Number.isFinite(row.capHour)?fmt(row.capHour,1):'0.0'}</b> panels/hr</p>
       </div>
-      ${editable?`<div class="toolbar" style="margin-top:10px"><button class="btn" onclick="addQuoteItem(${index})">+ Add Item</button><button class="btn primary" onclick="saveQuoteEditsByIndex(${index})">Save Quote Changes</button></div>`:''}
-    </div>
-  </div>`;
+    </div>`).join(''):`<div class="small">No route for ${TYPE_META[state.previewType]}.</div>`;
 }
-function quoteBomRow(q,qIndex,b,i,editable){
-  if(editable){
-    return `<tr data-qrow="${i}">
-      <td><input class="input" id="qname_${qIndex}_${i}" value="${esc(b.name||'')}"></td>
-      <td><input class="input" style="width:100px" type="number" min="0" step="0.01" id="qqty_${qIndex}_${i}" value="${Number(b.quantity||0)}"></td>
-      <td><input class="input" style="width:90px" id="qunit_${qIndex}_${i}" value="${esc(b.unit||'pcs')}"></td>
-      <td><input class="input" style="width:120px" type="number" min="0" step="0.01" id="qprice_${qIndex}_${i}" value="${Number(b.unitPrice||state.remoteByKey[b.internalKey]?.unitPrice||0).toFixed(2)}"></td>
-      <td><button class="btn danger" onclick="removeQuoteItem(${qIndex},${i})">Remove</button></td>
-    </tr>`;
+function renderEstimatorFields(){
+  const e=state.estimate, breakdown=getBreakdown(), b={wall:breakdown.wall,roof:breakdown.roof,base:breakdown.base,stay:e.includeStay?breakdown.stay:0};
+  document.getElementById('tankPreset').innerHTML=Object.keys(TANK_PRESETS).map(name=>`<option value="${name}" ${e.preset===name?'selected':''}>${name}</option>`).join('');
+  document.getElementById('tankQty').value=e.qty; document.getElementById('includeStay').checked=e.includeStay; document.getElementById('efficiency').value=e.efficiency;
+  document.getElementById('useFormula').checked=e.useFormula; document.getElementById('roofDeduct').value=e.roofDeduct; document.getElementById('lengthFt').value=e.lengthFt; document.getElementById('widthFt').value=e.widthFt; document.getElementById('heightFt').value=e.heightFt; document.getElementById('panelSizeFt').value=e.panelSizeFt;
+  document.getElementById('customWall').value=e.custom.wall; document.getElementById('customRoof').value=e.custom.roof; document.getElementById('customBase').value=e.custom.base; document.getElementById('customStay').value=e.custom.stay;
+  document.getElementById('startDate').value=e.startDate; document.getElementById('targetDays').value=e.targetDays; document.getElementById('hoursPerShift').value=e.hoursPerShift; document.getElementById('shiftsPerDay').value=e.shiftsPerDay; document.getElementById('breakMin').value=e.breakMin; document.getElementById('workdaysPerWeek').value=e.workdaysPerWeek;
+  document.getElementById('wallQty').textContent=b.wall; document.getElementById('roofQty').textContent=b.roof; document.getElementById('baseQty').textContent=b.base; document.getElementById('stayQty').textContent=e.includeStay?b.stay:0;
+  const note=document.getElementById('formulaNote');
+  if(e.useFormula && breakdown.meta){
+    const m=breakdown.meta;
+    note.innerHTML=`<b>BOM formula active:</b> Length panels = ${m.lenPanels}, Width panels = ${m.widthPanels}, Height levels = ${m.levels}. Wall = 2 × (${m.lenPanels} + ${m.widthPanels}) × ${m.levels} = <b>${b.wall}</b>. Base = ${m.lenPanels} × ${m.widthPanels} = <b>${b.base}</b>. Roof = Base ${b.base} - Deduction ${m.roofDeduct} = <b>${b.roof}</b>. Panel size = ${m.panel} ft.`;
+  } else {
+    note.innerHTML=`<b>Manual quantity mode:</b> using the custom Wall / Roof / Base / Stay values entered below.`;
   }
-  return `<tr><td><b>${esc(b.name||'')}</b></td><td>${Number(b.quantity||0)}</td><td>${esc(b.unit||'')}</td></tr>`;
 }
+function renderEstimateOutputs(){
+  const est=overallEstimate();
+  document.getElementById('estimateKpis').innerHTML=`
+    <div class="estimateKpi"><strong>${fmt(est.longestLeadMin,1)}</strong><span>First-Flow Lead (min)</span></div>
+    <div class="estimateKpi"><strong>${fmt(est.completionHr,2)}</strong><span>Estimated Completion (hr)</span></div>
+    <div class="estimateKpi"><strong>${fmt(est.completionHr/est.workHoursPerDay,2)}</strong><span>Working Days</span></div>
+    <div class="estimateKpi"><strong>${fmt(est.perTankHr,2)}</strong><span>Time / Tank (hr)</span></div>
+    <div class="estimateKpi"><strong>${fmt(est.workHoursPerDay,2)}</strong><span>Work Hours / Day</span></div>
+    <div class="estimateKpi"><strong>${est.finishDate?est.finishDate.toLocaleString():'—'}</strong><span>Estimated Finish</span></div>
+    <div class="estimateKpi"><strong>${est.bottleneck?.step?.name||'—'}</strong><span>Bottleneck Stage</span></div>
+    <div class="estimateKpi"><strong>${fmt(est.bottleneck?.capHour||0,1)}</strong><span>Bottleneck Capacity / hr</span></div>`;
 
-function renderPricingHistory(q){
-  const history=Array.isArray(q.pricingHistory)?q.pricingHistory:[];
-  const fallback=history.length?history:[{finalTotal:q.totals?.finalTotal||0,changedBy:q.updatedBy||q.createdBy||'',changedAt:q.updatedAt||q.createdAt,note:'Current price'}];
-  return `<div class="pricingHistoryList">${fallback.slice().reverse().map((h,i)=>`<div class="pricingHistoryRow">
-    <div><b>${money(h.finalTotal||h.totals?.finalTotal||0)}</b><div class="muted">${esc(h.note||'Price revision')} · ${new Date(h.changedAt||q.updatedAt||q.createdAt).toLocaleString()}</div></div>
-    <span class="muted">${esc(h.changedBy||'')}</span>
-  </div>`).join('')}</div>`;
-}
-function togglePricingHistory(index){
-  const el=document.getElementById(`priceHistory_${index}`),ch=document.getElementById(`priceHistoryChevron_${index}`);
-  if(!el)return;
-  const opening=el.classList.contains('hidden');el.classList.toggle('hidden');if(ch)ch.textContent=opening?'▲':'▼';
-}
-function toggleQuote(index){
-  const body=document.getElementById(`quoteBody_${index}`),chev=document.getElementById(`quoteChevron_${index}`);
-  if(!body)return;
-  const opening=body.classList.contains('hidden');
-  body.classList.toggle('hidden');
-  if(chev)chev.textContent=opening?'▲':'▼';
-}
-function addQuoteItem(index){
-  if(state.role!=='main')return;
-  const q=state.sharedQuotes[index];if(!q)return;
-  q.bom=q.bom||[];
-  q.bom.push({internalKey:'manual_quote_'+Date.now(),name:'Additional Item',quantity:1,unit:'pcs',category:'Manual',unitPrice:0,source:'Main'});
-  renderHistory().then(()=>setTimeout(()=>{toggleQuote(index)},0));
-}
-function removeQuoteItem(index,itemIndex){
-  if(state.role!=='main')return;
-  const q=state.sharedQuotes[index];if(!q?.bom)return;
-  q.bom.splice(itemIndex,1);
-  renderHistory().then(()=>setTimeout(()=>{toggleQuote(index)},0));
-}
-async function saveQuoteEditsByIndex(index){
-  const q=state.sharedQuotes[index];
-  if(!q)return;
-  const oldTotals=clone(q.totals||{});
-  try{
-    const bom=(q.bom||[]).map((b,i)=>({
-      ...b,
-      name:document.getElementById(`qname_${index}_${i}`)?.value||b.name,
-      quantity:Math.max(0,Number(document.getElementById(`qqty_${index}_${i}`)?.value)||0),
-      unit:document.getElementById(`qunit_${index}_${i}`)?.value||b.unit||'pcs',
-      unitPrice:Math.max(0,Number(document.getElementById(`qprice_${index}_${i}`)?.value)||0)
-    })).filter(b=>b.quantity>0);
+  const panelRows=Object.values(est.typeResults).map(r=>`<div class="capRow ${r.blocked?'bottleneck':''}"><b>${TYPE_META[r.type]}</b><span>${r.qtyPanels}</span><span>${r.route.length} step(s)</span><span>${Number.isFinite(r.leadMin)?fmt(r.leadMin,1):'Blocked'}</span><span>${r.bottleneck?.step?.name||'—'}</span><span>${Number.isFinite(r.bottleneck?.capHour)?fmt(r.bottleneck.capHour,1):'0.0'} /hr</span><span>${Number.isFinite(r.totalMin)?fmt(r.totalMin/60,2):'Blocked'} hr</span></div>`).join('');
+  document.getElementById('panelTypeTable').innerHTML=`<div class="capRow"><span>Panel Type</span><span>Qty</span><span>Route</span><span>Lead Min</span><span>Bottleneck</span><span>Capacity</span><span>Total Hours</span></div>${panelRows}`;
 
-    const tankQty=Math.max(1,Number(q.qty||1));
-    const material=bom.reduce((a,b)=>a+(Number(b.quantity)||0)*(Number(b.unitPrice)||0),0)*tankQty;
-    const wasteRate=Number(state.settings.waste||0),wasteAmount=material*wasteRate/100;
-    const fabrication=Number(state.settings.fabrication||0)*tankQty;
-    const installation=Number(state.settings.installation||0)*tankQty;
-    const transport=Number(state.settings.transport||state.settings.delivery||0)*tankQty;
-    const other=Number(state.settings.other||0)*tankQty;
-    const costBeforeSelling=material+wasteAmount+fabrication+installation+transport+other;
-    const overheadRate=Number(state.settings.overhead||0),overheadAmount=costBeforeSelling*overheadRate/100;
-    const profitMarginRate=Number(state.settings.profitMargin||0),profitAmount=(costBeforeSelling+overheadAmount)*profitMarginRate/100;
-    const discount=Number(state.settings.discount||0)*tankQty;
-    const subtotal=Math.max(0,costBeforeSelling+overheadAmount+profitAmount-discount);
-    const sstRate=q.tank?.includeTax!==false?Number(state.settings.sst||0):0;
-    const taxAmount=subtotal*sstRate/100;
-    const finalTotal=Math.round((subtotal+taxAmount+Number.EPSILON)*100)/100;
-    const totals={material,wasteRate,wasteAmount,fabrication,installation,transport,other,costBeforeSelling,overheadRate,overheadAmount,profitMarginRate,profitAmount,discount,subtotal,sstRate,taxAmount,finalTotal,currency:'MYR'};
-
-    await api('quick_quote_update',{id:q.id,bom,totals,status:q.status||'Sales Quote'});
-    try{await notifyApi('quote_edited',{quoteId:q.id,oldTotals,newTotals:totals,note:'Main edited quote'})}catch{}
-    recordActivity('quote_updated',{customer:q.customer||'',project:q.project||''});
-    alert('Sales quote updated. Sales has been notified and can check the pricing history.');
-    await renderHistory();
-  }catch(e){alert(e.message||'Unable to update sales quote')}
+  document.getElementById('bottleneckCard').innerHTML=est.bottleneck?`<strong>⚠ Bottleneck: ${est.bottleneck.step.name}</strong><span>Applies to: ${est.bottleneck.appliesTypes.map(t=>TYPE_META[t]).join(', ')||'—'} · Machine IDs: ${est.bottleneck.step.machineIds||'—'} · Configured ${Math.max(0,+est.bottleneck.step.machineCount||0)} · Active ${est.bottleneck.active} · Capacity ${fmt(est.bottleneck.capHour,1)} panels/hr · Stage workload ${fmt(est.bottleneck.workloadMin/60,2)} hr.</span>`:`<strong>No bottleneck data</strong>`;
+  document.getElementById('recommendationCard').innerHTML=`<strong>Recommendation</strong><span>${bottleneckRecommendation(est)}</span>`;
+  document.getElementById('capacityTable').innerHTML=`<div class="capRow"><span>Process</span><span>Types</span><span>IDs</span><span>Cfg/Act</span><span>Workers</span><span>Capacity</span><span>Stage Workload</span></div>`+
+    est.stepRows.map(row=>`<div class="capRow ${est.bottleneck&&row.step.id===est.bottleneck.step.id?'bottleneck':''}"><b>${row.step.name}</b><span>${row.appliesTypes.map(t=>TYPE_META[t]).join(', ')||'—'}</span><span>${row.step.machineIds||'—'}</span><span>${Math.max(0,+row.step.machineCount||0)} / ${row.active}</span><span>${Math.max(0,+row.step.availableWorkers||0)} avail</span><span>${fmt(row.capHour,1)} /hr</span><span>${Number.isFinite(row.workloadMin)?fmt(row.workloadMin/60,2):'Blocked'} hr</span></div>`).join('');
 }
-
-
-
-function renderAiControl(){
-  if(state.role!=='main'){setView('calculator');return}
-  page('AI Control','Ask the system to generate, check, fix or explain the current quotation BOM.');
-  const hasBom=!!state.currentBom;
-  view.innerHTML=`<div class="card aiPanel">
-    <h2>AI Control Panel</h2>
-    <div class="notice">AI-assisted commands use your current tank inputs, BOM formulas, Supabase prices and recent quotes. Nothing is saved until you choose Save Quote / Save Defaults.</div>
-    <div class="field full">
-      <label>Command</label>
-      <textarea id="aiCommand" class="input aiCommand" rows="4" placeholder="Example: Generate BOM and check missing items for current tank"></textarea>
-    </div>
-    <div class="aiQuick">
-      <button class="btn" onclick="runAiPreset('generate')">Generate BOM</button>
-      <button class="btn" onclick="runAiPreset('check')">Check BOM</button>
-      <button class="btn" onclick="runAiPreset('fix')">Fix Missing Items</button>
-      <button class="btn" onclick="runAiPreset('price')">Estimate Price</button>
-      <button class="btn" onclick="runAiPreset('compare')">Compare Latest Quote</button>
-      <button class="btn" onclick="runAiPreset('explain')">Explain BOM</button>
-    </div>
-    <div class="toolbar" style="margin-top:12px">
-      <button class="btn primary" data-requires-project="1" onclick="runAiCommand()">Run AI Command</button>
-      <button class="btn" onclick="setView('calculator')">Back to Calculator</button>
-    </div>
-    <div id="aiResult" class="aiResult">${hasBom?'Current calculator BOM is available for analysis.':'Open Quick Calculator and enter a tank size first.'}</div>
-  </div>`;
-}
-function runAiPreset(type){
-  const map={
-    generate:'Generate BOM for the current tank and show what you changed.',
-    check:'Check the current BOM for missing or invalid items.',
-    fix:'Fix missing BOM items for the current tank but do not save anything.',
-    price:'Estimate the current selling price and explain the cost build-up.',
-    compare:'Compare the current BOM with the latest saved sales quote.',
-    explain:'Explain the current BOM quantities and wall levels.'
-  };
-  const el=document.getElementById('aiCommand');if(el)el.value=map[type]||'';
-  runAiCommand();
-}
-function ensureCurrentBom(){
-  const l=num('len'),w=num('wid'),h=num('hei');
-  if(!(l>0&&w>0&&h>0))return null;
-  let bom=buildBom(l,w,h);
-  const levels=activeWallLevels(h);
-  [['wallL1','l1'],['wallL2','l2'],['wallL3','l3'],['wallL4','l4']].forEach(([rowKey,levelKey])=>{
-    const row=bom.rows.find(x=>x.key===rowKey);
-    if(row&&!levels[levelKey]){row.generatedQty=0;row.qty=0;row.removed=true}
+function buildGanttRows(est){
+  const rows=[];
+  Object.values(est.typeResults).forEach(res=>{
+    if(!res.qtyPanels || !res.route.length || !Number.isFinite(res.totalMin)) return;
+    let prefix=0;
+    res.rows.forEach(row=>{
+      const start=prefix;
+      const end=prefix + row.leadOne + Math.max(0,res.qtyPanels-1)*row.amortized;
+      rows.push({label:`${TYPE_META[res.type]} · ${row.step.name}`, startHr:start/60, endHr:end/60, status:row.step.status});
+      prefix += row.leadOne;
+    });
   });
-  return bom;
+  return rows;
 }
-function aiBomIssues(bom){
-  const issues=[];
-  const h=num('hei'),levels=activeWallLevels(h);
-  for(const [key,level] of [['wallL1','l1'],['wallL2','l2'],['wallL3','l3'],['wallL4','l4']]){
-    const r=bom.rows.find(x=>x.key===key);
-    if(r&&r.qty>0&&!levels[level])issues.push(`${key.toUpperCase()} is active although tank height is ${h} ft.`);
-  }
-  const active=bom.rows.filter(r=>r.qty>0&&!r.removed);
-  if(!active.find(r=>r.key==='manhole'))issues.push('Manhole is missing.');
-  if(document.getElementById('vent')?.value==='yes'&&!active.find(r=>r.key==='airVent'))issues.push('Air vent selected but missing from BOM.');
-  if(document.getElementById('level')?.value==='yes'&&!active.find(r=>r.key==='levelIndicator'))issues.push('Water level indicator selected but missing from BOM.');
-  if(document.getElementById('partitionRequired')?.value==='yes'&&!active.find(r=>r.key==='partition'))issues.push('Partition selected but base partition line is missing.');
-  active.filter(r=>Number(r.unitPrice||0)<=0).forEach(r=>issues.push(`${rowDisplayName(r)} has no unit price.`));
-  return issues;
+function renderGanttChart(){
+  const est=overallEstimate();
+  const rows=buildGanttRows(est);
+  const wrap=document.getElementById('ganttChart');
+  if(!rows.length){ wrap.innerHTML='<div class="small">No schedulable data yet.</div>'; return; }
+  const maxHr=Math.max(...rows.map(r=>r.endHr), 1);
+  const axis=`<div class="ganttAxis">${Array.from({length:11},(_,i)=>{const p=i*10; const hr=maxHr*p/100; return `<div class="ganttTick" style="left:${p}%"><span>${hr.toFixed(1)}h</span></div>`;}).join('')}</div>`;
+  wrap.innerHTML=axis + rows.map(r=>{const left=(r.startHr/maxHr)*100; const width=Math.max(2,((r.endHr-r.startHr)/maxHr)*100); return `<div class="ganttRow"><div class="ganttLabel">${r.label}</div><div class="ganttTrack"><div class="ganttBar ${statusClass(r.status)}" style="left:${left}%;width:${width}%">${r.startHr.toFixed(1)}h → ${r.endHr.toFixed(1)}h</div></div></div>`;}).join('');
 }
-function aiAddGapSuggestions(bom){
-  const before=bom.rows.filter(r=>r.qty>0&&!r.removed).length;
-  state.currentBom=bom;
-  generateAiBom();
-  bom=state.currentBom;
-  const after=bom.rows.filter(r=>r.qty>0&&!r.removed).length;
-  return {bom,added:Math.max(0,after-before)};
-}
-function aiPriceSummary(bom){
-  state.currentBom=bom;
-  const t=recalcMainManualBom();
-  if(!t)return 'Unable to calculate price.';
-  return `Material ${money(t.material)}; waste ${t.wasteRate}% = ${money(t.wasteAmount)}; fabrication ${money(t.fabrication)}; installation ${money(t.installation)}; transport/crane ${money(t.transport)}; other ${money(t.other)}; overhead ${t.overheadRate}% = ${money(t.overheadAmount)}; profit ${t.profitMarginRate}% = ${money(t.profitAmount)}; discount ${money(t.discount)}; SST ${t.sstRate}% = ${money(t.taxAmount)}; final ${money(t.finalTotal)}.`;
-}
-async function aiLatestQuoteCompare(bom){
-  try{
-    const r=await quotesApi('quotes_list'),quotes=r.quotes||[];
-    if(!quotes.length)return 'No saved sales quote is available for comparison.';
-    const q=quotes[0],cur=Object.fromEntries(bom.rows.filter(x=>x.qty>0&&!x.removed).map(x=>[x.internalKey,Number(x.qty||0)]));
-    const old=Object.fromEntries((q.bom||[]).map(x=>[x.internalKey||x.name,Number(x.quantity||0)]));
-    const changes=[];
-    for(const x of bom.rows.filter(x=>x.qty>0&&!x.removed)){
-      const oldQty=old[x.internalKey];
-      if(oldQty===undefined)changes.push(`Added: ${rowDisplayName(x)} × ${x.qty}`);
-      else if(oldQty!==Number(x.qty||0))changes.push(`Changed: ${rowDisplayName(x)} ${oldQty} → ${x.qty}`);
-    }
-    return `Compared with latest quote ${q.customer||''} ${q.project||''}. ${changes.length?changes.join(' • '):'No obvious BOM quantity changes found.'}`;
-  }catch(e){return e.message||'Unable to compare latest quote.'}
-}
-async function runAiCommand(){
-  if(!requireCustomerProject())return;
-  recordActivity('ai_command',{command:(document.getElementById('aiCommand')?.value||'').slice(0,120)});
-  if(state.role!=='main')return;
-  const out=document.getElementById('aiResult');
-  if(out)out.innerHTML='<span class="muted">Analyzing…</span>';
-  const cmd=(document.getElementById('aiCommand')?.value||'').toLowerCase();
-  let bom=ensureCurrentBom();
-  if(!bom){
-    if(out)out.textContent='Enter a valid tank Length × Width × Height in Quick Calculator first.';
-    return;
-  }
-  const notes=[];
-  if(cmd.includes('generate')){
-    state.currentBom=bom;generateAiBom();bom=state.currentBom;notes.push('Generated the BOM from the current tank configuration.');
-  }
-  if(cmd.includes('fix')||cmd.includes('missing')){
-    const result=aiAddGapSuggestions(bom);bom=result.bom;notes.push(`Added ${result.added} suggested BOM item(s) for Main review.`);
-  }
-  if(cmd.includes('check')){
-    const issues=aiBomIssues(bom);
-    notes.push(issues.length?`BOM check found ${issues.length} issue(s): ${issues.join(' • ')}`:'BOM check found no obvious rule or price issue.');
-  }
-  if(cmd.includes('price')||cmd.includes('estimate')){
-    notes.push(aiPriceSummary(bom));
-  }
-  if(cmd.includes('compare')){
-    notes.push(await aiLatestQuoteCompare(bom));
-  }
-  if(cmd.includes('explain')){
-    const h=num('hei'),levels=activeWallLevels(h),wall=['L1','L2','L3','L4'].filter((x,i)=>[levels.l1,levels.l2,levels.l3,levels.l4][i]);
-    notes.push(`Tank height ${h} ft activates ${wall.join(' + ')} only. Active BOM has ${bom.rows.filter(x=>x.qty>0&&!x.removed).length} lines. Inactive wall levels are forced to zero.`);
-  }
-  if(!notes.length){
-    notes.push('Command understood as a general BOM review. '+(aiBomIssues(bom).length?aiBomIssues(bom).join(' • '):'No obvious issue found.'));
-  }
-  state.currentBom=bom;
-  if(out)out.innerHTML=`<b>AI Result</b><div style="margin-top:8px">${notes.map(esc).join('<br><br>')}</div><div class="toolbar" style="margin-top:12px"><button class="btn primary" onclick="applyAiBomToCalculator()">Use This BOM</button><button class="btn" onclick="setView('calculator')">Review Calculator</button></div>`;
-}
-function applyAiBomToCalculator(){
-  if(!state.currentBom)return;
-  setView('calculator');
-  setTimeout(()=>{renderBomTableOnly(state.currentBom);recalcMainManualBom();if(document.getElementById('bomMethod'))bomMethod.textContent='AI-assisted BOM applied for Main review. Not saved until you save the quote/defaults.'},0);
+function renderUtilChart(){
+  const est=overallEstimate();
+  const el=document.getElementById('utilChart');
+  if(!est.stepRows.length || !Number.isFinite(est.completionMin) || est.completionMin<=0){ el.innerHTML='<div class="small">No utilization data yet.</div>'; return; }
+  el.innerHTML=est.stepRows.map(row=>{const util=Math.max(0,Math.min(100,(row.workloadMin/est.completionMin)*100)); const cls=util>=85?'bad':util>=65?'warn':''; return `<div class="utilRow"><div class="utilName">${row.step.name}</div><div class="utilTrack"><div class="utilBar ${cls}" style="width:${util}%"></div></div><div class="tiny">${util.toFixed(1)}%</div></div>`;}).join('');
 }
 
-
-
-async function refreshNotificationBadge(){
-  try{
-    const r=await notifyApi('notifications_list');
-    state.unreadNotifications=Number(r.unreadCount||0);
-    renderNav();
-  }catch{}
+function renderActual(){
+  const a=state.actual; const est=overallEstimate();
+  document.getElementById('actualStart').value=a.start; document.getElementById('actualFinish').value=a.finish; document.getElementById('actualQty').value=a.qty;
+  let totalHr=NaN, perTank=NaN, variance=NaN, etaDelay='—';
+  if(a.start && a.finish){ totalHr=(new Date(a.finish)-new Date(a.start))/3600000; }
+  if(Number.isFinite(totalHr) && totalHr>=0){ perTank=totalHr/Math.max(1,+a.qty||1); variance=perTank-est.perTankHr; }
+  if(a.start && est.finishDate){ const actualFinish=a.finish?new Date(a.finish):null; if(actualFinish && !isNaN(actualFinish)){ const diff=(actualFinish-est.finishDate)/3600000; etaDelay=`${diff>=0?'+':''}${fmt(diff,2)} hr`; }}
+  document.getElementById('actualKpis').innerHTML=`
+    <div class="estimateKpi"><strong>${Number.isFinite(totalHr)&&totalHr>=0?fmt(totalHr,2):'—'}</strong><span>Actual Total Hours</span></div>
+    <div class="estimateKpi"><strong>${Number.isFinite(perTank)&&perTank>=0?fmt(perTank,2):'—'}</strong><span>Actual Hours / Tank</span></div>
+    <div class="estimateKpi"><strong>${fmt(est.perTankHr,2)}</strong><span>Estimated Hours / Tank</span></div>
+    <div class="estimateKpi"><strong>${Number.isFinite(variance)?(variance>=0?'+':'')+fmt(variance,2):'—'}</strong><span>Variance vs Estimate</span></div>
+    <div class="estimateKpi"><strong>${est.finishDate?est.finishDate.toLocaleString():'—'}</strong><span>Estimated Finish</span></div>
+    <div class="estimateKpi"><strong>${etaDelay}</strong><span>Actual vs ETA</span></div>
+    <div class="estimateKpi"><strong>${Math.max(1,+a.qty||1)}</strong><span>Actual Tanks Completed</span></div>
+    <div class="estimateKpi"><strong>${Number.isFinite(totalHr)&&Number.isFinite(est.completionHr)?((totalHr-est.completionHr)>=0?'+':'')+fmt(totalHr-est.completionHr,2):'—'}</strong><span>Total Hour Difference</span></div>`;
 }
-async function renderNotifications(){
-  page('Notifications',state.role==='main'?'New Sales quotes and quote activity appear here.':'Quote changes from Main appear here.');
-  view.innerHTML='<div class="card"><div class="toolbar" style="justify-content:space-between"><h2 style="margin:0">Notifications</h2><button class="btn" onclick="markAllNotificationsRead()">Mark all read</button></div><div id="notificationList" style="margin-top:12px"><span class="muted">Loading…</span></div></div>';
-  try{
-    const r=await notifyApi('notifications_list');
-    state.unreadNotifications=Number(r.unreadCount||0);renderNav();
-    const list=r.notifications||[],el=document.getElementById('notificationList');
-    if(!list.length){el.innerHTML='<div class="muted">No notifications yet.</div>';return}
-    el.innerHTML=list.map(n=>`<button class="notificationRow ${n.unread?'unread':''}" onclick="openNotificationQuote('${esc(n.id)}','${esc(n.quoteId||'')}')">
-      <div class="notificationDot"></div>
-      <div><b>${esc(n.message||'Quote updated')}</b><div class="muted">${new Date(n.createdAt).toLocaleString()} · by ${esc(n.createdBy||'Main')}</div></div>
-    </button>`).join('');
-  }catch(e){document.getElementById('notificationList').innerHTML=`<div class="notice">${esc(e.message||'Unable to load notifications')}</div>`}
+function renderPresets(){
+  const list=document.getElementById('presetList');
+  list.innerHTML = state.scenarios.length?state.scenarios.map((s,i)=>`<div class="presetRow"><div><b>${s.name}</b><div class="tiny">Saved ${new Date(s.savedAt).toLocaleString()}</div></div><div><button data-load="${i}">Load</button></div><div><button class="danger" data-del="${i}">Delete</button></div></div>`).join(''):`<div class="small">No saved scenarios yet.</div>`;
+  list.querySelectorAll('[data-load]').forEach(btn=>btn.onclick=()=>loadScenario(+btn.dataset.load));
+  list.querySelectorAll('[data-del]').forEach(btn=>btn.onclick=()=>deleteScenario(+btn.dataset.del));
 }
-async function markAllNotificationsRead(){
-  try{await notifyApi('notifications_read',{ids:[]});state.unreadNotifications=0;renderNav();renderNotifications()}catch(e){alert(e.message||'Unable to mark notifications read')}
-}
-async function openNotificationQuote(notificationId,quoteId){
-  try{await notifyApi('notifications_read',{ids:[notificationId]});state.unreadNotifications=Math.max(0,state.unreadNotifications-1)}catch{}
-  await renderHistory();
-  setTimeout(()=>{
-    const idx=state.sharedQuotes.findIndex(q=>q.id===quoteId);
-    if(idx>=0)toggleQuote(idx);
-  },60);
-}
-
-async function renderUsers(){
-  if(state.role!=='main'){setView('calculator');return}
-  page('Users & Activity','Simple username/password Sales accounts and recent user activity.');
-  view.innerHTML=`<div class="adminGrid">
-    <div class="card">
-      <h2>Sales Users</h2>
-      <div class="notice">Login stays simple: username + password only.</div>
-      <div class="formGrid">
-        <div class="field"><label>Sales Username</label><input id="newSalesUser" class="input" autocomplete="off" placeholder="e.g. sales2"></div>
-        <div class="field"><label>Password</label><input id="newSalesPass" class="input" type="password" autocomplete="new-password" placeholder="Minimum 6 characters"></div>
+function renderEditor(){
+  const editor=document.getElementById('editorGrid');
+  editor.innerHTML=state.steps.map((step,i)=>{
+    const active=activeMachines(step), ids=idsCount(step.machineIds);
+    return `<div class="editCard">
+      <h4>${i+1}. ${step.name}</h4>
+      <div class="field"><label>Step name</label><input type="text" value="${escapeHtml(step.name)}" data-act="name" data-id="${step.id}"></div>
+      <div class="checkGrid">
+        ${Object.entries(TYPE_META).map(([k,v])=>`<label class="checkItem"><input type="checkbox" data-act="applies-${k}" data-id="${step.id}" ${step.applies?.[k]?'checked':''}> ${v}</label>`).join('')}
       </div>
-      <div class="toolbar" style="margin-top:10px"><button class="btn primary" onclick="saveSalesUser()">Add / Reset Sales User</button></div>
-      <div id="userList" style="margin-top:16px"><span class="muted">Loading users…</span></div>
-    </div>
-    <div class="card">
-      <div class="toolbar" style="justify-content:space-between"><h2 style="margin:0">Activity Log</h2><button class="btn" onclick="loadActivityLog()">Refresh</button></div>
-      <div id="activityList" style="margin-top:12px"><span class="muted">Loading activity…</span></div>
-    </div>
-  </div>`;
-  await Promise.all([loadUsers(),loadActivityLog()]);
+      <div class="grid2">
+        <div class="field"><label>Process time / panel (min)</label><input type="number" min="0" step="0.5" value="${fmt(+step.time||0,1)}" data-act="time" data-id="${step.id}"></div>
+        <div class="field"><label>Batch size</label><input type="number" min="1" step="1" value="${Math.max(1,+step.batchSize||1)}" data-act="batchSize" data-id="${step.id}"></div>
+        <div class="field"><label>Setup time (min / batch)</label><input type="number" min="0" step="0.5" value="${fmt(+step.setup||0,1)}" data-act="setup" data-id="${step.id}"></div>
+        <div class="field"><label>Transfer time (min / batch)</label><input type="number" min="0" step="0.5" value="${fmt(+step.transfer||0,1)}" data-act="transfer" data-id="${step.id}"></div>
+      </div>
+      <div class="field"><label>Machine IDs / station names (comma separated)</label><input type="text" value="${escapeHtml(step.machineIds||'')}" data-act="machineIds" data-id="${step.id}"><div class="tiny">Detected IDs: ${ids}</div></div>
+      <div class="grid3">
+        <div class="field"><label>Configured machines</label><input type="number" min="0" step="1" value="${Math.max(0,+step.machineCount||0)}" data-act="machineCount" data-id="${step.id}"></div>
+        <div class="field"><label>Workers / machine</label><input type="number" min="1" step="1" value="${Math.max(1,+step.workersPerMachine||1)}" data-act="workersPerMachine" data-id="${step.id}"></div>
+        <div class="field"><label>Available workers</label><input type="number" min="0" step="1" value="${Math.max(0,+step.availableWorkers||0)}" data-act="availableWorkers" data-id="${step.id}"></div>
+      </div>
+      <div class="tiny">Active machines now: ${active}</div>
+      <div class="field"><label>Status</label><select data-act="status" data-id="${step.id}"><option value="running" ${step.status==='running'?'selected':''}>Running</option><option value="ready" ${step.status==='ready'?'selected':''}>Ready</option><option value="blocked" ${step.status==='blocked'?'selected':''}>Blocked</option></select></div>
+      <div class="field"><label>Note</label><textarea data-act="note" data-id="${step.id}">${escapeHtml(step.note||'')}</textarea></div>
+      <div class="stepMoveBtns"><button type="button" data-move="up" data-id="${step.id}">← Earlier</button><button type="button" data-move="down" data-id="${step.id}">Later →</button></div>
+    </div>`;
+  }).join('');
+  editor.querySelectorAll('[data-act]').forEach(el=>{ el.addEventListener('input',onEdit); el.addEventListener('change',onEdit); });
+  editor.querySelectorAll('[data-move]').forEach(btn=>btn.onclick=()=>moveStep(btn.dataset.id, btn.dataset.move==='up'?-1:1));
 }
-async function loadUsers(){
-  const el=document.getElementById('userList');if(!el)return;
-  try{
-    const r=await adminApi('users_list');
-    const users=r.users||[];
-    el.innerHTML=users.map(u=>`<div class="userRow">
-      <div><b>${esc(u.username)}</b><span class="userRole">${esc(u.role)}</span><div class="muted">${u.active?'Active':'Inactive'} · Updated ${new Date(u.updated_at).toLocaleString()}</div></div>
-      <div>${u.role==='sales'?`<button class="btn ${u.active?'danger':''}" onclick="toggleSalesUser('${esc(u.username)}',${u.active?'false':'true'})">${u.active?'Deactivate':'Activate'}</button>`:'<span class="muted">Main</span>'}</div>
-    </div>`).join('');
-  }catch(e){el.innerHTML=`<div class="notice">${esc(e.message||'Unable to load users')}</div>`}
-}
-async function saveSalesUser(){
-  const username=(document.getElementById('newSalesUser')?.value||'').trim().toLowerCase();
-  const password=document.getElementById('newSalesPass')?.value||'';
-  if(!username||!password)return alert('Enter Sales username and password.');
-  try{
-    await adminApi('user_save',{username,password});
-    document.getElementById('newSalesPass').value='';
-    alert('Sales user saved. They can login with username + password.');
-    await loadUsers();await loadActivityLog();
-  }catch(e){alert(e.message||'Unable to save Sales user')}
-}
-async function toggleSalesUser(username,active){
-  try{await adminApi('user_toggle',{username,active});await loadUsers();await loadActivityLog()}
-  catch(e){alert(e.message||'Unable to update Sales user')}
-}
-function activityLabel(action){
-  const map={login:'Login',quote_saved:'Quote Saved',quote_updated:'Quote Updated',bom_defaults_saved:'BOM / Pricing Saved',ai_command:'AI Command',bom_item_added:'BOM Item Added',bom_item_removed:'BOM Item Removed',sales_user_saved:'Sales User Added / Password Reset',sales_user_activated:'Sales User Activated',sales_user_deactivated:'Sales User Deactivated'};
-  return map[action]||String(action||'Activity').replaceAll('_',' ');
-}
-async function loadActivityLog(){
-  const el=document.getElementById('activityList');if(!el)return;
-  try{
-    const r=await adminApi('activity_list',{limit:100}),logs=r.logs||[];
-    if(!logs.length){el.innerHTML='<div class="muted">No activity recorded yet.</div>';return}
-    el.innerHTML=`<div class="activityTable">${logs.map(x=>`<div class="activityRow">
-      <div class="activityDot"></div>
-      <div><b>${esc(activityLabel(x.action))}</b><div class="muted">${esc(x.username)} · ${new Date(x.created_at).toLocaleString()}</div>${x.details&&Object.keys(x.details).length?`<div class="activityDetails">${esc(Object.entries(x.details).map(([k,v])=>`${k}: ${v}`).join(' · '))}</div>`:''}</div>
-    </div>`).join('')}</div>`;
-  }catch(e){el.innerHTML=`<div class="notice">${esc(e.message||'Unable to load activity log')}</div>`}
+function escapeHtml(s){ return String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+function captureFlowRects(){ const out={}; document.querySelectorAll('.flowStep[data-step-id]').forEach(el=>out[el.dataset.stepId]=el.getBoundingClientRect()); return out; }
+function animateFlowFlip(oldRects){ requestAnimationFrame(()=>{ document.querySelectorAll('.flowStep[data-step-id]').forEach(el=>{ const old=oldRects?.[el.dataset.stepId]; if(!old) return; const now=el.getBoundingClientRect(); const dx=old.left-now.left, dy=old.top-now.top; if(Math.abs(dx)<1&&Math.abs(dy)<1)return; el.animate([{transform:`translate(${dx}px,${dy}px) scale(.98)`,opacity:.82},{transform:'translate(0,0) scale(1)',opacity:1}],{duration:420,easing:'cubic-bezier(.2,.8,.2,1)'}); }); }); }
+function moveStep(id,dir){ const oldRects=captureFlowRects(); const i=state.steps.findIndex(s=>s.id===id); if(i<0) return; const ni=i+dir; if(ni<0||ni>=state.steps.length)return; const moved=state.steps[i]; [state.steps[i],state.steps[ni]]=[state.steps[ni],state.steps[i]]; saveState(); renderAll(); animateFlowFlip(oldRects); showMotionToast(`${moved.name} moved ${dir<0?'earlier':'later'}`); }
+function enableFlowDragging(){
+  const cards=[...document.querySelectorAll('.flowStep[data-step-id]')]; let draggedId=null;
+  cards.forEach(card=>{
+    card.addEventListener('dragstart',()=>{draggedId=card.dataset.stepId; card.classList.add('dragging');});
+    card.addEventListener('dragend',()=>{draggedId=null; card.classList.remove('dragging'); cards.forEach(c=>c.classList.remove('dragover'));});
+    card.addEventListener('dragover',e=>{e.preventDefault(); if(card.dataset.stepId!==draggedId) card.classList.add('dragover');});
+    card.addEventListener('dragleave',()=>card.classList.remove('dragover'));
+    card.addEventListener('drop',e=>{ e.preventDefault(); card.classList.remove('dragover'); if(!draggedId||draggedId===card.dataset.stepId)return; const oldRects=captureFlowRects(); const from=state.steps.findIndex(s=>s.id===draggedId), to=state.steps.findIndex(s=>s.id===card.dataset.stepId); if(from<0||to<0)return; const [moved]=state.steps.splice(from,1); state.steps.splice(to,0,moved); saveState(); renderAll(); animateFlowFlip(oldRects); showMotionToast(`${moved.name} reordered`); });
+  });
 }
 
-function renderPrices(){
-  if(state.role!=='main'){setView('calculator');return}
-  page('BOM & Pricing','Manage products, prices and selling defaults.');
-  const d=state.settings||DEFAULTS;
-  view.innerHTML=`<div class="card">
-    <h2>Supabase BOM Control</h2>
-    <div class="notice">Quantity Override is optional. Leave it blank to use the generated BOM formula. Custom items can be added or removed. Sales cannot see unit prices.</div>
-    <div class="toolbar" style="margin-bottom:12px"><input id="priceSearch" class="input" style="max-width:340px" placeholder="Search BOM product..." oninput="filterPriceRows()"><button class="btn primary" onclick="addBomProduct()">+ Add BOM Product</button><button class="btn" onclick="refreshRemote()">Refresh Supabase</button></div>
-    <div class="tableWrap"><table><thead><tr><th>Category</th><th>BOM Name</th><th>Unit</th><th>Qty Override</th><th>Unit Price (RM)</th><th>Action</th></tr></thead><tbody>
-      ${state.remoteCatalogue.map(x=>`<tr class="priceRow"><td>${esc(x.category||'')}</td><td><input id="name_${esc(x.internalKey)}" class="input" value="${esc(x.name||'')}"></td><td>${esc(x.unit||'')}</td><td><input id="qty_${esc(x.internalKey)}" class="input" type="number" min="0" step="0.01" placeholder="Formula" value="${x.qtyOverride===null||x.qtyOverride===undefined?'':Number(x.qtyOverride)}"></td><td><input id="price_${esc(x.internalKey)}" class="input priceInput" type="number" min="0" step="0.01" value="${Number(x.unitPrice||0).toFixed(2)}"></td><td>${x.isCustom?`<button class="btn danger" onclick="removeBomProduct('${esc(x.internalKey)}')">Remove</button>`:'<span class="muted">System</span>'}</td></tr>`).join('')}
-    </tbody></table></div>
-    <div class="sectionTitle">Default Additional Costs & Selling Price</div>
-    <div class="formGrid">
-      <div class="field"><label>Waste Allowance (%)</label><input id="wasteP" class="input" type="number" min="0" step="0.01" value="${Number(d.waste??3)}"></div>
-      <div class="field"><label>Fabrication Labour (RM)</label><input id="fabricationP" class="input" type="number" min="0" step="0.01" value="${Number(d.fabrication??1000)}"></div>
-      <div class="field"><label>Installation (RM)</label><input id="installationP" class="input" type="number" min="0" step="0.01" value="${Number(d.installation??1000)}"></div>
-      <div class="field"><label>Transport / Crane (RM)</label><input id="transportP" class="input" type="number" min="0" step="0.01" value="${Number(d.transport??d.delivery??1000)}"></div>
-      <div class="field"><label>Other Cost (RM)</label><input id="otherP" class="input" type="number" min="0" step="0.01" value="${Number(d.other??100)}"></div>
-      <div class="field"><label>Overhead (%)</label><input id="overheadP" class="input" type="number" min="0" step="0.01" value="${Number(d.overhead??5)}"></div>
-      <div class="field"><label>Profit Margin (%)</label><input id="profitMarginP" class="input" type="number" min="0" step="0.01" value="${Number(d.profitMargin??20)}"></div>
-      <div class="field"><label>Discount (RM)</label><input id="discountP" class="input" type="number" min="0" step="0.01" value="${Number(d.discount??0)}"></div>
-      <div class="field"><label>SST (%)</label><input id="sstP" class="input" type="number" min="0" step="0.01" value="${Number(d.sst??5)}"></div>
-    </div>
-    <div class="toolbar" style="margin-top:16px"><button class="btn primary" onclick="savePrices()">Save to Supabase</button></div>
-  </div>`;
+function onEdit(e){
+  const id=e.target.dataset.id, act=e.target.dataset.act; const step=state.steps.find(s=>s.id===id); if(!step) return;
+  if(act==='name') step.name=e.target.value;
+  else if(act==='time') step.time=Math.max(0,+e.target.value||0);
+  else if(act==='setup') step.setup=Math.max(0,+e.target.value||0);
+  else if(act==='transfer') step.transfer=Math.max(0,+e.target.value||0);
+  else if(act==='batchSize') step.batchSize=Math.max(1,Math.floor(+e.target.value||1));
+  else if(act==='machineIds') step.machineIds=e.target.value;
+  else if(act==='machineCount') step.machineCount=Math.max(0,Math.floor(+e.target.value||0));
+  else if(act==='workersPerMachine') step.workersPerMachine=Math.max(1,Math.floor(+e.target.value||1));
+  else if(act==='availableWorkers') step.availableWorkers=Math.max(0,Math.floor(+e.target.value||0));
+  else if(act==='status'){ step.status=e.target.value; showMotionToast(`${step.name}: ${statusText(step.status)}`); }
+  else if(act==='note') step.note=e.target.value;
+  else if(act.startsWith('applies-')){ const t=act.split('-')[1]; step.applies[t]=e.target.checked; }
+  saveState(); renderAll();
 }
-async function addBomProduct(){
-  if(state.role!=='main')return;
-  const name=prompt('BOM product name:','Custom Item');if(!name)return;
-  const unit=prompt('Unit:','pcs')||'pcs';
-  const category=prompt('Category:','Custom')||'Custom';
-  const qty=Math.max(0,Number(prompt('Default quantity:','1'))||0);
-  const price=Math.max(0,Number(prompt('Unit price (RM):','0'))||0);
-  try{await api('quick_add_item',{name,unit,category,qtyOverride:qty,unitPrice:price});recordActivity('bom_item_added',{name});await loadRemoteConfig();renderPrices()}catch(e){alert(e.message||'Unable to add BOM product')}
+function updateEstimateField(id,val){ state.estimate[id]=val; saveState(); renderAll(); }
+function bindStaticInputs(){
+  document.getElementById('tankPreset').onchange=e=>{ state.estimate.preset=e.target.value; const p=TANK_PRESETS[e.target.value]||TANK_PRESETS['Custom']; state.estimate.lengthFt=p.L; state.estimate.widthFt=p.W; state.estimate.heightFt=p.H; state.estimate.roofDeduct=p.roofDeduct||0; state.estimate.custom.stay=p.stay||state.estimate.custom.stay; saveState(); renderAll(); };
+  document.getElementById('tankQty').oninput=e=>updateEstimateField('qty',Math.max(1,Math.floor(+e.target.value||1)));
+  document.getElementById('useFormula').onchange=e=>updateEstimateField('useFormula',e.target.checked);
+  document.getElementById('roofDeduct').oninput=e=>updateEstimateField('roofDeduct',Math.max(0,Math.floor(+e.target.value||0)));
+  document.getElementById('lengthFt').oninput=e=>updateEstimateField('lengthFt',Math.max(1,+e.target.value||24));
+  document.getElementById('widthFt').oninput=e=>updateEstimateField('widthFt',Math.max(1,+e.target.value||24));
+  document.getElementById('heightFt').oninput=e=>updateEstimateField('heightFt',Math.max(1,+e.target.value||8));
+  document.getElementById('panelSizeFt').oninput=e=>updateEstimateField('panelSizeFt',Math.max(1,+e.target.value||4));
+  document.getElementById('includeStay').onchange=e=>updateEstimateField('includeStay',e.target.checked);
+  document.getElementById('efficiency').oninput=e=>updateEstimateField('efficiency',Math.max(1,Math.min(100,+e.target.value||100)));
+  ['Wall','Roof','Base','Stay'].forEach(K=>{ document.getElementById('custom'+K).oninput=e=>{ state.estimate.preset='Custom'; state.estimate.custom[K.toLowerCase()]=Math.max(0,Math.floor(+e.target.value||0)); saveState(); renderAll(); }; });
+  document.getElementById('startDate').onchange=e=>updateEstimateField('startDate',e.target.value);
+  document.getElementById('targetDays').oninput=e=>updateEstimateField('targetDays',Math.max(0,+e.target.value||0));
+  document.getElementById('hoursPerShift').oninput=e=>updateEstimateField('hoursPerShift',Math.max(1,+e.target.value||8));
+  document.getElementById('shiftsPerDay').oninput=e=>updateEstimateField('shiftsPerDay',Math.max(1,Math.floor(+e.target.value||1)));
+  document.getElementById('breakMin').oninput=e=>updateEstimateField('breakMin',Math.max(0,+e.target.value||0));
+  document.getElementById('workdaysPerWeek').oninput=e=>updateEstimateField('workdaysPerWeek',Math.max(1,Math.min(7,Math.floor(+e.target.value||6))));
+  document.getElementById('actualStart').onchange=e=>{ state.actual.start=e.target.value; saveState(); renderAll(); };
+  document.getElementById('actualFinish').onchange=e=>{ state.actual.finish=e.target.value; saveState(); renderAll(); };
+  document.getElementById('actualQty').oninput=e=>{ state.actual.qty=Math.max(1,Math.floor(+e.target.value||1)); saveState(); renderAll(); };
+  document.getElementById('saveScenarioBtn').onclick=saveScenario;
 }
-async function removeBomProduct(key){
-  if(!confirm('Remove this custom BOM product?'))return;
-  try{await api('quick_remove_item',{internalKey:key});recordActivity('bom_item_removed',{internalKey:key});await loadRemoteConfig();renderPrices()}catch(e){alert(e.message||'Unable to remove BOM product')}
+
+function saveScenario(){
+  const name=document.getElementById('scenarioName').value.trim(); if(!name){ showMotionToast('Enter a preset name first'); return; }
+  state.scenarios.unshift({name,savedAt:Date.now(),payload:deepClone({previewType:state.previewType,steps:state.steps,estimate:state.estimate,actual:state.actual})});
+  saveState(); document.getElementById('scenarioName').value=''; renderAll(); showMotionToast(`Scenario saved: ${name}`);
 }
-function filterPriceRows(){const q=(document.getElementById('priceSearch')?.value||'').toLowerCase();document.querySelectorAll('.priceRow').forEach(row=>row.hidden=!!q&&!row.textContent.toLowerCase().includes(q))}
-async function refreshRemote(){try{await loadRemoteConfig();renderPrices()}catch(e){alert(e.message||'Unable to refresh Supabase')}}
-async function savePrices(){
-  try{
-    const items=state.remoteCatalogue.map(x=>({internalKey:x.internalKey,isCustom:!!x.isCustom,category:x.category,unit:x.unit,name:document.getElementById('name_'+x.internalKey)?.value||x.name,qtyOverride:(document.getElementById('qty_'+x.internalKey)?.value??'')===''?null:Number(document.getElementById('qty_'+x.internalKey).value),unitPrice:Number(document.getElementById('price_'+x.internalKey)?.value||0)}));
-    const defaults={waste:num('wasteP'),fabrication:num('fabricationP'),installation:num('installationP'),transport:num('transportP'),other:num('otherP'),overhead:num('overheadP'),profitMargin:num('profitMarginP'),discount:num('discountP'),sst:num('sstP'),currency:'MYR'};
-    await api('quick_save',{items,defaults});recordActivity('bom_defaults_saved',{itemCount:items.length});await loadRemoteConfig();alert('BOM names, quantities, prices and defaults saved to Supabase.');renderPrices();
-  }catch(e){alert(e.message||'Unable to save to Supabase')}
+function loadScenario(i){ const s=state.scenarios[i]; if(!s) return; state.previewType=s.payload.previewType||'wall'; state.steps=deepClone(s.payload.steps||DEFAULT_STEPS); state.estimate={...defaultState().estimate,...deepClone(s.payload.estimate||{})}; state.actual={...defaultState().actual,...deepClone(s.payload.actual||{})}; saveState(); renderAll(); showMotionToast(`Loaded scenario: ${s.name}`); }
+function deleteScenario(i){ const s=state.scenarios[i]; if(!s) return; state.scenarios.splice(i,1); saveState(); renderAll(); showMotionToast(`Deleted scenario: ${s.name}`); }
+
+function resetDefaults(){ state=defaultState(); saveState(); renderAll(); showMotionToast('Reset to default'); }
+function setAllStatus(status){ state.steps.forEach(s=>s.status=status); saveState(); renderAll(); }
+
+function renderAll(){
+  renderSummary(); renderPreviewTypeSeg(); renderFlow(); renderTimeline(); renderEstimatorFields(); renderEstimateOutputs(); renderGanttChart(); renderUtilChart(); renderActual(); renderPresets(); renderEditor();
 }
+
+document.getElementById('resetBtn').onclick=resetDefaults;
+document.getElementById('runningAllBtn').onclick=()=>setAllStatus('running');
+document.getElementById('readyAllBtn').onclick=()=>setAllStatus('ready');
+document.getElementById('blockedAllBtn').onclick=()=>setAllStatus('blocked');
+bindStaticInputs();
+renderAll();
 </script>
 </body>
 </html>
