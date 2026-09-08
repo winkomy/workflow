@@ -42,7 +42,7 @@ body{
 label{display:block;color:var(--muted);font-size:11px;font-weight:600;margin-bottom:6px;text-transform:uppercase;letter-spacing:.03em}
 input{
   width:100%;border:1px solid rgba(255,255,255,.1);background:#091422;color:var(--text);
-  border-radius:8px;padding:8px 10px;font-size:12px;transition:all .2s ease;
+  border-radius:8px;padding:8px 10px;font-size:12px;transition:all .2s ease;color-scheme: dark;
 }
 input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(56,189,248,.15)}
 
@@ -112,7 +112,7 @@ input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(56
         <input id="panelQty" class="bigInput" type="number" min="0" step="1" value="100" inputmode="numeric">
         <div class="hint">1 sheet yields panels per setting below. Stations run continuous flow.</div>
         <div style="margin-top:12px">
-          <label for="startDate">Production Scheduled Start</label>
+          <label for="startDate">Job Scheduled Start</label>
           <input id="startDate" type="datetime-local">
         </div>
       </div>
@@ -124,7 +124,7 @@ input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(56
         </div>
         <div class="kpi deliveryKpi">
           <strong id="targetDate">—</strong>
-          <span>Target Finish Date</span>
+          <span>Target Finish Date & Time</span>
         </div>
         <div class="kpi">
           <strong id="workingDays">—</strong>
@@ -231,11 +231,11 @@ input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(56
       <div class="settingsSection">
         <div class="settingsTitle">1. Process Cycle Times</div>
         <div class="settingsGrid">
-          <div><label>Laser / sheet (min)</label><input id="laserMinutes" type="number" min="0.1" step="0.5" value="12"></div>
+          <div><label>Laser / sheet (m)</label><input id="laserMinutes" type="number" min="0.1" step="0.5" value="12"></div>
           <div><label>Panels / sheet</label><input id="laserPanels" type="number" min="1" step="1" value="2"></div>
-          <div><label>Punch / panel (min)</label><input id="punchMinutes" type="number" min="0" step="0.5" value="5"></div>
-          <div><label>Notch / panel (min)</label><input id="notchMinutes" type="number" min="0" step="0.5" value="5"></div>
-          <div><label>Weld / panel (min)</label><input id="weldMinutes" type="number" min="0" step="0.5" value="5"></div>
+          <div><label>Punch / panel (m)</label><input id="punchMinutes" type="number" min="0" step="0.5" value="5"></div>
+          <div><label>Notch / panel (m)</label><input id="notchMinutes" type="number" min="0" step="0.5" value="5"></div>
+          <div><label>Weld / panel (m)</label><input id="weldMinutes" type="number" min="0" step="0.5" value="5"></div>
         </div>
       </div>
 
@@ -260,10 +260,10 @@ input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(56
         <div class="settingsTitle">3. Schedule & Efficiency</div>
         <div class="settingsGrid">
           <div><label>OEE / Eff. (%)</label><input id="efficiency" type="number" min="1" max="100" value="100"></div>
-          <div><label>Hours / Shift</label><input id="hoursPerShift" type="number" min="0.5" step="0.5" value="8"></div>
-          <div><label>Shifts / Day</label><input id="shiftsPerDay" type="number" min="1" value="1"></div>
-          <div><label>Break / Shift (m)</label><input id="breakMin" type="number" min="0" value="0"></div>
-          <div style="grid-column:1/-1"><label>Workdays / Week</label><input id="workdaysPerWeek" type="number" min="1" max="7" value="6"></div>
+          <div><label>Workdays / Wk</label><input id="workdaysPerWeek" type="number" min="1" max="7" value="6"></div>
+          <div><label>Daily Start</label><input id="dayStartTime" type="time" value="08:00"></div>
+          <div><label>Daily End</label><input id="dayEndTime" type="time" value="17:00"></div>
+          <div style="grid-column:1/-1"><label>Total Break / Day (min)</label><input id="breakMin" type="number" min="0" value="60"></div>
         </div>
       </div>
 
@@ -295,28 +295,66 @@ function formatDuration(minutes) {
   return `${h}h ${m}m`;
 }
 
-function calculateFinishDate(startDateStr, totalLeadMinutes, hoursPerDay, workdaysPerWeek) {
+// Simulates real factory clock, pausing overnight and on off-days
+function calculateFinishDate(startDateStr, totalLeadMinutes, startTimeStr, endTimeStr, breakMin, workdaysPerWeek) {
   if (!startDateStr || !totalLeadMinutes) return '—';
   let cur = new Date(startDateStr);
   if (isNaN(cur.getTime())) return '—';
 
-  let remainingMin = totalLeadMinutes;
-  const dailyWorkMin = hoursPerDay * 60;
+  const [sh, sm] = startTimeStr.split(':').map(Number);
+  const [eh, em] = endTimeStr.split(':').map(Number);
+  
+  const dayStartMin = sh * 60 + sm;
+  let dayEndMin = eh * 60 + em;
+  if (dayEndMin <= dayStartMin) dayEndMin += 24 * 60; // In case shift crosses midnight
 
-  while (remainingMin > 0) {
+  const grossDailyMin = dayEndMin - dayStartMin;
+  const netDailyMin = grossDailyMin - breakMin;
+  if (netDailyMin <= 0) return 'Invalid Schedule (Breaks exceed hours)';
+
+  // Ratio to convert net working minutes to physical clock minutes (stretching out breaks smoothly)
+  const clockStretch = grossDailyMin / netDailyMin; 
+  let remainingNet = totalLeadMinutes;
+  let loops = 0;
+
+  while (remainingNet > 0 && loops++ < 1000) {
     const dayOfWeek = cur.getDay(); 
     const isWorkingDay = workdaysPerWeek === 7 ? true : (dayOfWeek !== 0 && dayOfWeek <= workdaysPerWeek);
 
-    if (isWorkingDay) {
-      if (remainingMin <= dailyWorkMin) {
-        cur.setMinutes(cur.getMinutes() + remainingMin);
-        remainingMin = 0;
-      } else {
-        cur.setDate(cur.getDate() + 1);
-        remainingMin -= dailyWorkMin;
-      }
-    } else {
+    // Skip to next day if it's a weekend
+    if (!isWorkingDay) {
       cur.setDate(cur.getDate() + 1);
+      cur.setHours(sh, sm, 0, 0);
+      continue;
+    }
+
+    let curMin = cur.getHours() * 60 + cur.getMinutes();
+    
+    // If started before factory opens, wait until open time
+    if (curMin < dayStartMin) {
+      cur.setHours(sh, sm, 0, 0);
+      curMin = dayStartMin;
+    }
+    
+    // If it's already closing time (or past), jump to tomorrow morning
+    if (curMin >= dayEndMin) {
+      cur.setDate(cur.getDate() + 1);
+      cur.setHours(sh, sm, 0, 0);
+      continue;
+    }
+
+    const minutesLeftToday = dayEndMin - curMin;
+    const maxNetLeftToday = minutesLeftToday / clockStretch;
+
+    if (remainingNet <= maxNetLeftToday) {
+      // Job finishes today
+      cur.setMinutes(cur.getMinutes() + (remainingNet * clockStretch));
+      remainingNet = 0;
+    } else {
+      // Job carries over to tomorrow
+      cur.setDate(cur.getDate() + 1);
+      cur.setHours(sh, sm, 0, 0);
+      remainingNet -= maxNetLeftToday;
     }
   }
 
@@ -387,13 +425,18 @@ function calculate() {
   const weldSetup = Math.max(0, num('weldSetup', 0));
 
   const efficiency = Math.max(.01, Math.min(1, num('efficiency', 100) / 100));
-  const hoursPerShift = Math.max(.5, num('hoursPerShift', 8));
-  const shiftsPerDay = Math.max(1, Math.floor(num('shiftsPerDay', 1)));
+  const dayStartTime = $('dayStartTime').value || '08:00';
+  const dayEndTime = $('dayEndTime').value || '17:00';
   const breakMin = Math.max(0, num('breakMin', 0));
   const workdaysPerWeek = Math.max(1, Math.min(7, Math.floor(num('workdaysPerWeek', 6))));
   const startDate = $('startDate').value;
 
-  const hoursDay = Math.max(.25, (hoursPerShift - breakMin / 60) * shiftsPerDay);
+  // Calculate Net Working Hours Per Day for KPI
+  const [sh, sm] = dayStartTime.split(':').map(Number);
+  const [eh, em] = dayEndTime.split(':').map(Number);
+  let grossMin = (eh * 60 + em) - (sh * 60 + sm);
+  if (grossMin < 0) grossMin += 24 * 60;
+  const hoursDay = Math.max(0.1, (grossMin - breakMin) / 60);
 
   const effectiveLaserMin = laserMin / efficiency;
   const effectivePunchMin = punchMin / efficiency;
@@ -462,7 +505,7 @@ function calculate() {
   }
 
   $('estimateTime').textContent = qty ? formatDuration(completionMin) : '—';
-  $('targetDate').textContent = qty ? calculateFinishDate(startDate, completionMin, hoursDay, workdaysPerWeek) : '—';
+  $('targetDate').textContent = qty ? calculateFinishDate(startDate, completionMin, dayStartTime, dayEndTime, breakMin, workdaysPerWeek) : '—';
   $('workingDays').textContent = qty ? `${fmt(days, 2)} days` : '—';
   $('longSheets').textContent = qty ? `${batches}` : '—';
   $('rate').textContent = qty ? `${fmt(lineRate, 1)} / hr` : '—';
@@ -483,8 +526,8 @@ function calculate() {
   } else {
     const bottleneckNames = bottlenecks.map(b => b.id).join(' & ');
     $('summary').innerHTML =
-      `Order: <b>${qty} panels</b> (${batches} sheets). Est. completion in <b>${formatDuration(completionMin)}</b> ` +
-      `(${fmt(days, 2)} workdays @ ${fmt(hoursDay, 1)}h/day). Pacing speed: <b>${fmt(lineRate, 1)} panels/hr</b>. ` +
+      `Order: <b>${qty} panels</b> (${batches} sheets). Est. pipeline runtime is <b>${formatDuration(completionMin)}</b> ` +
+      `(${fmt(days, 2)} workdays @ ${fmt(hoursDay, 1)}h net/day). Pacing speed: <b>${fmt(lineRate, 1)} panels/hr</b>. ` +
       `Constraint is <b style="color:var(--amber)">${bottleneckNames}</b>.`;
   }
 }
@@ -492,7 +535,7 @@ function calculate() {
 [
   'panelQty','laserMinutes','laserPanels','punchMinutes','notchMinutes','weldMinutes',
   'laserMachines','laserSetup','punchMachines','punchSetup','notchMachines','notchSetup',
-  'weldStations','weldSetup','efficiency','hoursPerShift','shiftsPerDay','breakMin',
+  'weldStations','weldSetup','efficiency','dayStartTime','dayEndTime','breakMin',
   'workdaysPerWeek','startDate'
 ].forEach(id => {
   const el = $(id);
