@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>JUTARAMA Panel Workflow & Time Predictor</title>
+<title>JUTARAMA Panel Workflow Predictor (Dashboard)</title>
 <style>
 :root{
   --bg:#08101c;--card:#111b2b;--line:#28384f;--text:#eef6ff;--muted:#93a6bd;
@@ -12,98 +12,85 @@
 *{box-sizing:border-box}
 body{
   margin:0;font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
-  background:linear-gradient(180deg,#07101b,#0b1422);color:var(--text);min-height:100vh
+  background:linear-gradient(180deg,#07101b,#0b1422);color:var(--text);
+  height:100vh;overflow:hidden;display:flex;flex-direction:column;padding:16px;
 }
-.wrap{max-width:980px;margin:0 auto;padding:28px 18px 48px}
-.header{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;margin-bottom:20px}
-.header h1{margin:0;font-size:28px;font-weight:800;letter-spacing:-0.02em}
-.header p{margin:8px 0 0;color:var(--muted);font-size:14px;line-height:1.5}
+.wrap{
+  display:flex;flex-direction:column;height:100%;max-width:1600px;margin:0 auto;width:100%;
+}
+.header{
+  display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-shrink:0;
+}
+.header h1{margin:0;font-size:24px;font-weight:800;letter-spacing:-0.02em}
+.header p{margin:4px 0 0;color:var(--muted);font-size:13px}
 .btn{
   background:rgba(255,255,255,.07);color:var(--text);border:1px solid rgba(255,255,255,.15);
-  border-radius:10px;padding:10px 16px;cursor:pointer;font-size:13px;font-weight:600;white-space:nowrap;
+  border-radius:8px;padding:8px 14px;cursor:pointer;font-size:12px;font-weight:600;
   transition:all .2s ease;
 }
 .btn:hover{background:rgba(255,255,255,.14);border-color:var(--accent)}
-.card{
-  background:linear-gradient(180deg,rgba(255,255,255,.05),rgba(255,255,255,.02));
-  border:1px solid rgba(255,255,255,.08);border-radius:22px;padding:24px;
-  box-shadow:0 20px 50px rgba(0,0,0,.35)
+
+.dashboard{
+  display:grid;grid-template-columns:300px 1.2fr 380px;gap:16px;flex-grow:1;min-height:0;
 }
-.main{display:grid;grid-template-columns:1fr 1.25fr;gap:20px;align-items:start}
-label{display:block;color:var(--muted);font-size:13px;font-weight:500;margin-bottom:8px}
+.col{
+  background:linear-gradient(180deg,rgba(255,255,255,.04),rgba(255,255,255,.015));
+  border:1px solid rgba(255,255,255,.08);border-radius:18px;padding:16px;
+  display:flex;flex-direction:column;gap:16px;overflow:hidden;
+}
+
+label{display:block;color:var(--muted);font-size:11px;font-weight:600;margin-bottom:6px;text-transform:uppercase;letter-spacing:.03em}
 input{
   width:100%;border:1px solid rgba(255,255,255,.1);background:#091422;color:var(--text);
-  border-radius:12px;padding:12px 14px;font:inherit;transition:all .2s ease
+  border-radius:8px;padding:8px 10px;font-size:12px;transition:all .2s ease;
 }
 input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(56,189,248,.15)}
-.bigInputWrap{background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.06);border-radius:16px;padding:18px}
-.bigInput{font-size:36px;font-weight:800;text-align:center;padding:16px;color:#38bdf8}
-.hint{font-size:12px;color:var(--muted);margin-top:10px;line-height:1.5}
-.results{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
-.kpi{background:rgba(255,255,255,.035);border:1px solid rgba(255,255,255,.065);border-radius:14px;padding:14px 16px}
-.kpi strong{display:block;font-size:22px;line-height:1.2;font-weight:700}
-.kpi span{display:block;color:var(--muted);font-size:11px;margin-top:6px;text-transform:uppercase;letter-spacing:.04em}
+
+.bigInputWrap{background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.06);border-radius:12px;padding:14px}
+.bigInput{font-size:28px;font-weight:800;text-align:center;padding:10px;color:#38bdf8}
+.hint{font-size:11px;color:var(--muted);margin-top:8px;line-height:1.4}
+
+.results{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.kpi{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);border-radius:10px;padding:12px}
+.kpi strong{display:block;font-size:18px;line-height:1.2;font-weight:700}
+.kpi span{display:block;color:var(--muted);font-size:10px;margin-top:4px;text-transform:uppercase;letter-spacing:.04em}
 .primaryKpi{grid-column:1/-1;background:rgba(34,197,94,.08);border-color:rgba(34,197,94,.28)}
-.primaryKpi strong{font-size:32px;color:#4ade80}
+.primaryKpi strong{font-size:24px;color:#4ade80}
 .deliveryKpi{grid-column:1/-1;background:rgba(56,189,248,.08);border-color:rgba(56,189,248,.28)}
-.deliveryKpi strong{font-size:22px;color:#7dd3fc}
-.flow{
-  margin-top:20px;padding:18px;border-radius:16px;background:rgba(255,255,255,.02);
-  border:1px solid rgba(255,255,255,.06)
-}
-.flowHeader{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
-.flowTitle{font-weight:700;font-size:14px}
-.steps{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
-.step{
-  position:relative;padding:12px;border-radius:12px;
-  background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);
-  transition:all .2s ease
-}
+.deliveryKpi strong{font-size:20px;color:#7dd3fc}
+
+.flow{background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.06);border-radius:12px;padding:14px}
+.flowHeader{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.flowTitle{font-weight:700;font-size:13px}
+.steps{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.step{padding:10px;border-radius:10px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);transition:all .2s ease}
 .step.bottleneck{border-color:rgba(239,68,68,.5);background:rgba(239,68,68,.08)}
-.step b{display:block;font-size:13px;color:var(--text)}
-.step span{display:block;color:var(--muted);font-size:11px;margin-top:5px;line-height:1.4}
-.tag{
-  display:inline-block;padding:2px 6px;border-radius:4px;font-size:9px;font-weight:700;
-  text-transform:uppercase;margin-top:6px
-}
+.step b{display:block;font-size:12px;color:var(--text)}
+.step span{display:block;color:var(--muted);font-size:10px;margin-top:4px}
+.tag{display:inline-block;padding:2px 6px;border-radius:4px;font-size:9px;font-weight:700;text-transform:uppercase;margin-top:6px}
 .tag.bottle{background:#ef4444;color:#fff}
 .tag.ok{background:rgba(255,255,255,.1);color:var(--muted)}
-.timelineWrap{margin-top:16px}
-.timelineBar{
-  display:flex;height:12px;border-radius:6px;overflow:hidden;background:rgba(255,255,255,.05);
-  margin-top:8px
-}
+
+.timelineWrap{margin-top:12px}
+.timelineBar{display:flex;height:10px;border-radius:5px;overflow:hidden;background:rgba(255,255,255,.05);margin-top:6px}
 .timelineSeg{height:100%;transition:width .3s ease}
 .seg-laser{background:#38bdf8}
 .seg-punch{background:#a855f7}
 .seg-notch{background:#f59e0b}
 .seg-weld{background:#22c55e}
-.summary{
-  margin-top:18px;padding:16px;border-radius:14px;background:rgba(56,189,248,.07);
-  border:1px solid rgba(56,189,248,.18);font-size:13px;line-height:1.6
-}
-details{margin-top:20px}
-summary{cursor:pointer;font-weight:700;color:#dff6ff;padding:8px 0;outline:none}
-.settingsSection{margin-top:10px;padding:18px;border-radius:16px;background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.06)}
-.settingsTitle h3{margin:0;font-size:15px}
-.settingsTitle p{margin:4px 0 12px;color:var(--muted);font-size:12px}
-.settings{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
-.field{min-width:0}
-.table{margin-top:16px;border:1px solid rgba(255,255,255,.08);border-radius:14px;overflow:hidden}
-.row{
-  display:grid;grid-template-columns:1.2fr .8fr .8fr .8fr;gap:8px;padding:12px 14px;
-  border-top:1px solid rgba(255,255,255,.05);font-size:12px;align-items:center
-}
-.row:first-child{border-top:0;background:rgba(255,255,255,.04);color:var(--muted);font-size:11px;text-transform:uppercase;font-weight:600}
-.note{font-size:11px;color:var(--muted);line-height:1.6;margin-top:14px}
-@media(max-width:768px){
-  .main{grid-template-columns:1fr}.steps{grid-template-columns:1fr 1fr}.settings{grid-template-columns:1fr 1fr}
-}
-@media(max-width:480px){
-  .results,.steps,.settings{grid-template-columns:1fr}.row{grid-template-columns:1fr 1fr}
-}
+
+.summary{padding:14px;border-radius:10px;background:rgba(56,189,248,.07);border:1px solid rgba(56,189,248,.18);font-size:12px;line-height:1.5}
+
+.table{border:1px solid rgba(255,255,255,.08);border-radius:10px;overflow:hidden}
+.row{display:grid;grid-template-columns:1fr .8fr .8fr .8fr;gap:8px;padding:10px 12px;border-top:1px solid rgba(255,255,255,.05);font-size:11px;align-items:center}
+.row:first-child{border-top:0;background:rgba(255,255,255,.04);color:var(--muted);font-weight:600;text-transform:uppercase}
+
+.settingsSection{background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.06);border-radius:12px;padding:12px}
+.settingsTitle{margin-bottom:10px;font-size:13px;font-weight:700;color:var(--text)}
+.settingsGrid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px 12px}
+
 @media print{
-  body{background:#fff;color:#000}.card{box-shadow:none;border:none}.btn,details summary{display:none}details{display:block}
+  body{background:#fff;color:#000;height:auto;overflow:visible}.col{box-shadow:none;border:1px solid #ccc}.btn{display:none}
 }
 </style>
 </head>
@@ -112,19 +99,19 @@ summary{cursor:pointer;font-weight:700;color:#dff6ff;padding:8px 0;outline:none}
   <div class="header">
     <div>
       <h1>JUTARAMA Panel Workflow Predictor</h1>
-      <p>Precision line balance, WIP pipeline simulation, and delivery date estimation.</p>
+      <p>Precision line balance & delivery date estimation dashboard.</p>
     </div>
-    <button class="btn" onclick="window.print()">Print Report</button>
+    <button class="btn" onclick="window.print()">Print Dashboard</button>
   </div>
 
-  <section class="card">
-    <div class="main">
+  <div class="dashboard">
+    <!-- COLUMN 1: Inputs & KPIs -->
+    <div class="col">
       <div class="bigInputWrap">
         <label for="panelQty">Required Panel Output (Units)</label>
         <input id="panelQty" class="bigInput" type="number" min="0" step="1" value="100" inputmode="numeric">
-        <div class="hint">Laser conversion: 1 long metal sheet yields 2 panels (12 min/sheet). Downstream stations run unit-by-unit in continuous flow.</div>
-
-        <div style="margin-top:18px">
+        <div class="hint">1 sheet yields panels per setting below. Stations run continuous flow.</div>
+        <div style="margin-top:12px">
           <label for="startDate">Production Scheduled Start</label>
           <input id="startDate" type="datetime-local">
         </div>
@@ -133,11 +120,11 @@ summary{cursor:pointer;font-weight:700;color:#dff6ff;padding:8px 0;outline:none}
       <div class="results">
         <div class="kpi primaryKpi">
           <strong id="estimateTime">—</strong>
-          <span>Pipeline Completion Lead Time</span>
+          <span>Pipeline Lead Time</span>
         </div>
         <div class="kpi deliveryKpi">
           <strong id="targetDate">—</strong>
-          <span>Target Delivery / Finish Date</span>
+          <span>Target Finish Date</span>
         </div>
         <div class="kpi">
           <strong id="workingDays">—</strong>
@@ -145,7 +132,7 @@ summary{cursor:pointer;font-weight:700;color:#dff6ff;padding:8px 0;outline:none}
         </div>
         <div class="kpi">
           <strong id="longSheets">—</strong>
-          <span>Raw Long Sheets</span>
+          <span>Raw Sheets Req.</span>
         </div>
         <div class="kpi">
           <strong id="rate">—</strong>
@@ -153,195 +140,135 @@ summary{cursor:pointer;font-weight:700;color:#dff6ff;padding:8px 0;outline:none}
         </div>
         <div class="kpi">
           <strong id="workload">—</strong>
-          <span>Total Machine Work</span>
+          <span>Total Mach. Work</span>
         </div>
       </div>
     </div>
 
-    <div class="flow">
-      <div class="flowHeader">
-        <div class="flowTitle">Synchronized Flow Analysis & Critical Path</div>
-        <div id="bottleneckBadge" style="font-size:12px;color:var(--muted)"></div>
-      </div>
-      <div class="steps">
-        <div class="step" id="stepLaser">
-          <b>1. Laser Cutting</b>
-          <span>1 sheet → 2 panels · 12m</span>
-          <div class="tag ok" id="tagLaser">Balanced</div>
+    <!-- COLUMN 2: Flow, Timeline & Table -->
+    <div class="col">
+      <div class="flow">
+        <div class="flowHeader">
+          <div class="flowTitle">Synchronized Flow Analysis & Critical Path</div>
+          <div id="bottleneckBadge" style="font-size:11px;color:var(--muted)"></div>
         </div>
-        <div class="step" id="stepPunch">
-          <b>2. Punching</b>
-          <span>5 min / panel</span>
-          <div class="tag ok" id="tagPunch">Balanced</div>
+        <div class="steps">
+          <div class="step" id="stepLaser">
+            <b>1. Laser</b>
+            <span>Batch process</span>
+            <div class="tag ok" id="tagLaser">Balanced</div>
+          </div>
+          <div class="step" id="stepPunch">
+            <b>2. Punch</b>
+            <span>Per unit</span>
+            <div class="tag ok" id="tagPunch">Balanced</div>
+          </div>
+          <div class="step" id="stepNotch">
+            <b>3. Notch</b>
+            <span>Per unit</span>
+            <div class="tag ok" id="tagNotch">Balanced</div>
+          </div>
+          <div class="step" id="stepWeld">
+            <b>4. Weld</b>
+            <span>Per unit</span>
+            <div class="tag ok" id="tagWeld">Balanced</div>
+          </div>
         </div>
-        <div class="step" id="stepNotch">
-          <b>3. Notching</b>
-          <span>5 min / panel</span>
-          <div class="tag ok" id="tagNotch">Balanced</div>
-        </div>
-        <div class="step" id="stepWeld">
-          <b>4. Welding</b>
-          <span>5 min / panel</span>
-          <div class="tag ok" id="tagWeld">Balanced</div>
-        </div>
-      </div>
 
-      <div class="timelineWrap">
-        <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--muted)">
-          <span>Process Workload Distribution</span>
-          <span id="workloadRatio"></span>
-        </div>
-        <div class="timelineBar">
-          <div id="barLaser" class="timelineSeg seg-laser" style="width:25%"></div>
-          <div id="barPunch" class="timelineSeg seg-punch" style="width:25%"></div>
-          <div id="barNotch" class="timelineSeg seg-notch" style="width:25%"></div>
-          <div id="barWeld" class="timelineSeg seg-weld" style="width:25%"></div>
-        </div>
-      </div>
-    </div>
-
-    <div id="summary" class="summary"></div>
-
-    <details open>
-      <summary>Production & Scheduling Parameters</summary>
-      
-      <div class="settingsSection">
-        <div class="settingsTitle">
-          <h3>1. Process Cycle Times</h3>
-          <p>Net machine cutting and handling times per unit or raw sheet.</p>
-        </div>
-        <div class="settings">
-          <div class="field">
-            <label for="laserMinutes">Laser / sheet (min)</label>
-            <input id="laserMinutes" type="number" min="0.1" step="0.5" value="12">
+        <div class="timelineWrap">
+          <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--muted);text-transform:uppercase">
+            <span>Workload Distribution</span>
+            <span id="workloadRatio"></span>
           </div>
-          <div class="field">
-            <label for="laserPanels">Panels / long sheet</label>
-            <input id="laserPanels" type="number" min="1" step="1" value="2">
-          </div>
-          <div class="field">
-            <label for="punchMinutes">Punch / panel (min)</label>
-            <input id="punchMinutes" type="number" min="0" step="0.5" value="5">
-          </div>
-          <div class="field">
-            <label for="notchMinutes">Notch / panel (min)</label>
-            <input id="notchMinutes" type="number" min="0" step="0.5" value="5">
-          </div>
-          <div class="field">
-            <label for="weldMinutes">Weld / panel (min)</label>
-            <input id="weldMinutes" type="number" min="0" step="0.5" value="5">
+          <div class="timelineBar">
+            <div id="barLaser" class="timelineSeg seg-laser" style="width:25%"></div>
+            <div id="barPunch" class="timelineSeg seg-punch" style="width:25%"></div>
+            <div id="barNotch" class="timelineSeg seg-notch" style="width:25%"></div>
+            <div id="barWeld" class="timelineSeg seg-weld" style="width:25%"></div>
           </div>
         </div>
       </div>
 
-      <div class="settingsSection">
-        <div class="settingsTitle">
-          <h3>2. Station Capacities & Initial Setup</h3>
-          <p>Active machine count and one-time preparation setup per station.</p>
-        </div>
-        <div class="settings">
-          <div class="field">
-            <label for="laserMachines">Laser machines</label>
-            <input id="laserMachines" type="number" min="1" step="1" value="1">
-          </div>
-          <div class="field">
-            <label for="punchMachines">Punching machines</label>
-            <input id="punchMachines" type="number" min="1" step="1" value="1">
-          </div>
-          <div class="field">
-            <label for="notchMachines">Notching machines</label>
-            <input id="notchMachines" type="number" min="1" step="1" value="1">
-          </div>
-          <div class="field">
-            <label for="weldStations">Welding stations</label>
-            <input id="weldStations" type="number" min="1" step="1" value="1">
-          </div>
-          <div class="field">
-            <label for="laserSetup">Laser setup (min)</label>
-            <input id="laserSetup" type="number" min="0" step="1" value="0">
-          </div>
-          <div class="field">
-            <label for="punchSetup">Punch setup (min)</label>
-            <input id="punchSetup" type="number" min="0" step="1" value="0">
-          </div>
-          <div class="field">
-            <label for="notchSetup">Notch setup (min)</label>
-            <input id="notchSetup" type="number" min="0" step="1" value="0">
-          </div>
-          <div class="field">
-            <label for="weldSetup">Weld setup (min)</label>
-            <input id="weldSetup" type="number" min="0" step="1" value="0">
-          </div>
-        </div>
-      </div>
-
-      <div class="settingsSection">
-        <div class="settingsTitle">
-          <h3>3. Factory Calendar & Working Schedule</h3>
-          <p>Shift details and working availability used to project delivery dates.</p>
-        </div>
-        <div class="settings">
-          <div class="field">
-            <label for="efficiency">Efficiency / OEE (%)</label>
-            <input id="efficiency" type="number" min="1" max="100" step="1" value="100">
-          </div>
-          <div class="field">
-            <label for="hoursPerShift">Hours / shift</label>
-            <input id="hoursPerShift" type="number" min="0.5" step="0.5" value="8">
-          </div>
-          <div class="field">
-            <label for="shiftsPerDay">Shifts / day</label>
-            <input id="shiftsPerDay" type="number" min="1" step="1" value="1">
-          </div>
-          <div class="field">
-            <label for="breakMin">Break / shift (min)</label>
-            <input id="breakMin" type="number" min="0" step="1" value="0">
-          </div>
-          <div class="field">
-            <label for="workdaysPerWeek">Workdays / week</label>
-            <input id="workdaysPerWeek" type="number" min="1" max="7" step="1" value="6">
-          </div>
-        </div>
-      </div>
+      <div id="summary" class="summary"></div>
 
       <div class="table">
         <div class="row">
           <span>Process</span>
-          <span>Effective Workload</span>
-          <span>Station Output Rate</span>
+          <span>Effective Load</span>
+          <span>Output Rate</span>
           <span>Status</span>
         </div>
         <div class="row">
-          <b>Laser Cutting</b>
+          <b>Laser</b>
           <span id="laserLoad">—</span>
           <span id="laserCap">—</span>
           <span id="laserStatus">Normal</span>
         </div>
         <div class="row">
-          <b>Punching</b>
+          <b>Punch</b>
           <span id="punchLoad">—</span>
           <span id="punchCap">—</span>
           <span id="punchStatus">Normal</span>
         </div>
         <div class="row">
-          <b>Notching</b>
+          <b>Notch</b>
           <span id="notchLoad">—</span>
           <span id="notchCap">—</span>
           <span id="notchStatus">Normal</span>
         </div>
         <div class="row">
-          <b>Welding</b>
+          <b>Weld</b>
           <span id="weldLoad">—</span>
           <span id="weldCap">—</span>
           <span id="weldStatus">Normal</span>
         </div>
       </div>
+    </div>
 
-      <div class="note">
-        <strong>Flow Principles:</strong> Raw long sheets are cut into panel pairs by the Laser machine(s). Once a long sheet finishes, panels become immediately available for downstream continuous processing. Total machine workload aggregates single-station run hours across all machines, whereas Pipeline Completion Lead Time models physical overlapping throughput.
+    <!-- COLUMN 3: Settings -->
+    <div class="col" style="overflow-y:auto; padding-right:8px;">
+      
+      <div class="settingsSection">
+        <div class="settingsTitle">1. Process Cycle Times</div>
+        <div class="settingsGrid">
+          <div><label>Laser / sheet (min)</label><input id="laserMinutes" type="number" min="0.1" step="0.5" value="12"></div>
+          <div><label>Panels / sheet</label><input id="laserPanels" type="number" min="1" step="1" value="2"></div>
+          <div><label>Punch / panel (min)</label><input id="punchMinutes" type="number" min="0" step="0.5" value="5"></div>
+          <div><label>Notch / panel (min)</label><input id="notchMinutes" type="number" min="0" step="0.5" value="5"></div>
+          <div><label>Weld / panel (min)</label><input id="weldMinutes" type="number" min="0" step="0.5" value="5"></div>
+        </div>
       </div>
-    </details>
-  </section>
+
+      <div class="settingsSection">
+        <div class="settingsTitle">2. Capacities & Setup Time (Min)</div>
+        <div class="settingsGrid">
+          <div><label>Laser Mach.</label><input id="laserMachines" type="number" min="1" value="1"></div>
+          <div><label>Laser Setup</label><input id="laserSetup" type="number" min="0" value="0"></div>
+          
+          <div><label>Punch Mach.</label><input id="punchMachines" type="number" min="1" value="1"></div>
+          <div><label>Punch Setup</label><input id="punchSetup" type="number" min="0" value="0"></div>
+          
+          <div><label>Notch Mach.</label><input id="notchMachines" type="number" min="1" value="1"></div>
+          <div><label>Notch Setup</label><input id="notchSetup" type="number" min="0" value="0"></div>
+          
+          <div><label>Weld Stat.</label><input id="weldStations" type="number" min="1" value="1"></div>
+          <div><label>Weld Setup</label><input id="weldSetup" type="number" min="0" value="0"></div>
+        </div>
+      </div>
+
+      <div class="settingsSection">
+        <div class="settingsTitle">3. Schedule & Efficiency</div>
+        <div class="settingsGrid">
+          <div><label>OEE / Eff. (%)</label><input id="efficiency" type="number" min="1" max="100" value="100"></div>
+          <div><label>Hours / Shift</label><input id="hoursPerShift" type="number" min="0.5" step="0.5" value="8"></div>
+          <div><label>Shifts / Day</label><input id="shiftsPerDay" type="number" min="1" value="1"></div>
+          <div><label>Break / Shift (m)</label><input id="breakMin" type="number" min="0" value="0"></div>
+          <div style="grid-column:1/-1"><label>Workdays / Week</label><input id="workdaysPerWeek" type="number" min="1" max="7" value="6"></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
 </div>
 
 <script>
@@ -352,7 +279,6 @@ const num = (id, fallback=0) => {
 };
 const fmt = (n, d=2) => Number.isFinite(n) ? n.toFixed(d) : '—';
 
-// Auto-set start date to now (local timezone) if empty
 (function initDefaultDate() {
   const d = new Date();
   d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
@@ -364,12 +290,11 @@ function formatDuration(minutes) {
   const total = Math.round(minutes);
   const h = Math.floor(total / 60);
   const m = total % 60;
-  if (h === 0) return `${m} min`;
-  if (m === 0) return `${h} hr`;
-  return `${h} hr ${m} min`;
+  if (h === 0) return `${m}m`;
+  if (m === 0) return `${h}h`;
+  return `${h}h ${m}m`;
 }
 
-// Calculate target calendar completion accounting for workdays and shifts
 function calculateFinishDate(startDateStr, totalLeadMinutes, hoursPerDay, workdaysPerWeek) {
   if (!startDateStr || !totalLeadMinutes) return '—';
   let cur = new Date(startDateStr);
@@ -379,8 +304,7 @@ function calculateFinishDate(startDateStr, totalLeadMinutes, hoursPerDay, workda
   const dailyWorkMin = hoursPerDay * 60;
 
   while (remainingMin > 0) {
-    const dayOfWeek = cur.getDay(); // 0 is Sunday
-    // Check if current day is a working day (assuming 6 days = Mon-Sat, Sunday rest)
+    const dayOfWeek = cur.getDay(); 
     const isWorkingDay = workdaysPerWeek === 7 ? true : (dayOfWeek !== 0 && dayOfWeek <= workdaysPerWeek);
 
     if (isWorkingDay) {
@@ -392,7 +316,6 @@ function calculateFinishDate(startDateStr, totalLeadMinutes, hoursPerDay, workda
         remainingMin -= dailyWorkMin;
       }
     } else {
-      // Skip non-working day
       cur.setDate(cur.getDate() + 1);
     }
   }
@@ -496,14 +419,12 @@ function calculate() {
   const completionHr = completionMin / 60;
   const days = completionHr / hoursDay;
 
-  // Station rates (panels / hour)
   const laserRate = (laserMachines * laserPanels * 60) / effectiveLaserMin;
   const punchRate = effectivePunchMin > 0 ? (punchMachines * 60) / effectivePunchMin : Infinity;
   const notchRate = effectiveNotchMin > 0 ? (notchMachines * 60) / effectiveNotchMin : Infinity;
   const weldRate = effectiveWeldMin > 0 ? (weldStations * 60) / effectiveWeldMin : Infinity;
   const lineRate = Math.min(laserRate, punchRate, notchRate, weldRate);
 
-  // Identify Bottleneck(s)
   const rates = [
     { id: 'Laser', rate: laserRate, stepId: 'stepLaser', tagId: 'tagLaser', statId: 'laserStatus' },
     { id: 'Punch', rate: punchRate, stepId: 'stepPunch', tagId: 'tagPunch', statId: 'punchStatus' },
@@ -529,53 +450,45 @@ function calculate() {
   });
 
   $('bottleneckBadge').textContent = bottlenecks.length > 1
-    ? `Tied Constraints: ${bottlenecks.map(b => b.id).join(', ')} (${fmt(lineRate, 1)} p/hr)`
-    : `Primary Bottleneck: ${bottlenecks[0].id} (${fmt(lineRate, 1)} p/hr)`;
+    ? `Tied: ${bottlenecks.map(b => b.id).join(', ')} (${fmt(lineRate, 1)} p/hr)`
+    : `Constraint: ${bottlenecks[0].id} (${fmt(lineRate, 1)} p/hr)`;
 
-  // Update Workload Distribution Bar
   if (workloadMin > 0) {
     $('barLaser').style.width = `${((laserWork / workloadMin) * 100).toFixed(1)}%`;
     $('barPunch').style.width = `${((punchWork / workloadMin) * 100).toFixed(1)}%`;
     $('barNotch').style.width = `${((notchWork / workloadMin) * 100).toFixed(1)}%`;
     $('barWeld').style.width = `${((weldWork / workloadMin) * 100).toFixed(1)}%`;
-    $('workloadRatio').textContent = `Laser ${(laserWork/workloadMin*100).toFixed(0)}% · Punch ${(punchWork/workloadMin*100).toFixed(0)}% · Notch ${(notchWork/workloadMin*100).toFixed(0)}% · Weld ${(weldWork/workloadMin*100).toFixed(0)}%`;
+    $('workloadRatio').textContent = `L:${(laserWork/workloadMin*100).toFixed(0)}% · P:${(punchWork/workloadMin*100).toFixed(0)}% · N:${(notchWork/workloadMin*100).toFixed(0)}% · W:${(weldWork/workloadMin*100).toFixed(0)}%`;
   }
 
-  // Update Main KPIs
   $('estimateTime').textContent = qty ? formatDuration(completionMin) : '—';
   $('targetDate').textContent = qty ? calculateFinishDate(startDate, completionMin, hoursDay, workdaysPerWeek) : '—';
   $('workingDays').textContent = qty ? `${fmt(days, 2)} days` : '—';
   $('longSheets').textContent = qty ? `${batches}` : '—';
-  $('rate').textContent = qty ? `${fmt(lineRate, 1)} panels/hr` : '—';
+  $('rate').textContent = qty ? `${fmt(lineRate, 1)} / hr` : '—';
   $('workload').textContent = qty ? `${fmt(workloadMin / 60, 2)} hr` : '—';
 
-  // Update Table Columns
   $('laserLoad').textContent = formatDuration(laserWork + laserSetup * laserMachines);
   $('punchLoad').textContent = formatDuration(punchWork + punchSetup * punchMachines);
   $('notchLoad').textContent = formatDuration(notchWork + notchSetup * notchMachines);
   $('weldLoad').textContent = formatDuration(weldWork + weldSetup * weldStations);
 
-  $('laserCap').textContent = `${fmt(laserRate, 1)} panels/hr`;
-  $('punchCap').textContent = Number.isFinite(punchRate) ? `${fmt(punchRate, 1)} panels/hr` : 'No limit';
-  $('notchCap').textContent = Number.isFinite(notchRate) ? `${fmt(notchRate, 1)} panels/hr` : 'No limit';
-  $('weldCap').textContent = Number.isFinite(weldRate) ? `${fmt(weldRate, 1)} panels/hr` : 'No limit';
+  $('laserCap').textContent = `${fmt(laserRate, 1)}/h`;
+  $('punchCap').textContent = Number.isFinite(punchRate) ? `${fmt(punchRate, 1)}/h` : 'N/A';
+  $('notchCap').textContent = Number.isFinite(notchRate) ? `${fmt(notchRate, 1)}/h` : 'N/A';
+  $('weldCap').textContent = Number.isFinite(weldRate) ? `${fmt(weldRate, 1)}/h` : 'N/A';
 
-  // Dynamic Summary Text
   if (qty === 0) {
-    $('summary').innerHTML = '<b>Enter finished panel quantity</b> to project production timeline.';
+    $('summary').innerHTML = '<b>Enter quantity</b> to project production timeline.';
   } else {
     const bottleneckNames = bottlenecks.map(b => b.id).join(' & ');
     $('summary').innerHTML =
-      `Order: <b>${qty} panels</b> (${batches} long sheets) · ` +
-      `Est. completion in <b>${formatDuration(completionMin)}</b> ` +
-      `(${fmt(days, 2)} workdays @ ${fmt(hoursDay, 1)}h/day) · ` +
-      `Pacing speed: <b>${fmt(lineRate, 1)} panels/hr</b>. ` +
-      `Active constraint: <b style="color:var(--amber)">${bottleneckNames}</b>. ` +
-      `To accelerate throughput, scale capacity on <b>${bottleneckNames}</b>.`;
+      `Order: <b>${qty} panels</b> (${batches} sheets). Est. completion in <b>${formatDuration(completionMin)}</b> ` +
+      `(${fmt(days, 2)} workdays @ ${fmt(hoursDay, 1)}h/day). Pacing speed: <b>${fmt(lineRate, 1)} panels/hr</b>. ` +
+      `Constraint is <b style="color:var(--amber)">${bottleneckNames}</b>.`;
   }
 }
 
-// Attach event listeners
 [
   'panelQty','laserMinutes','laserPanels','punchMinutes','notchMinutes','weldMinutes',
   'laserMachines','laserSetup','punchMachines','punchSetup','notchMachines','notchSetup',
@@ -583,10 +496,7 @@ function calculate() {
   'workdaysPerWeek','startDate'
 ].forEach(id => {
   const el = $(id);
-  if (el) {
-    el.addEventListener('input', calculate);
-    el.addEventListener('change', calculate);
-  }
+  if (el) { el.addEventListener('input', calculate); el.addEventListener('change', calculate); }
 });
 
 calculate();
