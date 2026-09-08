@@ -1,548 +1,745 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>JUTARAMA Panel Workflow Predictor (Dashboard)</title>
-<style>
-:root{
-  --bg:#08101c;--card:#111b2b;--line:#28384f;--text:#eef6ff;--muted:#93a6bd;
-  --accent:#38bdf8;--green:#22c55e;--amber:#f59e0b;--red:#ef4444;--purple:#a855f7;
-}
-*{box-sizing:border-box}
-body{
-  margin:0;font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
-  background:linear-gradient(180deg,#07101b,#0b1422);color:var(--text);
-  height:100vh;overflow:hidden;display:flex;flex-direction:column;padding:16px;
-}
-.wrap{
-  display:flex;flex-direction:column;height:100%;max-width:1600px;margin:0 auto;width:100%;
-}
-.header{
-  display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-shrink:0;
-}
-.header h1{margin:0;font-size:24px;font-weight:800;letter-spacing:-0.02em}
-.header p{margin:4px 0 0;color:var(--muted);font-size:13px}
-.btn{
-  background:rgba(255,255,255,.07);color:var(--text);border:1px solid rgba(255,255,255,.15);
-  border-radius:8px;padding:8px 14px;cursor:pointer;font-size:12px;font-weight:600;
-  transition:all .2s ease;
-}
-.btn:hover{background:rgba(255,255,255,.14);border-color:var(--accent)}
+const THREE_URL = 'https://cdn.jsdelivr.net/npm/three@0.160.0/+esm';
+const ORBIT_URL = 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/controls/OrbitControls.js/+esm';
+const GLTF_URL = 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/loaders/GLTFLoader.js/+esm';
 
-.dashboard{
-  display:grid;grid-template-columns:300px 1.2fr 380px;gap:16px;flex-grow:1;min-height:0;
-}
-.col{
-  background:linear-gradient(180deg,rgba(255,255,255,.04),rgba(255,255,255,.015));
-  border:1px solid rgba(255,255,255,.08);border-radius:18px;padding:16px;
-  display:flex;flex-direction:column;gap:16px;overflow:hidden;
-}
-
-label{display:block;color:var(--muted);font-size:11px;font-weight:600;margin-bottom:6px;text-transform:uppercase;letter-spacing:.03em}
-input{
-  width:100%;border:1px solid rgba(255,255,255,.1);background:#091422;color:var(--text);
-  border-radius:8px;padding:8px 10px;font-size:12px;transition:all .2s ease;color-scheme: dark;
-}
-input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(56,189,248,.15)}
-
-.bigInputWrap{background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.06);border-radius:12px;padding:14px}
-.bigInput{font-size:28px;font-weight:800;text-align:center;padding:10px;color:#38bdf8}
-.hint{font-size:11px;color:var(--muted);margin-top:8px;line-height:1.4}
-
-.results{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.kpi{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);border-radius:10px;padding:12px}
-.kpi strong{display:block;font-size:18px;line-height:1.2;font-weight:700}
-.kpi span{display:block;color:var(--muted);font-size:10px;margin-top:4px;text-transform:uppercase;letter-spacing:.04em}
-.primaryKpi{grid-column:1/-1;background:rgba(34,197,94,.08);border-color:rgba(34,197,94,.28)}
-.primaryKpi strong{font-size:24px;color:#4ade80}
-.deliveryKpi{grid-column:1/-1;background:rgba(56,189,248,.08);border-color:rgba(56,189,248,.28)}
-.deliveryKpi strong{font-size:20px;color:#7dd3fc}
-
-.flow{background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.06);border-radius:12px;padding:14px}
-.flowHeader{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
-.flowTitle{font-weight:700;font-size:13px}
-.steps{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
-.step{padding:10px;border-radius:10px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);transition:all .2s ease}
-.step.bottleneck{border-color:rgba(239,68,68,.5);background:rgba(239,68,68,.08)}
-.step b{display:block;font-size:12px;color:var(--text)}
-.step span{display:block;color:var(--muted);font-size:10px;margin-top:4px}
-.tag{display:inline-block;padding:2px 6px;border-radius:4px;font-size:9px;font-weight:700;text-transform:uppercase;margin-top:6px}
-.tag.bottle{background:#ef4444;color:#fff}
-.tag.ok{background:rgba(255,255,255,.1);color:var(--muted)}
-
-.timelineWrap{margin-top:12px}
-.timelineBar{display:flex;height:10px;border-radius:5px;overflow:hidden;background:rgba(255,255,255,.05);margin-top:6px}
-.timelineSeg{height:100%;transition:width .3s ease}
-.seg-laser{background:#38bdf8}
-.seg-punch{background:#a855f7}
-.seg-notch{background:#f59e0b}
-.seg-weld{background:#22c55e}
-
-.summary{padding:14px;border-radius:10px;background:rgba(56,189,248,.07);border:1px solid rgba(56,189,248,.18);font-size:12px;line-height:1.5}
-
-.table{border:1px solid rgba(255,255,255,.08);border-radius:10px;overflow:hidden}
-.row{display:grid;grid-template-columns:1fr .8fr .8fr .8fr;gap:8px;padding:10px 12px;border-top:1px solid rgba(255,255,255,.05);font-size:11px;align-items:center}
-.row:first-child{border-top:0;background:rgba(255,255,255,.04);color:var(--muted);font-weight:600;text-transform:uppercase}
-
-.settingsSection{background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.06);border-radius:12px;padding:12px}
-.settingsTitle{margin-bottom:10px;font-size:13px;font-weight:700;color:var(--text)}
-.settingsGrid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px 12px}
-
-@media print{
-  body{background:#fff;color:#000;height:auto;overflow:visible}.col{box-shadow:none;border:1px solid #ccc}.btn{display:none}
-}
-</style>
-</head>
-<body>
-<div class="wrap">
-  <div class="header">
-    <div>
-      <h1>JUTARAMA Panel Workflow Predictor</h1>
-      <p>Precision line balance & delivery date estimation dashboard.</p>
-    </div>
-    <button class="btn" onclick="window.print()">Print Dashboard</button>
-  </div>
-
-  <div class="dashboard">
-    <!-- COLUMN 1: Inputs & KPIs -->
-    <div class="col">
-      <div class="bigInputWrap">
-        <label for="panelQty">Required Panel Output (Units)</label>
-        <input id="panelQty" class="bigInput" type="number" min="0" step="1" value="100" inputmode="numeric">
-        <div class="hint">1 sheet yields panels per setting below. Stations run continuous flow.</div>
-        <div style="margin-top:12px">
-          <label for="startDate">Job Scheduled Start</label>
-          <input id="startDate" type="datetime-local">
-        </div>
-      </div>
-
-      <div class="results">
-        <div class="kpi primaryKpi">
-          <strong id="estimateTime">—</strong>
-          <span>Pipeline Lead Time</span>
-        </div>
-        <div class="kpi deliveryKpi">
-          <strong id="targetDate">—</strong>
-          <span>Target Finish Date & Time</span>
-        </div>
-        <div class="kpi">
-          <strong id="workingDays">—</strong>
-          <span>Working Days</span>
-        </div>
-        <div class="kpi">
-          <strong id="longSheets">—</strong>
-          <span>Raw Sheets Req.</span>
-        </div>
-        <div class="kpi">
-          <strong id="rate">—</strong>
-          <span>Steady Line Rate</span>
-        </div>
-        <div class="kpi">
-          <strong id="workload">—</strong>
-          <span>Total Mach. Work</span>
-        </div>
-      </div>
-    </div>
-
-    <!-- COLUMN 2: Flow, Timeline & Table -->
-    <div class="col">
-      <div class="flow">
-        <div class="flowHeader">
-          <div class="flowTitle">Synchronized Flow Analysis & Critical Path</div>
-          <div id="bottleneckBadge" style="font-size:11px;color:var(--muted)"></div>
-        </div>
-        <div class="steps">
-          <div class="step" id="stepLaser">
-            <b>1. Laser</b>
-            <span>Batch process</span>
-            <div class="tag ok" id="tagLaser">Balanced</div>
-          </div>
-          <div class="step" id="stepPunch">
-            <b>2. Punch</b>
-            <span>Per unit</span>
-            <div class="tag ok" id="tagPunch">Balanced</div>
-          </div>
-          <div class="step" id="stepNotch">
-            <b>3. Notch</b>
-            <span>Per unit</span>
-            <div class="tag ok" id="tagNotch">Balanced</div>
-          </div>
-          <div class="step" id="stepWeld">
-            <b>4. Weld</b>
-            <span>Per unit</span>
-            <div class="tag ok" id="tagWeld">Balanced</div>
-          </div>
-        </div>
-
-        <div class="timelineWrap">
-          <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--muted);text-transform:uppercase">
-            <span>Workload Distribution</span>
-            <span id="workloadRatio"></span>
-          </div>
-          <div class="timelineBar">
-            <div id="barLaser" class="timelineSeg seg-laser" style="width:25%"></div>
-            <div id="barPunch" class="timelineSeg seg-punch" style="width:25%"></div>
-            <div id="barNotch" class="timelineSeg seg-notch" style="width:25%"></div>
-            <div id="barWeld" class="timelineSeg seg-weld" style="width:25%"></div>
-          </div>
-        </div>
-      </div>
-
-      <div id="summary" class="summary"></div>
-
-      <div class="table">
-        <div class="row">
-          <span>Process</span>
-          <span>Effective Load</span>
-          <span>Output Rate</span>
-          <span>Status</span>
-        </div>
-        <div class="row">
-          <b>Laser</b>
-          <span id="laserLoad">—</span>
-          <span id="laserCap">—</span>
-          <span id="laserStatus">Normal</span>
-        </div>
-        <div class="row">
-          <b>Punch</b>
-          <span id="punchLoad">—</span>
-          <span id="punchCap">—</span>
-          <span id="punchStatus">Normal</span>
-        </div>
-        <div class="row">
-          <b>Notch</b>
-          <span id="notchLoad">—</span>
-          <span id="notchCap">—</span>
-          <span id="notchStatus">Normal</span>
-        </div>
-        <div class="row">
-          <b>Weld</b>
-          <span id="weldLoad">—</span>
-          <span id="weldCap">—</span>
-          <span id="weldStatus">Normal</span>
-        </div>
-      </div>
-    </div>
-
-    <!-- COLUMN 3: Settings -->
-    <div class="col" style="overflow-y:auto; padding-right:8px;">
-      
-      <div class="settingsSection">
-        <div class="settingsTitle">1. Process Cycle Times</div>
-        <div class="settingsGrid">
-          <div><label>Laser / sheet (m)</label><input id="laserMinutes" type="number" min="0.1" step="0.5" value="12"></div>
-          <div><label>Panels / sheet</label><input id="laserPanels" type="number" min="1" step="1" value="2"></div>
-          <div><label>Punch / panel (m)</label><input id="punchMinutes" type="number" min="0" step="0.5" value="5"></div>
-          <div><label>Notch / panel (m)</label><input id="notchMinutes" type="number" min="0" step="0.5" value="5"></div>
-          <div><label>Weld / panel (m)</label><input id="weldMinutes" type="number" min="0" step="0.5" value="5"></div>
-        </div>
-      </div>
-
-      <div class="settingsSection">
-        <div class="settingsTitle">2. Capacities & Setup Time (Min)</div>
-        <div class="settingsGrid">
-          <div><label>Laser Mach.</label><input id="laserMachines" type="number" min="1" value="1"></div>
-          <div><label>Laser Setup</label><input id="laserSetup" type="number" min="0" value="0"></div>
-          
-          <div><label>Punch Mach.</label><input id="punchMachines" type="number" min="1" value="1"></div>
-          <div><label>Punch Setup</label><input id="punchSetup" type="number" min="0" value="0"></div>
-          
-          <div><label>Notch Mach.</label><input id="notchMachines" type="number" min="1" value="1"></div>
-          <div><label>Notch Setup</label><input id="notchSetup" type="number" min="0" value="0"></div>
-          
-          <div><label>Weld Stat.</label><input id="weldStations" type="number" min="1" value="1"></div>
-          <div><label>Weld Setup</label><input id="weldSetup" type="number" min="0" value="0"></div>
-        </div>
-      </div>
-
-      <div class="settingsSection">
-        <div class="settingsTitle">3. Schedule & Efficiency</div>
-        <div class="settingsGrid">
-          <div><label>OEE / Eff. (%)</label><input id="efficiency" type="number" min="1" max="100" value="100"></div>
-          <div><label>Workdays / Wk</label><input id="workdaysPerWeek" type="number" min="1" max="7" value="6"></div>
-          <div><label>Daily Start</label><input id="dayStartTime" type="time" value="08:00"></div>
-          <div><label>Daily End</label><input id="dayEndTime" type="time" value="17:00"></div>
-          <div style="grid-column:1/-1"><label>Total Break / Day (min)</label><input id="breakMin" type="number" min="0" value="60"></div>
-        </div>
-      </div>
-
-    </div>
-  </div>
-</div>
-
-<script>
-const $ = id => document.getElementById(id);
-const num = (id, fallback=0) => {
-  const n = Number($(id).value);
-  return Number.isFinite(n) ? n : fallback;
+const reducedMotionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+const MODEL_MODE = 'procedural';
+const componentNames = ['RoofAssembly', 'WallFront', 'WallBack', 'WallLeft', 'WallRight', 'BaseAssembly', 'SupportFrame'];
+const explosionConfig = {
+  RoofAssembly: { x: 0, y: 3.35, z: 0 },
+  WallFront: { x: 0, y: 0, z: 2.05 },
+  WallBack: { x: 0, y: 0, z: -2.05 },
+  WallLeft: { x: -2.05, y: 0, z: 0 },
+  WallRight: { x: 2.05, y: 0, z: 0 },
+  BaseAssembly: { x: 0, y: -1.12, z: 0 },
+  SupportFrame: { x: 0, y: -2.15, z: 0 }
 };
-const fmt = (n, d=2) => Number.isFinite(n) ? n.toFixed(d) : '—';
 
-(function initDefaultDate() {
-  const d = new Date();
-  d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
-  $('startDate').value = d.toISOString().slice(0, 16);
-})();
+const clamp = (value, min = 0, max = 1) => Math.max(min, Math.min(max, value));
+const vec = (value) => new THREE.Vector3(value.x, value.y, value.z);
 
-function formatDuration(minutes) {
-  if (!Number.isFinite(minutes) || minutes <= 0) return '0 min';
-  const total = Math.round(minutes);
-  const h = Math.floor(total / 60);
-  const m = total % 60;
-  if (h === 0) return `${m}m`;
-  if (m === 0) return `${h}h`;
-  return `${h}h ${m}m`;
-}
+let THREE;
+let OrbitControls;
+let GLTFLoader;
 
-// Simulates real factory clock, pausing overnight and on off-days
-function calculateFinishDate(startDateStr, totalLeadMinutes, startTimeStr, endTimeStr, breakMin, workdaysPerWeek) {
-  if (!startDateStr || !totalLeadMinutes) return '—';
-  let cur = new Date(startDateStr);
-  if (isNaN(cur.getTime())) return '—';
-
-  const [sh, sm] = startTimeStr.split(':').map(Number);
-  const [eh, em] = endTimeStr.split(':').map(Number);
-  
-  const dayStartMin = sh * 60 + sm;
-  let dayEndMin = eh * 60 + em;
-  if (dayEndMin <= dayStartMin) dayEndMin += 24 * 60; // In case shift crosses midnight
-
-  const grossDailyMin = dayEndMin - dayStartMin;
-  const netDailyMin = grossDailyMin - breakMin;
-  if (netDailyMin <= 0) return 'Invalid Schedule (Breaks exceed hours)';
-
-  // Ratio to convert net working minutes to physical clock minutes (stretching out breaks smoothly)
-  const clockStretch = grossDailyMin / netDailyMin; 
-  let remainingNet = totalLeadMinutes;
-  let loops = 0;
-
-  while (remainingNet > 0 && loops++ < 1000) {
-    const dayOfWeek = cur.getDay(); 
-    const isWorkingDay = workdaysPerWeek === 7 ? true : (dayOfWeek !== 0 && dayOfWeek <= workdaysPerWeek);
-
-    // Skip to next day if it's a weekend
-    if (!isWorkingDay) {
-      cur.setDate(cur.getDate() + 1);
-      cur.setHours(sh, sm, 0, 0);
-      continue;
-    }
-
-    let curMin = cur.getHours() * 60 + cur.getMinutes();
-    
-    // If started before factory opens, wait until open time
-    if (curMin < dayStartMin) {
-      cur.setHours(sh, sm, 0, 0);
-      curMin = dayStartMin;
-    }
-    
-    // If it's already closing time (or past), jump to tomorrow morning
-    if (curMin >= dayEndMin) {
-      cur.setDate(cur.getDate() + 1);
-      cur.setHours(sh, sm, 0, 0);
-      continue;
-    }
-
-    const minutesLeftToday = dayEndMin - curMin;
-    const maxNetLeftToday = minutesLeftToday / clockStretch;
-
-    if (remainingNet <= maxNetLeftToday) {
-      // Job finishes today
-      cur.setMinutes(cur.getMinutes() + (remainingNet * clockStretch));
-      remainingNet = 0;
-    } else {
-      // Job carries over to tomorrow
-      cur.setDate(cur.getDate() + 1);
-      cur.setHours(sh, sm, 0, 0);
-      remainingNet -= maxNetLeftToday;
-    }
-  }
-
-  return cur.toLocaleDateString(undefined, {
-    weekday: 'short', month: 'short', day: 'numeric',
-    hour: '2-digit', minute: '2-digit'
+function findNamed(root, name) {
+  let result = null;
+  root.traverse((object) => {
+    if (!result && object.name === name) result = object;
   });
+  return result;
 }
 
-function processOnParallelStations(arrivals, processMin, stations, setupMin=0) {
-  const free = Array.from({length: stations}, () => setupMin);
-  const departures = [];
-  for (const arrival of arrivals) {
-    let best = 0;
-    for (let i = 1; i < free.length; i++) if (free[i] < free[best]) best = i;
-    const start = Math.max(arrival, free[best]);
-    free[best] = start + processMin;
-    departures.push(free[best]);
-  }
-  departures.sort((a, b) => a - b);
-  return departures;
-}
-
-function simulatePipeline(
-  qty, laserMin, laserPanels, punchMin, notchMin, weldMin,
-  laserMachines, punchMachines, notchMachines, weldStations,
-  laserSetup, punchSetup, notchSetup, weldSetup
-) {
-  if (qty <= 0) return 0;
-  const release = [];
-  let produced = 0;
-  const laserFree = Array.from({length: laserMachines}, () => laserSetup);
-
-  while (produced < qty) {
-    let best = 0;
-    for (let i = 1; i < laserFree.length; i++) if (laserFree[i] < laserFree[best]) best = i;
-    laserFree[best] += laserMin;
-    const batch = Math.min(laserPanels, qty - produced);
-    for (let i = 0; i < batch; i++) release.push(laserFree[best]);
-    produced += batch;
-  }
-  release.sort((a, b) => a - b);
-
-  let arrivals = release;
-  arrivals = processOnParallelStations(arrivals, punchMin, punchMachines, punchSetup);
-  arrivals = processOnParallelStations(arrivals, notchMin, notchMachines, notchSetup);
-  arrivals = processOnParallelStations(arrivals, weldMin, weldStations, weldSetup);
-
-  return arrivals[arrivals.length - 1] || 0;
-}
-
-function calculate() {
-  const qty = Math.max(0, Math.floor(num('panelQty', 0)));
-  const laserMin = Math.max(.1, num('laserMinutes', 12));
-  const laserPanels = Math.max(1, Math.floor(num('laserPanels', 2)));
-  const punchMin = Math.max(0, num('punchMinutes', 5));
-  const notchMin = Math.max(0, num('notchMinutes', 5));
-  const weldMin = Math.max(0, num('weldMinutes', 5));
-
-  const laserMachines = Math.max(1, Math.floor(num('laserMachines', 1)));
-  const punchMachines = Math.max(1, Math.floor(num('punchMachines', 1)));
-  const notchMachines = Math.max(1, Math.floor(num('notchMachines', 1)));
-  const weldStations = Math.max(1, Math.floor(num('weldStations', 1)));
-
-  const laserSetup = Math.max(0, num('laserSetup', 0));
-  const punchSetup = Math.max(0, num('punchSetup', 0));
-  const notchSetup = Math.max(0, num('notchSetup', 0));
-  const weldSetup = Math.max(0, num('weldSetup', 0));
-
-  const efficiency = Math.max(.01, Math.min(1, num('efficiency', 100) / 100));
-  const dayStartTime = $('dayStartTime').value || '08:00';
-  const dayEndTime = $('dayEndTime').value || '17:00';
-  const breakMin = Math.max(0, num('breakMin', 0));
-  const workdaysPerWeek = Math.max(1, Math.min(7, Math.floor(num('workdaysPerWeek', 6))));
-  const startDate = $('startDate').value;
-
-  // Calculate Net Working Hours Per Day for KPI
-  const [sh, sm] = dayStartTime.split(':').map(Number);
-  const [eh, em] = dayEndTime.split(':').map(Number);
-  let grossMin = (eh * 60 + em) - (sh * 60 + sm);
-  if (grossMin < 0) grossMin += 24 * 60;
-  const hoursDay = Math.max(0.1, (grossMin - breakMin) / 60);
-
-  const effectiveLaserMin = laserMin / efficiency;
-  const effectivePunchMin = punchMin / efficiency;
-  const effectiveNotchMin = notchMin / efficiency;
-  const effectiveWeldMin = weldMin / efficiency;
-
-  const batches = qty === 0 ? 0 : Math.ceil(qty / laserPanels);
-  const laserWork = batches * effectiveLaserMin;
-  const punchWork = qty * effectivePunchMin;
-  const notchWork = qty * effectiveNotchMin;
-  const weldWork = qty * effectiveWeldMin;
-
-  const setupWork = (laserSetup * laserMachines) + (punchSetup * punchMachines) +
-                    (notchSetup * notchMachines) + (weldSetup * weldStations);
-  const workloadMin = laserWork + punchWork + notchWork + weldWork + setupWork;
-
-  const completionMin = simulatePipeline(
-    qty, effectiveLaserMin, laserPanels, effectivePunchMin, effectiveNotchMin, effectiveWeldMin,
-    laserMachines, punchMachines, notchMachines, weldStations,
-    laserSetup, punchSetup, notchSetup, weldSetup
-  );
-
-  const completionHr = completionMin / 60;
-  const days = completionHr / hoursDay;
-
-  const laserRate = (laserMachines * laserPanels * 60) / effectiveLaserMin;
-  const punchRate = effectivePunchMin > 0 ? (punchMachines * 60) / effectivePunchMin : Infinity;
-  const notchRate = effectiveNotchMin > 0 ? (notchMachines * 60) / effectiveNotchMin : Infinity;
-  const weldRate = effectiveWeldMin > 0 ? (weldStations * 60) / effectiveWeldMin : Infinity;
-  const lineRate = Math.min(laserRate, punchRate, notchRate, weldRate);
-
-  const rates = [
-    { id: 'Laser', rate: laserRate, stepId: 'stepLaser', tagId: 'tagLaser', statId: 'laserStatus' },
-    { id: 'Punch', rate: punchRate, stepId: 'stepPunch', tagId: 'tagPunch', statId: 'punchStatus' },
-    { id: 'Notch', rate: notchRate, stepId: 'stepNotch', tagId: 'tagNotch', statId: 'notchStatus' },
-    { id: 'Weld', rate: weldRate, stepId: 'stepWeld', tagId: 'tagWeld', statId: 'weldStatus' }
-  ];
-
-  rates.forEach(r => {
-    $(r.stepId).classList.remove('bottleneck');
-    $(r.tagId).className = 'tag ok';
-    $(r.tagId).textContent = 'Balanced';
-    $(r.statId).textContent = 'Balanced';
-    $(r.statId).style.color = 'inherit';
-  });
-
-  const bottlenecks = rates.filter(r => Math.abs(r.rate - lineRate) < 0.01);
-  bottlenecks.forEach(b => {
-    $(b.stepId).classList.add('bottleneck');
-    $(b.tagId).className = 'tag bottle';
-    $(b.tagId).textContent = 'Bottleneck';
-    $(b.statId).textContent = 'Bottleneck';
-    $(b.statId).style.color = 'var(--red)';
-  });
-
-  $('bottleneckBadge').textContent = bottlenecks.length > 1
-    ? `Tied: ${bottlenecks.map(b => b.id).join(', ')} (${fmt(lineRate, 1)} p/hr)`
-    : `Constraint: ${bottlenecks[0].id} (${fmt(lineRate, 1)} p/hr)`;
-
-  if (workloadMin > 0) {
-    $('barLaser').style.width = `${((laserWork / workloadMin) * 100).toFixed(1)}%`;
-    $('barPunch').style.width = `${((punchWork / workloadMin) * 100).toFixed(1)}%`;
-    $('barNotch').style.width = `${((notchWork / workloadMin) * 100).toFixed(1)}%`;
-    $('barWeld').style.width = `${((weldWork / workloadMin) * 100).toFixed(1)}%`;
-    $('workloadRatio').textContent = `L:${(laserWork/workloadMin*100).toFixed(0)}% · P:${(punchWork/workloadMin*100).toFixed(0)}% · N:${(notchWork/workloadMin*100).toFixed(0)}% · W:${(weldWork/workloadMin*100).toFixed(0)}%`;
-  }
-
-  $('estimateTime').textContent = qty ? formatDuration(completionMin) : '—';
-  $('targetDate').textContent = qty ? calculateFinishDate(startDate, completionMin, dayStartTime, dayEndTime, breakMin, workdaysPerWeek) : '—';
-  $('workingDays').textContent = qty ? `${fmt(days, 2)} days` : '—';
-  $('longSheets').textContent = qty ? `${batches}` : '—';
-  $('rate').textContent = qty ? `${fmt(lineRate, 1)} / hr` : '—';
-  $('workload').textContent = qty ? `${fmt(workloadMin / 60, 2)} hr` : '—';
-
-  $('laserLoad').textContent = formatDuration(laserWork + laserSetup * laserMachines);
-  $('punchLoad').textContent = formatDuration(punchWork + punchSetup * punchMachines);
-  $('notchLoad').textContent = formatDuration(notchWork + notchSetup * notchMachines);
-  $('weldLoad').textContent = formatDuration(weldWork + weldSetup * weldStations);
-
-  $('laserCap').textContent = `${fmt(laserRate, 1)}/h`;
-  $('punchCap').textContent = Number.isFinite(punchRate) ? `${fmt(punchRate, 1)}/h` : 'N/A';
-  $('notchCap').textContent = Number.isFinite(notchRate) ? `${fmt(notchRate, 1)}/h` : 'N/A';
-  $('weldCap').textContent = Number.isFinite(weldRate) ? `${fmt(weldRate, 1)}/h` : 'N/A';
-
-  if (qty === 0) {
-    $('summary').innerHTML = '<b>Enter quantity</b> to project production timeline.';
+function makeTexture(THREE, { blue = false } = {}) {
+  const canvas = document.createElement('canvas');
+  canvas.width = canvas.height = 512;
+  const context = canvas.getContext('2d');
+  const gradient = context.createLinearGradient(0, 0, 512, 512);
+  if (blue) {
+    gradient.addColorStop(0, '#1f66d0');
+    gradient.addColorStop(0.55, '#0e3d9f');
+    gradient.addColorStop(1, '#061d55');
   } else {
-    const bottleneckNames = bottlenecks.map(b => b.id).join(' & ');
-    $('summary').innerHTML =
-      `Order: <b>${qty} panels</b> (${batches} sheets). Est. pipeline runtime is <b>${formatDuration(completionMin)}</b> ` +
-      `(${fmt(days, 2)} workdays @ ${fmt(hoursDay, 1)}h net/day). Pacing speed: <b>${fmt(lineRate, 1)} panels/hr</b>. ` +
-      `Constraint is <b style="color:var(--amber)">${bottleneckNames}</b>.`;
+    gradient.addColorStop(0, '#f0f3f4');
+    gradient.addColorStop(0.33, '#afb7be');
+    gradient.addColorStop(0.72, '#7d8790');
+    gradient.addColorStop(1, '#d6dce0');
+  }
+  context.fillStyle = gradient;
+  context.fillRect(0, 0, 512, 512);
+  context.strokeStyle = blue ? 'rgba(3, 20, 58, .85)' : 'rgba(66, 74, 82, .86)';
+  context.lineWidth = 11;
+  context.strokeRect(14, 14, 484, 484);
+  context.strokeStyle = blue ? 'rgba(102, 170, 255, .55)' : 'rgba(240, 244, 247, .88)';
+  context.lineWidth = 25;
+  context.lineCap = 'round';
+  context.beginPath();
+  context.moveTo(90, 90);
+  context.lineTo(422, 422);
+  context.moveTo(422, 90);
+  context.lineTo(90, 422);
+  context.stroke();
+  context.fillStyle = blue ? '#1e5dc6' : '#727d87';
+  context.beginPath();
+  context.arc(256, 256, 23, 0, Math.PI * 2);
+  context.fill();
+  context.fillStyle = blue ? '#d8e9ff' : '#262d35';
+  for (let index = 0; index < 16; index += 1) {
+    const position = 34 + index * (444 / 15);
+    for (const [x, y] of [[position, 18], [position, 494], [18, position], [494, position]]) {
+      context.beginPath();
+      context.arc(x, y, 4, 0, Math.PI * 2);
+      context.fill();
+    }
+  }
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  texture.anisotropy = 4;
+  return texture;
+}
+
+function createMaterials(THREE) {
+  return {
+    steel: new THREE.MeshStandardMaterial({ map: makeTexture(THREE), metalness: 0.84, roughness: 0.34 }),
+    steelPlain: new THREE.MeshStandardMaterial({ color: 0xb8c0c8, metalness: 0.84, roughness: 0.34 }),
+    steelEdge: new THREE.MeshStandardMaterial({ color: 0x68727c, metalness: 0.86, roughness: 0.28 }),
+    steelLight: new THREE.MeshStandardMaterial({ color: 0xc6cdd3, metalness: 0.78, roughness: 0.32 }),
+    silicone: new THREE.MeshStandardMaterial({ map: makeTexture(THREE, { blue: true }), metalness: 0.02, roughness: 0.34 }),
+    siliconeEdge: new THREE.MeshStandardMaterial({ color: 0x1555bc, metalness: 0.01, roughness: 0.3 }),
+    fastener: new THREE.MeshStandardMaterial({ color: 0xd6dce0, metalness: 0.92, roughness: 0.21 })
+  };
+}
+
+function addBolt(THREE, group, x, y, z, material, rotation = [Math.PI / 2, 0, 0], radius = 0.032) {
+  const bolt = new THREE.Mesh(new THREE.CylinderGeometry(radius, radius, 0.024, 10), material);
+  bolt.position.set(x, y, z);
+  bolt.rotation.set(...rotation);
+  bolt.castShadow = true;
+  group.add(bolt);
+}
+
+function createWallPanel(THREE, materials, size = 1.45) {
+  const panel = new THREE.Group();
+  panel.name = 'WallPanel';
+  const body = new THREE.Group();
+  body.name = 'HDGPanel';
+  const liner = new THREE.Group();
+  liner.name = 'SiliconeLiner';
+  const fasteners = new THREE.Group();
+  fasteners.name = 'Fasteners';
+
+  const bodyMesh = new THREE.Mesh(new THREE.BoxGeometry(size - 0.05, size - 0.05, 0.09), materials.steel);
+  bodyMesh.castShadow = true;
+  bodyMesh.receiveShadow = true;
+  body.add(bodyMesh);
+  const braceLength = size * 0.92;
+  for (const rotation of [Math.PI / 4, -Math.PI / 4]) {
+    const brace = new THREE.Mesh(new THREE.BoxGeometry(braceLength, 0.055, 0.035), materials.steelLight);
+    brace.position.z = 0.058;
+    brace.rotation.z = rotation;
+    brace.castShadow = true;
+    body.add(brace);
+  }
+  for (const [x, y, width, height] of [[0, size / 2 - 0.035, size, 0.055], [0, -size / 2 + 0.035, size, 0.055], [size / 2 - 0.035, 0, 0.055, size], [-size / 2 + 0.035, 0, 0.055, size]]) {
+    const frameBar = new THREE.Mesh(new THREE.BoxGeometry(width, height, 0.05), materials.steelEdge);
+    frameBar.position.set(x, y, 0.06);
+    body.add(frameBar);
+  }
+
+  const linerBody = new THREE.Group();
+  linerBody.name = 'MainBody';
+  const linerMesh = new THREE.Mesh(new THREE.BoxGeometry(size - 0.1, size - 0.1, 0.018), materials.silicone);
+  linerMesh.position.z = -0.06;
+  linerMesh.receiveShadow = true;
+  linerBody.add(linerMesh);
+  for (const rotation of [Math.PI / 4, -Math.PI / 4]) {
+    const linerBrace = new THREE.Mesh(new THREE.BoxGeometry(braceLength, 0.022, 0.02), materials.siliconeEdge);
+    linerBrace.position.z = -0.075;
+    linerBrace.rotation.z = rotation;
+    linerBody.add(linerBrace);
+  }
+
+  const flangeTop = new THREE.Group();
+  flangeTop.name = 'FlangeWallTop';
+  const flangeRight = new THREE.Group();
+  flangeRight.name = 'FlangeWallRight';
+  const flangeBottom = new THREE.Group();
+  flangeBottom.name = 'FlangeWallBottom';
+  const flangeLeft = new THREE.Group();
+  flangeLeft.name = 'FlangeWallLeft';
+  
+  const flangePieces = [
+    [flangeTop, new THREE.BoxGeometry(size - 0.16, 0.09, 0.16), 0, size / 2 - 0.045, 0.02],
+    [flangeRight, new THREE.BoxGeometry(0.09, size - 0.16, 0.16), size / 2 - 0.045, 0, 0.02],
+    [flangeBottom, new THREE.BoxGeometry(size - 0.16, 0.09, 0.16), 0, -size / 2 + 0.045, 0.02],
+    [flangeLeft, new THREE.BoxGeometry(0.09, size - 0.16, 0.16), -size / 2 + 0.045, 0, 0.02]
+  ];
+  flangePieces.forEach(([group, geometry, x, y, z]) => {
+    const mesh = new THREE.Mesh(geometry, materials.siliconeEdge);
+    mesh.position.set(x, y, z);
+    mesh.castShadow = true;
+    group.add(mesh);
+  });
+
+  const cornerGroups = {};
+  for (const [name, x, y] of [
+    ['CornerMemberTopLeft', -size / 2 + 0.09, size / 2 - 0.09],
+    ['CornerMemberTopRight', size / 2 - 0.09, size / 2 - 0.09],
+    ['CornerMemberBottomLeft', -size / 2 + 0.09, -size / 2 + 0.09],
+    ['CornerMemberBottomRight', size / 2 - 0.09, -size / 2 + 0.09]
+  ]) {
+    const group = new THREE.Group();
+    group.name = name;
+    const member = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.18, 0.16), materials.siliconeEdge);
+    member.position.set(x, y, 0.02);
+    member.castShadow = true;
+    group.add(member);
+    cornerGroups[name] = group;
+  }
+
+  const linerHoles = new THREE.Group();
+  linerHoles.name = 'LinerHoles';
+  for (let index = 0; index < 16; index += 1) {
+    const position = -size / 2 + 0.08 + index * ((size - 0.16) / 15);
+    addBolt(THREE, linerHoles, position, size / 2 + 0.015, -0.087, materials.siliconeEdge, [Math.PI / 2, 0, 0], 0.022);
+    addBolt(THREE, linerHoles, position, -size / 2 - 0.015, -0.087, materials.siliconeEdge, [Math.PI / 2, 0, 0], 0.022);
+    addBolt(THREE, linerHoles, -size / 2 - 0.015, position, -0.087, materials.siliconeEdge, [Math.PI / 2, 0, 0], 0.022);
+    addBolt(THREE, linerHoles, size / 2 + 0.015, position, -0.087, materials.siliconeEdge, [Math.PI / 2, 0, 0], 0.022);
+  }
+  liner.add(linerBody, flangeTop, flangeRight, flangeBottom, flangeLeft, ...Object.values(cornerGroups), linerHoles);
+
+  for (let index = 0; index < 16; index += 1) {
+    const position = -size / 2 + 0.08 + index * ((size - 0.16) / 15);
+    addBolt(THREE, fasteners, position, size / 2 + 0.015, 0.089, materials.fastener);
+    addBolt(THREE, fasteners, position, -size / 2 - 0.015, 0.089, materials.fastener);
+    addBolt(THREE, fasteners, -size / 2 - 0.015, position, 0.089, materials.fastener);
+    addBolt(THREE, fasteners, size / 2 + 0.015, position, 0.089, materials.fastener);
+  }
+
+  panel.add(body, liner, fasteners);
+  panel.userData.layerGroups = { HDGPanel: body, SiliconeLiner: liner, Fasteners: fasteners };
+  return panel;
+}
+
+function createProceduralTank(THREE, materials) {
+  const tank = new THREE.Group();
+  tank.name = 'Tank';
+  const roof = new THREE.Group();
+  roof.name = 'RoofAssembly';
+  const front = new THREE.Group();
+  front.name = 'WallFront';
+  const back = new THREE.Group();
+  back.name = 'WallBack';
+  const left = new THREE.Group();
+  left.name = 'WallLeft';
+  const right = new THREE.Group();
+  right.name = 'WallRight';
+  const base = new THREE.Group();
+  base.name = 'BaseAssembly';
+  const support = new THREE.Group();
+  support.name = 'SupportFrame';
+
+  const columns = 4;
+  const rows = 3;
+  const levels = 2;
+  const panelSize = 1.45;
+  const width = columns * panelSize;
+  const depth = rows * panelSize;
+  const height = levels * panelSize;
+  const tankBottom = 0.4;
+
+  for (let level = 0; level < levels; level += 1) {
+    const y = tankBottom + panelSize / 2 + level * panelSize;
+    for (let index = 0; index < columns; index += 1) {
+      const x = -width / 2 + panelSize / 2 + index * panelSize;
+      const frontPanel = createWallPanel(THREE, materials, panelSize);
+      frontPanel.position.set(x, y, depth / 2);
+      front.add(frontPanel);
+      const backPanel = createWallPanel(THREE, materials, panelSize);
+      backPanel.position.set(-x, y, -depth / 2);
+      backPanel.rotation.y = Math.PI;
+      back.add(backPanel);
+    }
+    for (let index = 0; index < rows; index += 1) {
+      const z = -depth / 2 + panelSize / 2 + index * panelSize;
+      const rightPanel = createWallPanel(THREE, materials, panelSize);
+      rightPanel.position.set(width / 2, y, -z);
+      rightPanel.rotation.y = Math.PI / 2;
+      right.add(rightPanel);
+      const leftPanel = createWallPanel(THREE, materials, panelSize);
+      leftPanel.position.set(-width / 2, y, z);
+      leftPanel.rotation.y = -Math.PI / 2;
+      left.add(leftPanel);
+    }
+  }
+
+  for (let column = 0; column < columns; column += 1) {
+    for (let row = 0; row < rows; row += 1) {
+      const x = -width / 2 + panelSize / 2 + column * panelSize;
+      const z = -depth / 2 + panelSize / 2 + row * panelSize;
+      const basePanel = createWallPanel(THREE, materials, panelSize);
+      basePanel.name = `BasePanelAssembly-${column + 1}-${row + 1}`;
+      basePanel.position.set(x, tankBottom - 0.1, z);
+      basePanel.rotation.x = Math.PI / 2;
+      base.add(basePanel);
+    }
+  }
+
+  const roofThickness = 0.08;
+  for (let column = 0; column < columns; column += 1) {
+    for (let row = 0; row < rows; row += 1) {
+      const x = -width / 2 + panelSize / 2 + column * panelSize;
+      const z = -depth / 2 + panelSize / 2 + row * panelSize;
+      const roofPanel = new THREE.Mesh(new THREE.BoxGeometry(panelSize - 0.05, roofThickness, panelSize - 0.05), materials.steelPlain);
+      roofPanel.position.set(x, tankBottom + height + 0.08, z);
+      roofPanel.castShadow = true;
+      roof.add(roofPanel);
+    }
+  }
+  const railY = tankBottom - 0.62;
+  for (let index = 0; index <= columns; index += 1) {
+    const beam = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.12, depth + 0.35), materials.steelEdge);
+    beam.position.set(-width / 2 + index * panelSize, railY, 0);
+    beam.castShadow = true;
+    support.add(beam);
+  }
+  for (let index = 0; index <= rows; index += 1) {
+    const beam = new THREE.Mesh(new THREE.BoxGeometry(width + 0.35, 0.12, 0.1), materials.steelEdge);
+    beam.position.set(0, railY, -depth / 2 + index * panelSize);
+    beam.castShadow = true;
+    support.add(beam);
+  }
+  for (let column = 0; column <= columns; column += 1) {
+    for (let row = 0; row <= rows; row += 1) {
+      const post = new THREE.Mesh(new THREE.BoxGeometry(0.13, 0.52, 0.13), materials.steelEdge);
+      post.position.set(-width / 2 + column * panelSize, railY - 0.29, -depth / 2 + row * panelSize);
+      post.castShadow = true;
+      support.add(post);
+    }
+  }
+
+  tank.add(roof, front, back, left, right, base, support);
+  tank.userData.dimensions = { width, depth, height, panelSize };
+  return tank;
+}
+
+function disposeObject(root) {
+  root.traverse((object) => {
+    if (object.geometry) object.geometry.dispose();
+    if (object.material) {
+      const materials = Array.isArray(object.material) ? object.material : [object.material];
+      materials.forEach((material) => {
+        if (material.map) material.map.dispose();
+        material.dispose();
+      });
+    }
+  });
+}
+
+function getStage(progress) {
+  if (progress < 0.1) return { name: 'assembled', label: 'Assembled', detail: 'Drag to rotate. Scroll or use the slider to inspect the construction.' };
+  if (progress < 0.18) return { name: 'approach', label: 'Closer inspection', detail: 'The camera moves in to make the assembly easier to read.' };
+  if (progress < 0.30) return { name: 'roof', label: 'Flat roof assembly', detail: 'The flat roof lifts vertically from the tank body.' };
+  if (progress < 0.42) return { name: 'front', label: 'Front wall panels', detail: 'Front wall panels move forward along their assembly axis.' };
+  if (progress < 0.54) return { name: 'right', label: 'Right wall panels', detail: 'Right wall panels move laterally from the original structure.' };
+  if (progress < 0.66) return { name: 'left', label: 'Left wall panels', detail: 'Left wall panels move laterally from the original structure.' };
+  if (progress < 0.78) return { name: 'back', label: 'Rear wall panels', detail: 'Rear wall panels move backward along their assembly axis.' };
+  if (progress < 0.88) return { name: 'interior', label: 'Interior liner surface', detail: 'Blue silicone faces remain toward the water-contact side of the tank.' };
+  if (progress < 0.97) return { name: 'panel', label: 'Panel interface', detail: 'Flange walls, corner members and registered holes become legible.' };
+  return { name: 'joint', label: 'Joint interface', detail: 'The reverse pass reassembles the construction through the panel interface.' };
+}
+
+function markOriginalPositions(groups) {
+  Object.entries(groups).forEach(([name, group]) => {
+    if (!group) return;
+    group.userData.originalPosition = group.position.clone();
+    group.userData.originalRotation = group.rotation.clone();
+    group.userData.originalScale = group.scale.clone();
+    group.userData.explosionVector = vec(explosionConfig[name]);
+  });
+}
+
+function applyExplosion(record, value, { fromScroll = false } = {}) {
+  const progress = clamp(value);
+  record.progress = progress;
+  Object.values(record.groups).forEach((group) => {
+    if (!group || !group.userData.originalPosition) return;
+    group.position.copy(group.userData.originalPosition).addScaledVector(group.userData.explosionVector, progress);
+    if (group.userData.originalRotation) group.rotation.copy(group.userData.originalRotation);
+    if (group.userData.originalScale) group.scale.copy(group.userData.originalScale);
+  });
+  const stage = getStage(progress);
+  if (record.status) record.status.textContent = `${stage.label.toUpperCase()} · ${Math.round(progress * 100)}%`;
+  if (record.output) record.output.textContent = `${Math.round(progress * 100)}%`;
+  if (record.labels) record.labels.dataset.stage = stage.name;
+  if (record.mobileInfo) {
+    record.mobileInfo.innerHTML = `<strong>${stage.label}</strong><span>${stage.detail}</span>`;
+  }
+  if (record.range && Number(record.range.value) !== Math.round(progress * 100)) record.range.value = String(Math.round(progress * 100));
+  if (record.debug) record.debug.textContent = `mode=${record.modelMode}  progress=${progress.toFixed(3)}  camera=${record.camera.position.toArray().map((value) => value.toFixed(2)).join(',')}`;
+  if (!fromScroll) window.dispatchEvent(new CustomEvent('tank:manual-control'));
+}
+
+function setupLighting(THREE, scene, mode) {
+  const ambient = new THREE.HemisphereLight(0xdce8fa, 0x141c28, 1.55);
+  scene.add(ambient);
+  const key = new THREE.DirectionalLight(0xffffff, 4.1);
+  key.position.set(6, 8, 8);
+  key.castShadow = true;
+  key.shadow.mapSize.set(1024, 1024);
+  key.shadow.camera.left = -10;
+  key.shadow.camera.right = 10;
+  key.shadow.camera.top = 10;
+  key.shadow.camera.bottom = -10;
+  scene.add(key);
+  const rim = new THREE.DirectionalLight(0x79a7ff, 1.9);
+  rim.position.set(-8, 5, -6);
+  scene.add(rim);
+  const fill = new THREE.PointLight(0xf47b16, 9, 18, 2);
+  fill.position.set(-5, 3, 6);
+  scene.add(fill);
+  return { key, rim, fill, mode };
+}
+
+async function loadGlb(record, modelUrl) {
+  if (!modelUrl) return false;
+  try {
+    const loader = new GLTFLoader();
+    const result = await loader.loadAsync(modelUrl);
+    disposeObject(record.tankRoot);
+    record.tankRoot.clear();
+    record.modelRoot = result.scene;
+    record.tankRoot.add(result.scene);
+    const mapped = {};
+    const aliases = { RoofAssembly: ['RoofAssembly', 'Roof'] };
+    componentNames.forEach((name) => {
+      mapped[name] = (aliases[name] || [name]).map((candidate) => findNamed(result.scene, candidate)).find(Boolean) || null;
+    });
+    if (Object.values(mapped).some((group) => !group)) throw new Error('GLB group mapping incomplete');
+    record.groups = mapped;
+    record.modelMode = 'glb';
+    markOriginalPositions(record.groups);
+    applyExplosion(record, record.progress, { fromScroll: true });
+    return true;
+  } catch (error) {
+    console.warn('WINKO GLB unavailable. Using the procedural tank until a mapped model is supplied.', error);
+    return false;
   }
 }
 
-[
-  'panelQty','laserMinutes','laserPanels','punchMinutes','notchMinutes','weldMinutes',
-  'laserMachines','laserSetup','punchMachines','punchSetup','notchMachines','notchSetup',
-  'weldStations','weldSetup','efficiency','dayStartTime','dayEndTime','breakMin',
-  'workdaysPerWeek','startDate'
-].forEach(id => {
-  const el = $(id);
-  if (el) { el.addEventListener('input', calculate); el.addEventListener('change', calculate); }
-});
+function showFallback(record) {
+  record.canvas.style.display = 'none';
+  record.fallback.style.display = 'flex';
+  if (record.status) record.status.textContent = '3D VIEW FALLBACK';
+  if (record.range) record.range.disabled = true;
+  if (record.playButton) record.playButton.disabled = true;
+  if (record.resetButton) record.resetButton.disabled = true;
+  if (record.rotateButton) record.rotateButton.disabled = true;
+}
 
-calculate();
-</script>
-</body>
-</html>
+function resetCamera(record) {
+  record.manualCamera = false;
+  record.controls.autoRotate = false;
+  record.controls.enabled = true;
+  record.camera.position.copy(record.defaultCamera);
+  record.controls.target.copy(record.defaultTarget);
+  record.controls.update();
+  if (record.rotateButton) {
+    record.rotateButton.setAttribute('aria-pressed', 'false');
+  }
+}
+
+function startRender(record) {
+  if (record.running || record.fallbackActive) return;
+  record.running = true;
+  record.lastFrame = 0;
+  record.raf = requestAnimationFrame((time) => renderLoop(record, time));
+}
+
+function stopRender(record) {
+  record.running = false;
+  if (record.raf) cancelAnimationFrame(record.raf);
+  record.raf = 0;
+}
+
+function renderLoop(record, time) {
+  if (!record.running) return;
+  const delta = record.lastFrame ? Math.min(50, time - record.lastFrame) : 16;
+  record.lastFrame = time;
+  
+  if (record.mode === 'hero' && !record.introComplete && !reducedMotionQuery.matches) {
+    const progress = clamp((time - record.introStart) / 1600);
+    const eased = 1 - Math.pow(1 - progress, 3);
+    record.camera.position.lerpVectors(record.introCamera, record.defaultCamera, eased);
+    record.tankRoot.rotation.y = -0.19 + eased * 0.28;
+    record.lighting.key.position.x = 8 - eased * 6;
+    if (progress >= 1) {
+      record.introComplete = true;
+      record.controls.enabled = true;
+      record.tankRoot.rotation.y = 0.09;
+    }
+  }
+  
+  if (record.explosionPlaying && !reducedMotionQuery.matches) {
+    const next = record.progress + (record.playDirection * delta) / 5200;
+    if (next >= 1) { record.progress = 1; record.playDirection = -1; }
+    if (next <= 0) { record.progress = 0; record.playDirection = 1; }
+    applyExplosion(record, clamp(next), { fromScroll: true });
+  }
+
+  if (!record.manualCamera && record.mode === 'main' && record.progress > 0.1 && record.progress < 0.25) {
+    const approach = clamp((record.progress - 0.1) / 0.15);
+    record.camera.position.lerpVectors(record.defaultCamera, record.closeCamera, approach * 0.55);
+    record.controls.target.lerpVectors(record.defaultTarget, record.closeTarget, approach * 0.55);
+  }
+
+  // --- ANTIGRAVITY IMPLEMENTATION ---
+  if (record.antigravity) {
+    // Make the entire tank slowly float up and down
+    record.tankRoot.position.y = Math.sin(time * 0.0015) * 0.4;
+    // Add a slow, weightless tumble
+    record.tankRoot.rotation.x = Math.sin(time * 0.0008) * 0.15;
+    record.tankRoot.rotation.z = Math.cos(time * 0.0009) * 0.1;
+  } else {
+    // Gently return the tank to the ground when turned off
+    record.tankRoot.position.y += (0 - record.tankRoot.position.y) * 0.05;
+    record.tankRoot.rotation.x += (0 - record.tankRoot.rotation.x) * 0.05;
+    record.tankRoot.rotation.z += (0 - record.tankRoot.rotation.z) * 0.05;
+  }
+  // ----------------------------------
+
+  record.controls.update(delta / 1000);
+  record.renderer.render(record.scene, record.camera);
+  record.raf = requestAnimationFrame((nextTime) => renderLoop(record, nextTime));
+}
+
+function wireControls(record) {
+  if (!record.range) return;
+  record.range.addEventListener('input', () => {
+    record.explosionPlaying = false;
+    record.playButton?.setAttribute('aria-pressed', 'false');
+    record.playButton?.querySelector('span:last-child')?.replaceChildren(document.createTextNode('Play'));
+    applyExplosion(record, Number(record.range.value) / 100);
+    startRender(record);
+  });
+  record.playButton?.addEventListener('click', () => {
+    if (reducedMotionQuery.matches) {
+      applyExplosion(record, 1);
+      return;
+    }
+    record.explosionPlaying = !record.explosionPlaying;
+    record.playButton.setAttribute('aria-pressed', String(record.explosionPlaying));
+    record.playButton.querySelector('span:last-child').textContent = record.explosionPlaying ? 'Pause' : 'Play';
+    record.playButton.querySelector('span:first-child').textContent = record.explosionPlaying ? 'Ⅱ' : '▶';
+    startRender(record);
+  });
+  record.resetButton?.addEventListener('click', () => {
+    record.explosionPlaying = false;
+    record.playDirection = 1;
+    record.manualCamera = false;
+    record.playButton?.setAttribute('aria-pressed', 'false');
+    if (record.playButton) {
+      record.playButton.querySelector('span:last-child').textContent = 'Play';
+      record.playButton.querySelector('span:first-child').textContent = '▶';
+    }
+    applyExplosion(record, 0);
+    resetCamera(record);
+    window.dispatchEvent(new CustomEvent('tank:manual-reset'));
+    startRender(record);
+  });
+  record.rotateButton?.addEventListener('click', () => {
+    record.controls.autoRotate = !record.controls.autoRotate;
+    record.rotateButton.setAttribute('aria-pressed', String(record.controls.autoRotate));
+    startRender(record);
+  });
+  record.canvas.addEventListener('pointerdown', () => {
+    record.manualCamera = true;
+    startRender(record);
+  }, { passive: true });
+  record.controls.addEventListener('start', () => { record.manualCamera = true; });
+  record.setExplosionProgress = (value) => applyExplosion(record, value);
+  record.resetExplosion = () => record.resetButton?.click();
+  record.playExplosion = () => {
+    record.explosionPlaying = true;
+    record.playButton?.setAttribute('aria-pressed', 'true');
+    if (record.playButton) {
+      record.playButton.querySelector('span:last-child').textContent = 'Pause';
+      record.playButton.querySelector('span:first-child').textContent = 'Ⅱ';
+    }
+    startRender(record);
+  };
+  record.pauseExplosion = () => {
+    record.explosionPlaying = false;
+    record.playButton?.setAttribute('aria-pressed', 'false');
+    if (record.playButton) {
+      record.playButton.querySelector('span:last-child').textContent = 'Play';
+      record.playButton.querySelector('span:first-child').textContent = '▶';
+    }
+  };
+  record.setSelectedPanel = (panelId) => {
+    record.selectedPanel = panelId;
+    record.viewer?.dispatchEvent(new CustomEvent('tank:panel-selected', { detail: { panelId } }));
+  };
+  record.setCameraState = (state = 'default') => {
+    const target = state === 'close' ? record.closeCamera : record.defaultCamera;
+    const lookAt = state === 'close' ? record.closeTarget : record.defaultTarget;
+    record.camera.position.copy(target);
+    record.controls.target.copy(lookAt);
+    record.controls.update();
+  };
+}
+
+async function initViewer({ canvas, fallback, viewer, mode, status, range, output, labels, mobileInfo, playButton, resetButton, rotateButton, modelUrl }) {
+  const record = { canvas, fallback, viewer, mode, modelMode: MODEL_MODE, status, range, output, labels, mobileInfo, playButton, resetButton, rotateButton, modelUrl, running: false, fallbackActive: false, progress: 0, explosionPlaying: false, playDirection: 1, manualCamera: false, introComplete: mode !== 'hero' || reducedMotionQuery.matches };
+  try {
+    if (!THREE || !OrbitControls) throw new Error('Three.js modules unavailable');
+    const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true, powerPreference: 'high-performance' });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, mode === 'hero' ? 1.35 : 1.5));
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.07;
+    record.renderer = renderer;
+
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x070a10);
+    record.scene = scene;
+    const camera = new THREE.PerspectiveCamera(31, 1, 0.1, 100);
+    const defaultCamera = new THREE.Vector3(8.9, 5.75, 9.65);
+    const introCamera = new THREE.Vector3(11.8, 7.6, 13.1);
+    const closeCamera = new THREE.Vector3(8.1, 5.1, 8.6);
+    const defaultTarget = new THREE.Vector3(0, 1.18, 0);
+    const closeTarget = new THREE.Vector3(0, 1.05, 0);
+    if (mode === 'hero') {
+      defaultCamera.set(8.25, 4.9, 9.8);
+      introCamera.set(11.8, 6.6, 13.5);
+      defaultTarget.set(0, 1.08, 0);
+    }
+    camera.position.copy(record.introComplete ? defaultCamera : introCamera);
+    record.camera = camera;
+    record.defaultCamera = defaultCamera;
+    record.introCamera = introCamera;
+    record.closeCamera = closeCamera;
+    record.defaultTarget = defaultTarget;
+    record.closeTarget = closeTarget;
+    const controls = new OrbitControls(camera, canvas);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.065;
+    controls.enablePan = false;
+    controls.minDistance = mode === 'hero' ? 6.4 : 7.2;
+    controls.maxDistance = mode === 'hero' ? 14 : 17;
+    controls.maxPolarAngle = Math.PI * 0.49;
+    controls.target.copy(defaultTarget);
+    controls.enabled = record.introComplete;
+    record.controls = controls;
+
+    if (new URLSearchParams(window.location.search).get('debug3d') === '1') {
+      const debug = document.createElement('pre');
+      debug.className = 'viewer-debug';
+      viewer.appendChild(debug);
+      record.debug = debug;
+    }
+
+    record.lighting = setupLighting(THREE, scene, mode);
+    const materials = createMaterials(THREE);
+    const tankRoot = new THREE.Group();
+    tankRoot.name = 'Tank';
+    const procedural = createProceduralTank(THREE, materials);
+    tankRoot.add(...procedural.children);
+    tankRoot.userData.dimensions = procedural.userData.dimensions;
+    scene.add(tankRoot);
+    record.tankRoot = tankRoot;
+    record.groups = {};
+    componentNames.forEach((name) => { record.groups[name] = findNamed(tankRoot, name); });
+    markOriginalPositions(record.groups);
+    applyExplosion(record, 0, { fromScroll: true });
+
+    const floor = new THREE.Mesh(new THREE.PlaneGeometry(30, 30), new THREE.MeshStandardMaterial({ color: 0x070a10, roughness: 0.96 }));
+    floor.rotation.x = -Math.PI / 2;
+    floor.position.y = -2.22;
+    floor.receiveShadow = true;
+    scene.add(floor);
+
+    const resize = () => {
+      const bounds = viewer.getBoundingClientRect();
+      if (!bounds.width || !bounds.height) return;
+      renderer.setSize(bounds.width, bounds.height, false);
+      camera.aspect = bounds.width / bounds.height;
+      camera.updateProjectionMatrix();
+    };
+    const resizeObserver = new ResizeObserver(resize);
+    resizeObserver.observe(viewer);
+    resize();
+    record.resizeObserver = resizeObserver;
+
+    if (mode === 'hero') {
+      record.introStart = performance.now();
+      record.tankRoot.rotation.y = record.introComplete ? 0.09 : -0.19;
+    }
+    wireControls(record);
+    if (modelUrl && GLTFLoader) await loadGlb(record, modelUrl);
+    const visibilityObserver = new IntersectionObserver((entries) => {
+      const visible = entries.some((entry) => entry.isIntersecting);
+      record.visible = visible;
+      if (visible) startRender(record);
+      else if (!record.explosionPlaying && !record.controls.autoRotate && record.introComplete) stopRender(record);
+    }, { threshold: 0.02 });
+    visibilityObserver.observe(viewer);
+    record.visibilityObserver = visibilityObserver;
+    window.addEventListener('tank:scroll-progress', (event) => {
+      if (mode !== 'main' || record.manualControl) return;
+      applyExplosion(record, event.detail.progress, { fromScroll: true });
+      startRender(record);
+    });
+    window.addEventListener('tank:manual-control', () => {
+      if (mode === 'main') record.manualControl = true;
+    }, { passive: true });
+    window.addEventListener('beforeunload', () => {
+      stopRender(record);
+      visibilityObserver.disconnect();
+      resizeObserver.disconnect();
+      controls.dispose();
+      disposeObject(scene);
+    }, { once: true });
+    if (mode === 'main') window.winkoTankViewer = record;
+    if (mode === 'hero') window.winkoHeroViewer = record;
+    return record;
+  } catch (error) {
+    console.error('WINKO tank viewer unavailable', error);
+    record.fallbackActive = true;
+    showFallback(record);
+    return record;
+  }
+}
+
+async function boot() {
+  try {
+    const threeModule = await import(THREE_URL);
+    THREE = threeModule;
+    ({ OrbitControls } = await import(ORBIT_URL));
+    ({ GLTFLoader } = await import(GLTF_URL));
+  } catch (error) {
+    console.error('WINKO Three.js modules failed to load', error);
+  }
+  const heroCanvas = document.getElementById('heroCanvas');
+  const mainCanvas = document.getElementById('tankCanvas');
+  if (heroCanvas) {
+    await initViewer({
+      canvas: heroCanvas,
+      fallback: document.getElementById('heroFallback'),
+      viewer: heroCanvas.closest('.hero-stage'),
+      mode: 'hero',
+      status: null,
+      range: null,
+      output: null,
+      labels: null,
+      mobileInfo: null,
+      playButton: null,
+      resetButton: null,
+      rotateButton: null,
+      modelUrl: ''
+    });
+  }
+  if (mainCanvas) {
+    await initViewer({
+      canvas: mainCanvas,
+      fallback: document.getElementById('tankFallback'),
+      viewer: document.getElementById('viewer'),
+      mode: 'main',
+      status: document.getElementById('viewerStatus'),
+      range: document.getElementById('explodeRange'),
+      output: document.getElementById('explodeOutput'),
+      labels: document.getElementById('viewerLabels'),
+      mobileInfo: document.getElementById('mobileInfoPanel'),
+      playButton: document.getElementById('playBtn'),
+      resetButton: document.getElementById('resetBtn'),
+      rotateButton: document.getElementById('rotateBtn'),
+      modelUrl: mainCanvas.closest('[data-tank-viewer]')?.dataset.modelUrl || ''
+    });
+  }
+}
+
+boot();
+
+export { explosionConfig, applyExplosion };
