@@ -1,704 +1,595 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>JUTARAMA 2D Tank Planner V20</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>JUTARAMA Panel Workflow & Time Predictor</title>
 <style>
-  :root{
-    --bg:#0b1220; --panel:#121b2d; --panel2:#172338; --line:#2a3952; --text:#e8f1fb; --muted:#96a8c0;
-    --accent:#38bdf8; --green:#22c55e; --amber:#f59e0b; --red:#ef4444; --violet:#a855f7;
-    --shadow:0 16px 40px rgba(0,0,0,.28); --radius:18px;
-  }
-  *{box-sizing:border-box}
-  body{margin:0;font-family:Inter,Segoe UI,Arial,sans-serif;color:var(--text);background:linear-gradient(180deg,#08101c,#0c1524 48%,#0a1220)}
-  .wrap{max-width:1460px;margin:0 auto;padding:24px}
-  .hero{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap;margin-bottom:18px}
-  .title h1{margin:0;font-size:30px;letter-spacing:.2px}
-  .title p{margin:8px 0 0;color:var(--muted);max-width:920px;line-height:1.55}
-  .toolbar{display:flex;gap:10px;flex-wrap:wrap}
-  button{border:1px solid rgba(255,255,255,.08);background:linear-gradient(180deg,rgba(255,255,255,.08),rgba(255,255,255,.03));color:var(--text);border-radius:12px;padding:11px 14px;font-weight:700;cursor:pointer}
-  button.primary{background:linear-gradient(180deg,#0ea5e9,#0284c7);border-color:#38bdf8;color:#fff}
-  button.danger{border-color:rgba(239,68,68,.4);color:#ffe2e2}
-  button:hover{transform:translateY(-1px)} button:active{transform:scale(.97)}
-  .summary{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:18px}
-  .kpi{padding:16px;border-radius:16px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06)}
-  .kpi strong{display:block;font-size:28px;line-height:1}.kpi span{display:block;margin-top:8px;color:var(--muted);font-size:13px}
-  .layout2{display:grid;grid-template-columns:1.3fr .95fr;gap:18px}
-  .layout3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:18px}
-  .card{background:linear-gradient(180deg,rgba(255,255,255,.05),rgba(255,255,255,.025));border:1px solid rgba(255,255,255,.07);border-radius:var(--radius);box-shadow:var(--shadow)}
-  .cardHead{padding:18px 20px 0}.cardHead h2,.cardHead h3{margin:0 0 6px}.cardHead p{margin:0;color:var(--muted);line-height:1.5}
-  .cardBody{padding:18px 20px 20px}
-  .inline{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
-  .field{margin-top:10px}.field label{display:block;font-size:12px;color:var(--muted);margin-bottom:6px}
-  input,select,textarea{width:100%;padding:11px 12px;border-radius:12px;border:1px solid rgba(255,255,255,.08);background:#0d1525;color:var(--text);font:inherit}
-  textarea{min-height:78px;resize:vertical}
-  input:focus,select:focus,textarea:focus{outline:none;border-color:rgba(56,189,248,.55);box-shadow:0 0 0 3px rgba(56,189,248,.10)}
-  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
-  .muted{color:var(--muted)} .small{font-size:12px;color:var(--muted);line-height:1.45} .tiny{font-size:11px;color:var(--muted)}
-
-  .previewBar{display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:14px}
-  .seg{display:inline-flex;gap:6px;flex-wrap:wrap}
-  .seg button{padding:8px 12px;border-radius:999px}.seg button.active{background:rgba(56,189,248,.15);border-color:rgba(56,189,248,.35);color:#dff7ff}
-  .reorderHint{color:#bfe9ff;font-size:12px}
-  .flowCanvasBox{background:linear-gradient(180deg,#0b1423,#0d1728);border:1px solid rgba(255,255,255,.06);border-radius:20px;padding:18px;overflow:auto}
-  .flowRow{min-width:960px;display:grid;grid-auto-flow:column;grid-auto-columns:minmax(180px,1fr);gap:26px;align-items:stretch;position:relative;padding:14px 10px 24px}
-  .flowStep{position:relative;min-height:235px;border-radius:20px;border:1px solid rgba(255,255,255,.08);background:linear-gradient(180deg,rgba(255,255,255,.06),rgba(255,255,255,.025));padding:16px;display:flex;flex-direction:column;justify-content:space-between;cursor:grab;transition:transform .22s cubic-bezier(.2,.8,.2,1),box-shadow .22s ease,border-color .22s ease,opacity .22s ease;will-change:transform,opacity}
-  .flowStep:hover{transform:translateY(-5px);border-color:rgba(56,189,248,.28);box-shadow:0 16px 30px rgba(0,0,0,.22)}
-  .flowStep.dragging{opacity:.35!important;transform:scale(.96)!important;box-shadow:0 22px 44px rgba(0,0,0,.32)}
-  .flowStep.dragover{outline:2px solid rgba(56,189,248,.9);outline-offset:4px;transform:translateY(-4px) scale(1.015)}
-  .flowStep::after{content:"";position:absolute;top:50%;right:-20px;width:18px;height:18px;border-top:3px solid #4cc9ff;border-right:3px solid #4cc9ff;transform:translateY(-50%) rotate(45deg);opacity:.95;animation:arrowFlow 1.25s ease-in-out infinite}
-  .flowStep:last-child::after{display:none}
-  .stepNo{display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:999px;background:rgba(56,189,248,.14);border:1px solid rgba(56,189,248,.34);color:#dff6ff;font-weight:800;font-size:14px;position:relative;overflow:hidden}
-  .stepNo::after{content:"";position:absolute;inset:-2px;border-radius:999px;border:1px solid rgba(56,189,248,.35);animation:ringPulse 1.8s ease-out infinite}
-  .stepTop{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}.stepMain h3{margin:12px 0 6px;font-size:22px}.stepMain p{margin:0;color:var(--muted);line-height:1.45;font-size:13px}
-  .statusTag{padding:6px 10px;border-radius:999px;font-size:12px;font-weight:800;letter-spacing:.2px;border:1px solid rgba(255,255,255,.07)}
-  .running{background:rgba(34,197,94,.16);color:#d8ffe5;animation:runningPulse 1.65s ease-in-out infinite}
-  .ready{background:rgba(56,189,248,.15);color:#dcf6ff}
-  .blocked{background:rgba(239,68,68,.16);color:#ffe1e1;animation:blockedPulse 1.15s ease-in-out infinite}
-  .warn{background:rgba(245,158,11,.16);color:#fff1d5}
-  .timeBox{margin-top:14px;padding:12px 13px;border-radius:14px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.06)}
-  .timeBox strong{display:block;font-size:24px}.timeBox span{display:block;margin-top:6px;color:var(--muted);font-size:12px}
-  .stepFoot{display:flex;justify-content:space-between;align-items:flex-end;gap:10px;margin-top:12px;color:var(--muted);font-size:12px}.machineTag{padding:6px 9px;border-radius:999px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.06)}
-  .appliesTags{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}.typeTag{padding:4px 8px;border-radius:999px;background:rgba(168,85,247,.13);border:1px solid rgba(168,85,247,.25);font-size:11px;color:#eadcff}
-
-  .timeline{display:flex;flex-direction:column;gap:14px}.timeLineItem{display:grid;grid-template-columns:40px 1fr;gap:12px;align-items:start}.timeDot{width:40px;height:40px;border-radius:999px;display:flex;align-items:center;justify-content:center;font-weight:800;background:rgba(56,189,248,.14);border:1px solid rgba(56,189,248,.35);color:#dff6ff}.timeBody{padding:13px 14px;border-radius:16px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06)}.timeBody .top{display:flex;justify-content:space-between;gap:12px;align-items:center}.timeBody h4{margin:0;font-size:16px}.timeBody p{margin:8px 0 0;color:var(--muted);font-size:13px;line-height:1.5}
-
-  .breakdown{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:12px}.breakItem{padding:12px;border-radius:14px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06)}.breakItem b{display:block;font-size:20px}.breakItem span{display:block;margin-top:6px;color:var(--muted);font-size:12px}
-  .estimateKpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:14px}.estimateKpi{padding:14px;border-radius:14px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06)}.estimateKpi strong{display:block;font-size:24px}.estimateKpi span{display:block;margin-top:6px;font-size:12px;color:var(--muted)}
-  .bottleneckCard{margin-top:14px;padding:16px;border-radius:16px;background:linear-gradient(180deg,rgba(245,158,11,.12),rgba(245,158,11,.05));border:1px solid rgba(245,158,11,.28)}.bottleneckCard strong{font-size:18px}.bottleneckCard span{display:block;margin-top:6px;color:#f7d89b;font-size:12px;line-height:1.45}
-  .goodCard{margin-top:14px;padding:16px;border-radius:16px;background:linear-gradient(180deg,rgba(34,197,94,.12),rgba(34,197,94,.05));border:1px solid rgba(34,197,94,.28)}
-  .capacityTable{margin-top:14px;border:1px solid rgba(255,255,255,.06);border-radius:14px;overflow:hidden}.capRow{display:grid;grid-template-columns:1.1fr .65fr .9fr .65fr .8fr .95fr 1fr;gap:8px;padding:10px 12px;border-top:1px solid rgba(255,255,255,.05);font-size:12px;align-items:center}.capRow:first-child{border-top:0;background:rgba(255,255,255,.035);color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.04em}.capRow.bottleneck{background:rgba(245,158,11,.08)}.capRow b{color:#eff8ff}
-.formulaBox{margin-top:12px;padding:14px;border-radius:14px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06)}.ganttWrap{margin-top:14px}.ganttAxis{position:relative;height:28px;margin-left:170px;border-bottom:1px solid rgba(255,255,255,.08)}.ganttTick{position:absolute;top:0;bottom:0;width:1px;background:rgba(255,255,255,.08)}.ganttTick span{position:absolute;top:4px;left:4px;font-size:10px;color:var(--muted)}.ganttRow{display:grid;grid-template-columns:160px 1fr;gap:10px;align-items:center;margin-top:10px}.ganttLabel{font-size:12px;color:#dff6ff}.ganttTrack{position:relative;height:42px;border-radius:14px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);overflow:hidden}.ganttBar{position:absolute;top:7px;height:28px;border-radius:10px;display:flex;align-items:center;padding:0 10px;font-size:11px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;border:1px solid rgba(255,255,255,.12)}.ganttBar.running{background:linear-gradient(180deg,rgba(34,197,94,.42),rgba(34,197,94,.22));color:#eafff2}.ganttBar.ready{background:linear-gradient(180deg,rgba(56,189,248,.42),rgba(56,189,248,.22));color:#e2f8ff}.ganttBar.blocked{background:linear-gradient(180deg,rgba(239,68,68,.42),rgba(239,68,68,.22));color:#ffe7e7}.ganttBar.warn{background:linear-gradient(180deg,rgba(245,158,11,.42),rgba(245,158,11,.22));color:#fff4dd}.utilGrid{display:flex;flex-direction:column;gap:12px;margin-top:14px}.utilRow{display:grid;grid-template-columns:180px 1fr 64px;gap:10px;align-items:center}.utilName{font-size:12px;color:#dff6ff}.utilTrack{height:22px;border-radius:999px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.06);overflow:hidden}.utilBar{height:100%;border-radius:999px;background:linear-gradient(90deg,#0ea5e9,#38bdf8)}.utilBar.warn{background:linear-gradient(90deg,#f59e0b,#fbbf24)}.utilBar.bad{background:linear-gradient(90deg,#ef4444,#fb7185)}
-  .editorGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}.editCard{padding:14px;border-radius:16px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06)}.editCard h4{margin:0 0 10px;font-size:15px}.stepMoveBtns{display:flex;gap:6px;margin-top:10px}.stepMoveBtns button{padding:7px 9px;border-radius:9px;font-size:12px}
-  .checkGrid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:8px}.checkItem{display:flex;gap:8px;align-items:center;padding:8px 10px;border-radius:12px;background:rgba(255,255,255,.025);border:1px solid rgba(255,255,255,.05);font-size:12px}.checkItem input{width:auto;margin:0}
-  .presetRow{display:grid;grid-template-columns:1fr auto auto;gap:10px;align-items:center;padding:10px 12px;border-radius:14px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);margin-top:10px}
-  .motionToast{position:fixed;right:22px;bottom:22px;z-index:999;padding:10px 14px;border-radius:12px;background:rgba(7,18,31,.94);border:1px solid rgba(56,189,248,.28);color:#dff6ff;font-size:12px;font-weight:700;box-shadow:0 14px 30px rgba(0,0,0,.28);animation:toastIn .25s ease both}
-
-  @keyframes runningPulse{0%,100%{box-shadow:0 0 0 0 rgba(34,197,94,.05)}50%{box-shadow:0 0 0 5px rgba(34,197,94,.10)}}
-  @keyframes blockedPulse{0%,100%{box-shadow:0 0 0 0 rgba(239,68,68,.04)}50%{box-shadow:0 0 0 5px rgba(239,68,68,.12)}}
-  @keyframes arrowFlow{0%,100%{opacity:.45;transform:translateY(-50%) translateX(-2px) rotate(45deg)}50%{opacity:1;transform:translateY(-50%) translateX(3px) rotate(45deg)}}
-  @keyframes ringPulse{0%{opacity:.75;transform:scale(.72)}80%,100%{opacity:0;transform:scale(1.45)}}
-  @keyframes toastIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
-
-  @media (max-width:1200px){.summary{grid-template-columns:repeat(3,1fr)}.layout2,.layout3{grid-template-columns:1fr}.estimateKpis,.breakdown,.editorGrid,.grid4{grid-template-columns:repeat(2,1fr)}.capRow{grid-template-columns:1.2fr .65fr .9fr .65fr .8fr .95fr 1fr}}
-  @media (max-width:720px){.wrap{padding:16px}.summary,.estimateKpis,.breakdown,.editorGrid,.grid4,.grid3,.grid2{grid-template-columns:1fr}.title h1{font-size:24px}.capRow{grid-template-columns:1fr 1fr}}
-  @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important;scroll-behavior:auto!important}}
+:root{
+  --bg:#08101c;--card:#111b2b;--line:#28384f;--text:#eef6ff;--muted:#93a6bd;
+  --accent:#38bdf8;--green:#22c55e;--amber:#f59e0b;--red:#ef4444;--purple:#a855f7;
+}
+*{box-sizing:border-box}
+body{
+  margin:0;font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+  background:linear-gradient(180deg,#07101b,#0b1422);color:var(--text);min-height:100vh
+}
+.wrap{max-width:980px;margin:0 auto;padding:28px 18px 48px}
+.header{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;margin-bottom:20px}
+.header h1{margin:0;font-size:28px;font-weight:800;letter-spacing:-0.02em}
+.header p{margin:8px 0 0;color:var(--muted);font-size:14px;line-height:1.5}
+.btn{
+  background:rgba(255,255,255,.07);color:var(--text);border:1px solid rgba(255,255,255,.15);
+  border-radius:10px;padding:10px 16px;cursor:pointer;font-size:13px;font-weight:600;white-space:nowrap;
+  transition:all .2s ease;
+}
+.btn:hover{background:rgba(255,255,255,.14);border-color:var(--accent)}
+.card{
+  background:linear-gradient(180deg,rgba(255,255,255,.05),rgba(255,255,255,.02));
+  border:1px solid rgba(255,255,255,.08);border-radius:22px;padding:24px;
+  box-shadow:0 20px 50px rgba(0,0,0,.35)
+}
+.main{display:grid;grid-template-columns:1fr 1.25fr;gap:20px;align-items:start}
+label{display:block;color:var(--muted);font-size:13px;font-weight:500;margin-bottom:8px}
+input{
+  width:100%;border:1px solid rgba(255,255,255,.1);background:#091422;color:var(--text);
+  border-radius:12px;padding:12px 14px;font:inherit;transition:all .2s ease
+}
+input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(56,189,248,.15)}
+.bigInputWrap{background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.06);border-radius:16px;padding:18px}
+.bigInput{font-size:36px;font-weight:800;text-align:center;padding:16px;color:#38bdf8}
+.hint{font-size:12px;color:var(--muted);margin-top:10px;line-height:1.5}
+.results{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+.kpi{background:rgba(255,255,255,.035);border:1px solid rgba(255,255,255,.065);border-radius:14px;padding:14px 16px}
+.kpi strong{display:block;font-size:22px;line-height:1.2;font-weight:700}
+.kpi span{display:block;color:var(--muted);font-size:11px;margin-top:6px;text-transform:uppercase;letter-spacing:.04em}
+.primaryKpi{grid-column:1/-1;background:rgba(34,197,94,.08);border-color:rgba(34,197,94,.28)}
+.primaryKpi strong{font-size:32px;color:#4ade80}
+.deliveryKpi{grid-column:1/-1;background:rgba(56,189,248,.08);border-color:rgba(56,189,248,.28)}
+.deliveryKpi strong{font-size:22px;color:#7dd3fc}
+.flow{
+  margin-top:20px;padding:18px;border-radius:16px;background:rgba(255,255,255,.02);
+  border:1px solid rgba(255,255,255,.06)
+}
+.flowHeader{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.flowTitle{font-weight:700;font-size:14px}
+.steps{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.step{
+  position:relative;padding:12px;border-radius:12px;
+  background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);
+  transition:all .2s ease
+}
+.step.bottleneck{border-color:rgba(239,68,68,.5);background:rgba(239,68,68,.08)}
+.step b{display:block;font-size:13px;color:var(--text)}
+.step span{display:block;color:var(--muted);font-size:11px;margin-top:5px;line-height:1.4}
+.tag{
+  display:inline-block;padding:2px 6px;border-radius:4px;font-size:9px;font-weight:700;
+  text-transform:uppercase;margin-top:6px
+}
+.tag.bottle{background:#ef4444;color:#fff}
+.tag.ok{background:rgba(255,255,255,.1);color:var(--muted)}
+.timelineWrap{margin-top:16px}
+.timelineBar{
+  display:flex;height:12px;border-radius:6px;overflow:hidden;background:rgba(255,255,255,.05);
+  margin-top:8px
+}
+.timelineSeg{height:100%;transition:width .3s ease}
+.seg-laser{background:#38bdf8}
+.seg-punch{background:#a855f7}
+.seg-notch{background:#f59e0b}
+.seg-weld{background:#22c55e}
+.summary{
+  margin-top:18px;padding:16px;border-radius:14px;background:rgba(56,189,248,.07);
+  border:1px solid rgba(56,189,248,.18);font-size:13px;line-height:1.6
+}
+details{margin-top:20px}
+summary{cursor:pointer;font-weight:700;color:#dff6ff;padding:8px 0;outline:none}
+.settingsSection{margin-top:10px;padding:18px;border-radius:16px;background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.06)}
+.settingsTitle h3{margin:0;font-size:15px}
+.settingsTitle p{margin:4px 0 12px;color:var(--muted);font-size:12px}
+.settings{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.field{min-width:0}
+.table{margin-top:16px;border:1px solid rgba(255,255,255,.08);border-radius:14px;overflow:hidden}
+.row{
+  display:grid;grid-template-columns:1.2fr .8fr .8fr .8fr;gap:8px;padding:12px 14px;
+  border-top:1px solid rgba(255,255,255,.05);font-size:12px;align-items:center
+}
+.row:first-child{border-top:0;background:rgba(255,255,255,.04);color:var(--muted);font-size:11px;text-transform:uppercase;font-weight:600}
+.note{font-size:11px;color:var(--muted);line-height:1.6;margin-top:14px}
+@media(max-width:768px){
+  .main{grid-template-columns:1fr}.steps{grid-template-columns:1fr 1fr}.settings{grid-template-columns:1fr 1fr}
+}
+@media(max-width:480px){
+  .results,.steps,.settings{grid-template-columns:1fr}.row{grid-template-columns:1fr 1fr}
+}
+@media print{
+  body{background:#fff;color:#000}.card{box-shadow:none;border:none}.btn,details summary{display:none}details{display:block}
+}
 </style>
 </head>
 <body>
 <div class="wrap">
-  <div class="hero">
-    <div class="title">
-      <h1>JUTARAMA 2D Tank Planner V20</h1>
-      <p>Full 2D planning version with <b>editable workflow arrangement</b>, <b>Gantt chart schedule</b>, <b>machine utilization chart</b>, and a more accurate <b>BOM-style tank preset formula</b> using length, width, height, wall levels, and roof deduction logic.</p>
+  <div class="header">
+    <div>
+      <h1>JUTARAMA Panel Workflow Predictor</h1>
+      <p>Precision line balance, WIP pipeline simulation, and delivery date estimation.</p>
     </div>
-    <div class="toolbar">
-      <button class="primary" id="resetBtn">Reset Default</button>
-      <button id="runningAllBtn">Set All Running</button>
-      <button id="readyAllBtn">Set All Ready</button>
-      <button id="blockedAllBtn">Set All Blocked</button>
-    </div>
+    <button class="btn" onclick="window.print()">Print Report</button>
   </div>
 
-  <div class="summary" id="summary"></div>
+  <section class="card">
+    <div class="main">
+      <div class="bigInputWrap">
+        <label for="panelQty">Required Panel Output (Units)</label>
+        <input id="panelQty" class="bigInput" type="number" min="0" step="1" value="100" inputmode="numeric">
+        <div class="hint">Laser conversion: 1 long metal sheet yields 2 panels (12 min/sheet). Downstream stations run unit-by-unit in continuous flow.</div>
 
-  <div class="layout2">
-    <section class="card">
-      <div class="cardHead">
-        <h2>2D Workflow Diagram</h2>
-        <p>Preview one panel type at a time. Drag workflow cards left/right to rearrange the process order. Each card can be assigned to Wall / Roof / Base / Stay.</p>
-      </div>
-      <div class="cardBody">
-        <div class="previewBar">
-          <div class="seg" id="previewTypeSeg"></div>
-          <div class="reorderHint">Drag cards to reorder workflow arrangement.</div>
+        <div style="margin-top:18px">
+          <label for="startDate">Production Scheduled Start</label>
+          <input id="startDate" type="datetime-local">
         </div>
-        <div class="flowCanvasBox"><div class="flowRow" id="flowRow"></div></div>
       </div>
-    </section>
 
-    <section class="card">
-      <div class="cardHead">
-        <h2>Step Timeline</h2>
-        <p>Timeline and stage metrics for the selected panel type route.</p>
-      </div>
-      <div class="cardBody">
-        <div class="timeline" id="timeline"></div>
-        <div class="small" style="margin-top:14px">Cycle per panel = process time divided by active machines and efficiency, with setup and transfer amortized by batch size.</div>
-      </div>
-    </section>
-  </div>
-
-  <section class="card" style="margin-top:18px">
-    <div class="cardHead">
-      <h3>Tank Input, Calendar & Target</h3>
-      <p>Set tank breakdown, shift configuration, and target completion. The estimate updates automatically.</p>
-    </div>
-    <div class="cardBody">
-      <div class="layout2">
-        <div>
-          <div class="grid2">
-            <div class="field"><label>Tank size preset</label><select id="tankPreset"></select></div>
-            <div class="field"><label>Tank quantity</label><input id="tankQty" type="number" min="1" step="1" value="1"></div>
-          </div>
-          <div class="grid2">
-            <div class="field"><label><input id="useFormula" type="checkbox" checked style="width:auto;margin-right:8px">Use BOM formula by dimension</label></div>
-            <div class="field"><label>Roof deduction / opening panels</label><input id="roofDeduct" type="number" min="0" step="1" value="1"></div>
-          </div>
-          <div class="grid4">
-            <div class="field"><label>Length (ft)</label><input id="lengthFt" type="number" min="4" step="4" value="24"></div>
-            <div class="field"><label>Width (ft)</label><input id="widthFt" type="number" min="4" step="4" value="24"></div>
-            <div class="field"><label>Height (ft)</label><input id="heightFt" type="number" min="4" step="4" value="8"></div>
-            <div class="field"><label>Panel size (ft)</label><input id="panelSizeFt" type="number" min="1" step="1" value="4"></div>
-          </div>
-          <div class="breakdown">
-            <div class="breakItem"><b id="wallQty">0</b><span>Wall Panels</span></div>
-            <div class="breakItem"><b id="roofQty">0</b><span>Roof Panels</span></div>
-            <div class="breakItem"><b id="baseQty">0</b><span>Base Panels</span></div>
-            <div class="breakItem"><b id="stayQty">0</b><span>Stay / Accessory</span></div>
-          </div>
-          <div id="formulaNote" class="formulaBox small"></div>
-          <div class="grid4">
-            <div class="field"><label>Custom wall panels</label><input id="customWall" type="number" min="0" step="1" value="48"></div>
-            <div class="field"><label>Custom roof panels</label><input id="customRoof" type="number" min="0" step="1" value="35"></div>
-            <div class="field"><label>Custom base panels</label><input id="customBase" type="number" min="0" step="1" value="36"></div>
-            <div class="field"><label>Custom stay / accessory</label><input id="customStay" type="number" min="0" step="1" value="12"></div>
-          </div>
-          <div class="grid2">
-            <div class="field"><label><input id="includeStay" type="checkbox" checked style="width:auto;margin-right:8px">Include stay / accessory</label></div>
-            <div class="field"><label>Efficiency factor (%)</label><input id="efficiency" type="number" min="1" max="100" step="1" value="100"></div>
-          </div>
+      <div class="results">
+        <div class="kpi primaryKpi">
+          <strong id="estimateTime">—</strong>
+          <span>Pipeline Completion Lead Time</span>
         </div>
-        <div>
-          <div class="grid2">
-            <div class="field"><label>Production start date & time</label><input id="startDate" type="datetime-local"></div>
-            <div class="field"><label>Target completion (working days)</label><input id="targetDays" type="number" min="0" step="0.1" value="0"></div>
-          </div>
-          <div class="grid4">
-            <div class="field"><label>Hours / shift</label><input id="hoursPerShift" type="number" min="1" step="0.5" value="8"></div>
-            <div class="field"><label>Shifts / day</label><input id="shiftsPerDay" type="number" min="1" step="1" value="1"></div>
-            <div class="field"><label>Break min / shift</label><input id="breakMin" type="number" min="0" step="1" value="0"></div>
-            <div class="field"><label>Workdays / week</label><input id="workdaysPerWeek" type="number" min="1" max="7" step="1" value="6"></div>
-          </div>
-          <div class="estimateKpis" id="estimateKpis"></div>
+        <div class="kpi deliveryKpi">
+          <strong id="targetDate">—</strong>
+          <span>Target Delivery / Finish Date</span>
+        </div>
+        <div class="kpi">
+          <strong id="workingDays">—</strong>
+          <span>Working Days</span>
+        </div>
+        <div class="kpi">
+          <strong id="longSheets">—</strong>
+          <span>Raw Long Sheets</span>
+        </div>
+        <div class="kpi">
+          <strong id="rate">—</strong>
+          <span>Steady Line Rate</span>
+        </div>
+        <div class="kpi">
+          <strong id="workload">—</strong>
+          <span>Total Machine Work</span>
         </div>
       </div>
     </div>
-  </section>
 
-  <div class="layout2" style="margin-top:18px">
-    <section class="card">
-      <div class="cardHead">
-        <h3>Panel Type Estimate</h3>
-        <p>Separate workflow estimate for Wall, Roof, Base, and Stay.</p>
+    <div class="flow">
+      <div class="flowHeader">
+        <div class="flowTitle">Synchronized Flow Analysis & Critical Path</div>
+        <div id="bottleneckBadge" style="font-size:12px;color:var(--muted)"></div>
       </div>
-      <div class="cardBody"><div class="capacityTable" id="panelTypeTable"></div></div>
-    </section>
-
-    <section class="card">
-      <div class="cardHead">
-        <h3>Capacity, Bottleneck & Recommendation</h3>
-        <p>Machine-specific capacity using machine count, workers per machine, and available workers.</p>
-      </div>
-      <div class="cardBody">
-        <div id="bottleneckCard" class="bottleneckCard"></div>
-        <div id="recommendationCard" class="goodCard"></div>
-        <div class="capacityTable" id="capacityTable"></div>
-      </div>
-    </section>
-  </div>
-
-  <div class="layout2" style="margin-top:18px">
-    <section class="card">
-      <div class="cardHead">
-        <h3>Gantt Chart Style Schedule</h3>
-        <p>Shows an overlapped schedule by panel type. Each bar starts when the first batch can move to the step and ends when that step finishes the last required panel.</p>
-      </div>
-      <div class="cardBody"><div id="ganttChart" class="ganttWrap"></div></div>
-    </section>
-
-    <section class="card">
-      <div class="cardHead">
-        <h3>Machine Utilization % Chart</h3>
-        <p>Utilization is based on each stage workload divided by the total estimated completion window for the selected tank job.</p>
-      </div>
-      <div class="cardBody"><div id="utilChart" class="utilGrid"></div></div>
-    </section>
-  </div>
-
-  <div class="layout2" style="margin-top:18px">
-    <section class="card">
-      <div class="cardHead">
-        <h3>Actual vs Estimated</h3>
-        <p>Record actual production and compare with the estimate.</p>
-      </div>
-      <div class="cardBody">
-        <div class="grid3">
-          <div class="field"><label>Actual start</label><input id="actualStart" type="datetime-local"></div>
-          <div class="field"><label>Actual finish</label><input id="actualFinish" type="datetime-local"></div>
-          <div class="field"><label>Actual tanks completed</label><input id="actualQty" type="number" min="1" step="1" value="1"></div>
+      <div class="steps">
+        <div class="step" id="stepLaser">
+          <b>1. Laser Cutting</b>
+          <span>1 sheet → 2 panels · 12m</span>
+          <div class="tag ok" id="tagLaser">Balanced</div>
         </div>
-        <div class="estimateKpis" id="actualKpis"></div>
-      </div>
-    </section>
-
-    <section class="card">
-      <div class="cardHead">
-        <h3>Scenario Presets</h3>
-        <p>Save and compare different production scenarios such as normal mode, OT mode, low manpower, or machine breakdown.</p>
-      </div>
-      <div class="cardBody">
-        <div class="grid2">
-          <div class="field"><label>Preset name</label><input id="scenarioName" type="text" placeholder="e.g. Normal 1 Shift"></div>
-          <div class="field" style="display:flex;align-items:end"><button class="primary" id="saveScenarioBtn">Save Current Scenario</button></div>
+        <div class="step" id="stepPunch">
+          <b>2. Punching</b>
+          <span>5 min / panel</span>
+          <div class="tag ok" id="tagPunch">Balanced</div>
         </div>
-        <div id="presetList"></div>
+        <div class="step" id="stepNotch">
+          <b>3. Notching</b>
+          <span>5 min / panel</span>
+          <div class="tag ok" id="tagNotch">Balanced</div>
+        </div>
+        <div class="step" id="stepWeld">
+          <b>4. Welding</b>
+          <span>5 min / panel</span>
+          <div class="tag ok" id="tagWeld">Balanced</div>
+        </div>
       </div>
-    </section>
-  </div>
 
-  <section class="card" style="margin-top:18px">
-    <div class="cardHead">
-      <h3>Workflow Editor</h3>
-      <p>Edit step arrangement, panel-type applicability, machine IDs, batch size, setup time, transfer time, worker limit, and notes.</p>
+      <div class="timelineWrap">
+        <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--muted)">
+          <span>Process Workload Distribution</span>
+          <span id="workloadRatio"></span>
+        </div>
+        <div class="timelineBar">
+          <div id="barLaser" class="timelineSeg seg-laser" style="width:25%"></div>
+          <div id="barPunch" class="timelineSeg seg-punch" style="width:25%"></div>
+          <div id="barNotch" class="timelineSeg seg-notch" style="width:25%"></div>
+          <div id="barWeld" class="timelineSeg seg-weld" style="width:25%"></div>
+        </div>
+      </div>
     </div>
-    <div class="cardBody"><div class="editorGrid" id="editorGrid"></div></div>
+
+    <div id="summary" class="summary"></div>
+
+    <details open>
+      <summary>Production & Scheduling Parameters</summary>
+      
+      <div class="settingsSection">
+        <div class="settingsTitle">
+          <h3>1. Process Cycle Times</h3>
+          <p>Net machine cutting and handling times per unit or raw sheet.</p>
+        </div>
+        <div class="settings">
+          <div class="field">
+            <label for="laserMinutes">Laser / sheet (min)</label>
+            <input id="laserMinutes" type="number" min="0.1" step="0.5" value="12">
+          </div>
+          <div class="field">
+            <label for="laserPanels">Panels / long sheet</label>
+            <input id="laserPanels" type="number" min="1" step="1" value="2">
+          </div>
+          <div class="field">
+            <label for="punchMinutes">Punch / panel (min)</label>
+            <input id="punchMinutes" type="number" min="0" step="0.5" value="5">
+          </div>
+          <div class="field">
+            <label for="notchMinutes">Notch / panel (min)</label>
+            <input id="notchMinutes" type="number" min="0" step="0.5" value="5">
+          </div>
+          <div class="field">
+            <label for="weldMinutes">Weld / panel (min)</label>
+            <input id="weldMinutes" type="number" min="0" step="0.5" value="5">
+          </div>
+        </div>
+      </div>
+
+      <div class="settingsSection">
+        <div class="settingsTitle">
+          <h3>2. Station Capacities & Initial Setup</h3>
+          <p>Active machine count and one-time preparation setup per station.</p>
+        </div>
+        <div class="settings">
+          <div class="field">
+            <label for="laserMachines">Laser machines</label>
+            <input id="laserMachines" type="number" min="1" step="1" value="1">
+          </div>
+          <div class="field">
+            <label for="punchMachines">Punching machines</label>
+            <input id="punchMachines" type="number" min="1" step="1" value="1">
+          </div>
+          <div class="field">
+            <label for="notchMachines">Notching machines</label>
+            <input id="notchMachines" type="number" min="1" step="1" value="1">
+          </div>
+          <div class="field">
+            <label for="weldStations">Welding stations</label>
+            <input id="weldStations" type="number" min="1" step="1" value="1">
+          </div>
+          <div class="field">
+            <label for="laserSetup">Laser setup (min)</label>
+            <input id="laserSetup" type="number" min="0" step="1" value="0">
+          </div>
+          <div class="field">
+            <label for="punchSetup">Punch setup (min)</label>
+            <input id="punchSetup" type="number" min="0" step="1" value="0">
+          </div>
+          <div class="field">
+            <label for="notchSetup">Notch setup (min)</label>
+            <input id="notchSetup" type="number" min="0" step="1" value="0">
+          </div>
+          <div class="field">
+            <label for="weldSetup">Weld setup (min)</label>
+            <input id="weldSetup" type="number" min="0" step="1" value="0">
+          </div>
+        </div>
+      </div>
+
+      <div class="settingsSection">
+        <div class="settingsTitle">
+          <h3>3. Factory Calendar & Working Schedule</h3>
+          <p>Shift details and working availability used to project delivery dates.</p>
+        </div>
+        <div class="settings">
+          <div class="field">
+            <label for="efficiency">Efficiency / OEE (%)</label>
+            <input id="efficiency" type="number" min="1" max="100" step="1" value="100">
+          </div>
+          <div class="field">
+            <label for="hoursPerShift">Hours / shift</label>
+            <input id="hoursPerShift" type="number" min="0.5" step="0.5" value="8">
+          </div>
+          <div class="field">
+            <label for="shiftsPerDay">Shifts / day</label>
+            <input id="shiftsPerDay" type="number" min="1" step="1" value="1">
+          </div>
+          <div class="field">
+            <label for="breakMin">Break / shift (min)</label>
+            <input id="breakMin" type="number" min="0" step="1" value="0">
+          </div>
+          <div class="field">
+            <label for="workdaysPerWeek">Workdays / week</label>
+            <input id="workdaysPerWeek" type="number" min="1" max="7" step="1" value="6">
+          </div>
+        </div>
+      </div>
+
+      <div class="table">
+        <div class="row">
+          <span>Process</span>
+          <span>Effective Workload</span>
+          <span>Station Output Rate</span>
+          <span>Status</span>
+        </div>
+        <div class="row">
+          <b>Laser Cutting</b>
+          <span id="laserLoad">—</span>
+          <span id="laserCap">—</span>
+          <span id="laserStatus">Normal</span>
+        </div>
+        <div class="row">
+          <b>Punching</b>
+          <span id="punchLoad">—</span>
+          <span id="punchCap">—</span>
+          <span id="punchStatus">Normal</span>
+        </div>
+        <div class="row">
+          <b>Notching</b>
+          <span id="notchLoad">—</span>
+          <span id="notchCap">—</span>
+          <span id="notchStatus">Normal</span>
+        </div>
+        <div class="row">
+          <b>Welding</b>
+          <span id="weldLoad">—</span>
+          <span id="weldCap">—</span>
+          <span id="weldStatus">Normal</span>
+        </div>
+      </div>
+
+      <div class="note">
+        <strong>Flow Principles:</strong> Raw long sheets are cut into panel pairs by the Laser machine(s). Once a long sheet finishes, panels become immediately available for downstream continuous processing. Total machine workload aggregates single-station run hours across all machines, whereas Pipeline Completion Lead Time models physical overlapping throughput.
+      </div>
+    </details>
   </section>
 </div>
 
 <script>
-const STORAGE_KEY='jutarama_2d_tank_planner_v19';
-const TYPE_META={wall:'Wall',roof:'Roof',base:'Base',stay:'Stay'};
-const DEFAULT_STEPS=[
-  {id:'laser',name:'Laser Cutting',machineIds:'LC1',machineCount:1,workersPerMachine:1,availableWorkers:1,time:12,setup:10,transfer:2,batchSize:10,status:'running',note:'Cut raw sheet to required panel shape and size.',applies:{wall:true,roof:true,base:true,stay:true}},
-  {id:'punch',name:'Punching',machineIds:'PR1',machineCount:1,workersPerMachine:1,availableWorkers:1,time:8,setup:6,transfer:1,batchSize:10,status:'ready',note:'Punch holes and fixing points.',applies:{wall:true,roof:true,base:true,stay:false}},
-  {id:'notch',name:'Notching',machineIds:'N01',machineCount:1,workersPerMachine:1,availableWorkers:1,time:12,setup:5,transfer:1,batchSize:8,status:'ready',note:'Create notch / trimming detail for panel joints.',applies:{wall:true,roof:false,base:false,stay:false}},
-  {id:'weld',name:'Welding',machineIds:'WL1',machineCount:1,workersPerMachine:1,availableWorkers:1,time:18,setup:8,transfer:2,batchSize:6,status:'ready',note:'Weld panel details, stays or local joint work.',applies:{wall:true,roof:false,base:true,stay:true}},
-  {id:'finish',name:'Finish',machineIds:'FN1',machineCount:1,workersPerMachine:1,availableWorkers:1,time:12,setup:4,transfer:1,batchSize:12,status:'ready',note:'Final finish, checking, touch-up, and preparation.',applies:{wall:true,roof:true,base:true,stay:true}}
-];
-const TANK_PRESETS={
-  '16×16×16':{L:16,W:16,H:16,roofDeduct:0,stay:16},
-  '24×24×8':{L:24,W:24,H:8,roofDeduct:1,stay:12},
-  '40×12×16':{L:40,W:12,H:16,roofDeduct:0,stay:24},
-  '44×20×16':{L:44,W:20,H:16,roofDeduct:0,stay:30},
-  'Custom':{L:24,W:24,H:8,roofDeduct:1,stay:12}
+const $ = id => document.getElementById(id);
+const num = (id, fallback=0) => {
+  const n = Number($(id).value);
+  return Number.isFinite(n) ? n : fallback;
 };
-let state=loadState();
+const fmt = (n, d=2) => Number.isFinite(n) ? n.toFixed(d) : '—';
 
-function deepClone(x){return JSON.parse(JSON.stringify(x));}
-function defaultState(){
-  return {
-    previewType:'wall',
-    steps:deepClone(DEFAULT_STEPS),
-    estimate:{preset:'24×24×8',qty:1,includeStay:true,useFormula:true,efficiency:100,lengthFt:24,widthFt:24,heightFt:8,panelSizeFt:4,roofDeduct:1,custom:{wall:48,roof:35,base:36,stay:12},startDate:'',targetDays:0,hoursPerShift:8,shiftsPerDay:1,breakMin:0,workdaysPerWeek:6},
-    actual:{start:'',finish:'',qty:1},
-    scenarios:[]
-  };
-}
-function loadState(){
-  const def=defaultState();
-  try{
-    const raw=localStorage.getItem(STORAGE_KEY);
-    if(!raw) return def;
-    const parsed=JSON.parse(raw);
-    const merged={...def,...parsed};
-    merged.estimate={...def.estimate,...(parsed.estimate||{})};
-    ['lengthFt','widthFt','heightFt','panelSizeFt','roofDeduct'].forEach(k=>{ if(!Number.isFinite(+merged.estimate[k])) merged.estimate[k]=def.estimate[k]; });
-    merged.estimate.custom={...def.estimate.custom,...(parsed.estimate?.custom||{})};
-    merged.actual={...def.actual,...(parsed.actual||{})};
-    merged.steps=(parsed.steps||def.steps).map((step,idx)=>{
-      const ref=DEFAULT_STEPS.find(d=>d.id===step.id)||DEFAULT_STEPS[idx]||{};
-      return {...ref,...step,applies:{...(ref.applies||{}),...(step.applies||{})}};
-    });
-    merged.scenarios=Array.isArray(parsed.scenarios)?parsed.scenarios:[];
-    if(!TYPE_META[merged.previewType]) merged.previewType='wall';
-    return merged;
-  }catch(e){return def;}
-}
-function saveState(){ localStorage.setItem(STORAGE_KEY,JSON.stringify(state)); }
-function fmt(n,d=1){ return Number.isFinite(n)?n.toFixed(d):'—'; }
-function statusClass(s){ return s==='blocked'?'blocked':s==='running'?'running':s==='ready'?'ready':'warn'; }
-function statusText(s){ return s==='blocked'?'BLOCKED':s==='running'?'RUNNING':s==='ready'?'READY':String(s||'').toUpperCase(); }
-function showMotionToast(msg){ const old=document.querySelector('.motionToast'); if(old) old.remove(); const d=document.createElement('div'); d.className='motionToast'; d.textContent=msg; document.body.appendChild(d); setTimeout(()=>{d.style.opacity='0';d.style.transform='translateY(8px)'; setTimeout(()=>d.remove(),220)},1000); }
+// Auto-set start date to now (local timezone) if empty
+(function initDefaultDate() {
+  const d = new Date();
+  d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
+  $('startDate').value = d.toISOString().slice(0, 16);
+})();
 
-function getFormulaBreakdown(){
-  const panel=Math.max(1,+state.estimate.panelSizeFt||4);
-  const L=Math.max(panel,+state.estimate.lengthFt||24);
-  const W=Math.max(panel,+state.estimate.widthFt||24);
-  const H=Math.max(panel,+state.estimate.heightFt||8);
-  const roofDeduct=Math.max(0,Math.floor(+state.estimate.roofDeduct||0));
-  const lenPanels=Math.max(1,Math.round(L/panel));
-  const widthPanels=Math.max(1,Math.round(W/panel));
-  const levels=Math.max(1,Math.round(H/panel));
-  const wall=2*(lenPanels+widthPanels)*levels;
-  const base=lenPanels*widthPanels;
-  const roof=Math.max(0,base-roofDeduct);
-  const stay=state.estimate.includeStay ? Math.max(0,+state.estimate.custom.stay||0) : 0;
-  return {wall,roof,base,stay,meta:{panel,L,W,H,lenPanels,widthPanels,levels,roofDeduct}};
+function formatDuration(minutes) {
+  if (!Number.isFinite(minutes) || minutes <= 0) return '0 min';
+  const total = Math.round(minutes);
+  const h = Math.floor(total / 60);
+  const m = total % 60;
+  if (h === 0) return `${m} min`;
+  if (m === 0) return `${h} hr`;
+  return `${h} hr ${m} min`;
 }
-function getBreakdown(){
-  if(state.estimate.useFormula) return getFormulaBreakdown();
-  return {
-    wall:Math.max(0,+state.estimate.custom.wall||0),
-    roof:Math.max(0,+state.estimate.custom.roof||0),
-    base:Math.max(0,+state.estimate.custom.base||0),
-    stay:state.estimate.includeStay?Math.max(0,+state.estimate.custom.stay||0):0,
-    meta:null
-  };
-}
-function activeMachines(step){
-  if(step.status==='blocked') return 0;
-  const machines=Math.max(0,Math.floor(+step.machineCount||0));
-  const wpm=Math.max(1,+step.workersPerMachine||1);
-  const avail=Math.max(0,+step.availableWorkers||0);
-  const workerLimited=Math.floor(avail/wpm);
-  return Math.max(0, Math.min(machines, workerLimited));
-}
-function idsCount(ids){ return String(ids||'').split(',').map(s=>s.trim()).filter(Boolean).length; }
-function routeForType(type){ return state.steps.filter(step=>step.applies?.[type]); }
-function stageMetrics(step){
-  const eff=Math.max(0.01,(+state.estimate.efficiency||100)/100);
-  const active=activeMachines(step);
-  const pTime=Math.max(0,+step.time||0);
-  const setup=Math.max(0,+step.setup||0);
-  const transfer=Math.max(0,+step.transfer||0);
-  const batch=Math.max(1,Math.floor(+step.batchSize||1));
-  const processCycle=active>0 ? pTime/active/eff : Infinity;
-  const amortized=active>0 ? processCycle + (setup+transfer)/batch : Infinity;
-  const leadOne=active>0 ? processCycle + setup + transfer : Infinity;
-  const capHour=Number.isFinite(amortized)&&amortized>0 ? 60/amortized : 0;
-  return {active,pTime,setup,transfer,batch,processCycle,amortized,leadOne,capHour};
-}
-function panelTypeEstimate(type, qtyPanels){
-  const route=routeForType(type);
-  const rows=route.map(step=>({step,...stageMetrics(step)}));
-  const blocked=rows.some(r=>r.active<=0);
-  const leadMin=blocked?Infinity:rows.reduce((sum,r)=>sum+r.leadOne,0);
-  const bottleneck=rows.reduce((best,row)=>!best||row.amortized>best.amortized?row:best,null);
-  const totalMin=(blocked||qtyPanels<=0)?(qtyPanels<=0?0:Infinity):(leadMin + Math.max(0,qtyPanels-1)*(bottleneck?.amortized||0));
-  return {type,qtyPanels,route,rows,blocked,leadMin,bottleneck,totalMin};
-}
-function overallEstimate(){
-  const breakdown=getBreakdown();
-  const tankQty=Math.max(1,Math.floor(+state.estimate.qty||1));
-  const typeResults={};
-  Object.keys(TYPE_META).forEach(type=>{ typeResults[type]=panelTypeEstimate(type, breakdown[type]*tankQty); });
-  const stepRows=state.steps.map(step=>{
-    const metric=stageMetrics(step);
-    const appliesTypes=Object.keys(TYPE_META).filter(t=>step.applies?.[t]);
-    const totalPieces=appliesTypes.reduce((sum,t)=>sum+breakdown[t]*tankQty,0);
-    const workloadMin=(metric.active>0)?totalPieces*metric.amortized:Infinity;
-    return {step,appliesTypes,totalPieces,...metric,workloadMin};
+
+// Calculate target calendar completion accounting for workdays and shifts
+function calculateFinishDate(startDateStr, totalLeadMinutes, hoursPerDay, workdaysPerWeek) {
+  if (!startDateStr || !totalLeadMinutes) return '—';
+  let cur = new Date(startDateStr);
+  if (isNaN(cur.getTime())) return '—';
+
+  let remainingMin = totalLeadMinutes;
+  const dailyWorkMin = hoursPerDay * 60;
+
+  while (remainingMin > 0) {
+    const dayOfWeek = cur.getDay(); // 0 is Sunday
+    // Check if current day is a working day (assuming 6 days = Mon-Sat, Sunday rest)
+    const isWorkingDay = workdaysPerWeek === 7 ? true : (dayOfWeek !== 0 && dayOfWeek <= workdaysPerWeek);
+
+    if (isWorkingDay) {
+      if (remainingMin <= dailyWorkMin) {
+        cur.setMinutes(cur.getMinutes() + remainingMin);
+        remainingMin = 0;
+      } else {
+        cur.setDate(cur.getDate() + 1);
+        remainingMin -= dailyWorkMin;
+      }
+    } else {
+      // Skip non-working day
+      cur.setDate(cur.getDate() + 1);
+    }
+  }
+
+  return cur.toLocaleDateString(undefined, {
+    weekday: 'short', month: 'short', day: 'numeric',
+    hour: '2-digit', minute: '2-digit'
   });
-  const bottleneck=stepRows.reduce((best,row)=>!best||row.workloadMin>best.workloadMin?row:best,null);
-  const longestLeadMin=Math.max(...Object.values(typeResults).map(r=>Number.isFinite(r.leadMin)?r.leadMin:0),0);
-  const completionMin=(stepRows.some(r=>r.totalPieces>0 && !Number.isFinite(r.workloadMin)))?Infinity:(longestLeadMin + Math.max(...stepRows.map(r=>Number.isFinite(r.workloadMin)?r.workloadMin:0),0));
-  const workHoursPerDay=Math.max(0.25,(+state.estimate.hoursPerShift||8)-(+state.estimate.breakMin||0)/60) * Math.max(1,+state.estimate.shiftsPerDay||1);
-  const completionHr=completionMin/60;
-  const perTankHr=completionHr/Math.max(1,tankQty);
-  const finishDate=state.estimate.startDate?addWorkingHours(new Date(state.estimate.startDate),completionHr,workHoursPerDay,Math.max(1,Math.min(7,+state.estimate.workdaysPerWeek||6))):null;
-  return {breakdown,tankQty,typeResults,stepRows,bottleneck,longestLeadMin,completionMin,completionHr,perTankHr,workHoursPerDay,finishDate};
-}
-function addWorkingHours(startDate,hoursToAdd,workHoursPerDay,workdaysPerWeek){
-  if(!(startDate instanceof Date) || isNaN(startDate) || !Number.isFinite(hoursToAdd)) return null;
-  let current=new Date(startDate);
-  const startHour=current.getHours()+current.getMinutes()/60;
-  const startMinTemplate={h:Math.floor(startHour),m:current.getMinutes()};
-  let remaining=hoursToAdd;
-  while(remaining>1e-9){
-    if(dayIndex(current)>=workdaysPerWeek){ current=nextWorkDay(current, workdaysPerWeek, startMinTemplate); continue; }
-    const dayStart=new Date(current); dayStart.setHours(startMinTemplate.h,startMinTemplate.m,0,0);
-    const dayEnd=new Date(dayStart.getTime()+workHoursPerDay*3600000);
-    if(current<dayStart) current=new Date(dayStart);
-    if(current>=dayEnd){ current=nextWorkDay(current, workdaysPerWeek, startMinTemplate); continue; }
-    const available=(dayEnd-current)/3600000;
-    const use=Math.min(remaining,available);
-    current=new Date(current.getTime()+use*3600000); remaining-=use;
-    if(remaining>1e-9) current=nextWorkDay(current, workdaysPerWeek, startMinTemplate);
-  }
-  return current;
-}
-function dayIndex(d){ return (d.getDay()+6)%7; } // Monday=0
-function nextWorkDay(current, workdaysPerWeek, start){
-  const d=new Date(current); do { d.setDate(d.getDate()+1); d.setHours(start.h,start.m,0,0);} while(dayIndex(d)>=workdaysPerWeek); return d;
 }
 
-function bottleneckRecommendation(est){
-  const targetDays=Math.max(0,+state.estimate.targetDays||0);
-  const workHoursPerDay=est.workHoursPerDay;
-  if(!est.bottleneck) return 'No bottleneck information.';
-  const step=est.bottleneck.step;
-  const active=est.bottleneck.active;
-  const machineCount=Math.max(0,+step.machineCount||0);
-  const workersNeeded=Math.max(1,+step.workersPerMachine||1);
-  if(active===0){
-    if(step.status==='blocked') return `Unblock ${step.name}. It is currently stopped and prevents a valid completion estimate.`;
-    return `Add workers or activate machines for ${step.name}. Active machines are 0 because available workers are insufficient.`;
+function processOnParallelStations(arrivals, processMin, stations, setupMin=0) {
+  const free = Array.from({length: stations}, () => setupMin);
+  const departures = [];
+  for (const arrival of arrivals) {
+    let best = 0;
+    for (let i = 1; i < free.length; i++) if (free[i] < free[best]) best = i;
+    const start = Math.max(arrival, free[best]);
+    free[best] = start + processMin;
+    departures.push(free[best]);
   }
-  if(active < machineCount) return `Add ${Math.max(1,machineCount-active)*workersNeeded} more worker(s) to fully use all configured ${machineCount} machine(s) on ${step.name}.`;
-  if(targetDays<=0) return `To shorten completion time, add 1 more machine/station to ${step.name} first. It is currently the limiting stage.`;
-  const targetHours=targetDays*workHoursPerDay;
-  if(!Number.isFinite(est.completionHr)) return `Fix blocked or unstaffed stages first, then compare against target ${targetDays} day(s).`;
-  if(est.completionHr<=targetHours) return `Current setup can meet the target of ${targetDays} working day(s).`;
-  const clone=deepClone(state.steps);
-  const idx=clone.findIndex(s=>s.id===step.id);
-  let extra=0, newHours=est.completionHr;
-  while(extra<10 && newHours>targetHours){
-    extra++; clone[idx].machineCount+=1; clone[idx].availableWorkers+=workersNeeded;
-    const prevSteps=state.steps; state.steps=clone;
-    newHours=overallEstimate().completionHr;
-    state.steps=prevSteps;
-  }
-  if(newHours<=targetHours) return `To meet ${targetDays} day(s), add about ${extra} more machine/station(s) to ${step.name} (and corresponding workers). New estimate ≈ ${fmt(newHours,2)} hr.`;
-  return `Even with +10 extra machines on ${step.name}, the target may still be tight. Review multiple stages or increase shifts.`;
+  departures.sort((a, b) => a - b);
+  return departures;
 }
 
-function renderSummary(){
-  const est=overallEstimate();
-  const previewCount=routeForType(state.previewType).length;
-  const blocked=state.steps.filter(s=>activeMachines(s)===0 && Object.values(s.applies||{}).some(Boolean)).length;
-  const bottleneckName=est.bottleneck?.step?.name || '—';
-  document.getElementById('summary').innerHTML=`
-    <div class="kpi"><strong>${state.steps.length}</strong><span>Total Workflow Steps</span></div>
-    <div class="kpi"><strong>${previewCount}</strong><span>${TYPE_META[state.previewType]} Route Steps</span></div>
-    <div class="kpi"><strong>${fmt(est.completionHr,2)}</strong><span>Estimated Tank Hours</span></div>
-    <div class="kpi"><strong>${blocked}</strong><span>Blocked / Unstaffed Stages</span></div>
-    <div class="kpi"><strong>${bottleneckName}</strong><span>Current Bottleneck</span></div>`;
+function simulatePipeline(
+  qty, laserMin, laserPanels, punchMin, notchMin, weldMin,
+  laserMachines, punchMachines, notchMachines, weldStations,
+  laserSetup, punchSetup, notchSetup, weldSetup
+) {
+  if (qty <= 0) return 0;
+  const release = [];
+  let produced = 0;
+  const laserFree = Array.from({length: laserMachines}, () => laserSetup);
+
+  while (produced < qty) {
+    let best = 0;
+    for (let i = 1; i < laserFree.length; i++) if (laserFree[i] < laserFree[best]) best = i;
+    laserFree[best] += laserMin;
+    const batch = Math.min(laserPanels, qty - produced);
+    for (let i = 0; i < batch; i++) release.push(laserFree[best]);
+    produced += batch;
+  }
+  release.sort((a, b) => a - b);
+
+  let arrivals = release;
+  arrivals = processOnParallelStations(arrivals, punchMin, punchMachines, punchSetup);
+  arrivals = processOnParallelStations(arrivals, notchMin, notchMachines, notchSetup);
+  arrivals = processOnParallelStations(arrivals, weldMin, weldStations, weldSetup);
+
+  return arrivals[arrivals.length - 1] || 0;
 }
-function renderPreviewTypeSeg(){
-  const el=document.getElementById('previewTypeSeg');
-  el.innerHTML=Object.entries(TYPE_META).map(([k,v])=>`<button class="${state.previewType===k?'active':''}" data-preview="${k}">${v}</button>`).join('');
-  el.querySelectorAll('[data-preview]').forEach(btn=>btn.onclick=()=>{state.previewType=btn.dataset.preview; saveState(); renderAll();});
-}
-function renderFlow(){
-  const route=routeForType(state.previewType);
-  document.getElementById('flowRow').innerHTML = route.length?route.map((step, i)=>{
-    const m=stageMetrics(step);
-    return `<div class="flowStep" draggable="true" data-step-id="${step.id}">
-      <div>
-        <div class="stepTop"><span class="stepNo">${i+1}</span><span class="statusTag ${statusClass(step.status)}">${statusText(step.status)}</span></div>
-        <div class="stepMain"><h3>${step.name}</h3><p>${step.note||''}</p></div>
-        <div class="appliesTags">${Object.keys(TYPE_META).filter(t=>step.applies?.[t]).map(t=>`<span class="typeTag">${TYPE_META[t]}</span>`).join('')}</div>
-        <div class="timeBox"><strong>${fmt(step.time,1)} min</strong><span>Proc/panel · setup ${fmt(step.setup,0)} min · transfer ${fmt(step.transfer,0)} min · batch ${Math.max(1,+step.batchSize||1)}</span></div>
-      </div>
-      <div class="stepFoot"><div><div class="machineTag">${step.machineIds||'—'}</div><div class="tiny" style="margin-top:6px">Configured ${Math.max(0,+step.machineCount||0)} · Active ${m.active}</div></div><div class="tiny">${Number.isFinite(m.capHour)?fmt(m.capHour,1):'0.0'} /hr</div></div>
-    </div>`;
-  }).join(''):`<div class="small">No steps are assigned to ${TYPE_META[state.previewType]}.</div>`;
-  enableFlowDragging();
-}
-function renderTimeline(){
-  const res=panelTypeEstimate(state.previewType, getBreakdown()[state.previewType] * Math.max(1,+state.estimate.qty||1));
-  document.getElementById('timeline').innerHTML = res.route.length?res.rows.map((row,i)=>`
-    <div class="timeLineItem">
-      <div class="timeDot">${i+1}</div>
-      <div class="timeBody">
-        <div class="top"><h4>${row.step.name}</h4><span class="statusTag ${statusClass(row.step.status)}">${statusText(row.step.status)}</span></div>
-        <p>Machine IDs: <b>${row.step.machineIds||'—'}</b><br>
-        Configured/Active: <b>${Math.max(0,+row.step.machineCount||0)} / ${row.active}</b> · Workers/Machine: <b>${Math.max(1,+row.step.workersPerMachine||1)}</b> · Available Workers: <b>${Math.max(0,+row.step.availableWorkers||0)}</b><br>
-        Process: <b>${fmt(row.pTime,1)} min</b> · Setup: <b>${fmt(row.setup,0)} min</b> · Transfer: <b>${fmt(row.transfer,0)} min</b> · Batch: <b>${row.batch}</b><br>
-        Effective cycle: <b>${Number.isFinite(row.amortized)?fmt(row.amortized,2):'Blocked'}</b> min/panel · Capacity: <b>${Number.isFinite(row.capHour)?fmt(row.capHour,1):'0.0'}</b> panels/hr</p>
-      </div>
-    </div>`).join(''):`<div class="small">No route for ${TYPE_META[state.previewType]}.</div>`;
-}
-function renderEstimatorFields(){
-  const e=state.estimate, breakdown=getBreakdown(), b={wall:breakdown.wall,roof:breakdown.roof,base:breakdown.base,stay:e.includeStay?breakdown.stay:0};
-  document.getElementById('tankPreset').innerHTML=Object.keys(TANK_PRESETS).map(name=>`<option value="${name}" ${e.preset===name?'selected':''}>${name}</option>`).join('');
-  document.getElementById('tankQty').value=e.qty; document.getElementById('includeStay').checked=e.includeStay; document.getElementById('efficiency').value=e.efficiency;
-  document.getElementById('useFormula').checked=e.useFormula; document.getElementById('roofDeduct').value=e.roofDeduct; document.getElementById('lengthFt').value=e.lengthFt; document.getElementById('widthFt').value=e.widthFt; document.getElementById('heightFt').value=e.heightFt; document.getElementById('panelSizeFt').value=e.panelSizeFt;
-  document.getElementById('customWall').value=e.custom.wall; document.getElementById('customRoof').value=e.custom.roof; document.getElementById('customBase').value=e.custom.base; document.getElementById('customStay').value=e.custom.stay;
-  document.getElementById('startDate').value=e.startDate; document.getElementById('targetDays').value=e.targetDays; document.getElementById('hoursPerShift').value=e.hoursPerShift; document.getElementById('shiftsPerDay').value=e.shiftsPerDay; document.getElementById('breakMin').value=e.breakMin; document.getElementById('workdaysPerWeek').value=e.workdaysPerWeek;
-  document.getElementById('wallQty').textContent=b.wall; document.getElementById('roofQty').textContent=b.roof; document.getElementById('baseQty').textContent=b.base; document.getElementById('stayQty').textContent=e.includeStay?b.stay:0;
-  const note=document.getElementById('formulaNote');
-  if(e.useFormula && breakdown.meta){
-    const m=breakdown.meta;
-    note.innerHTML=`<b>BOM formula active:</b> Length panels = ${m.lenPanels}, Width panels = ${m.widthPanels}, Height levels = ${m.levels}. Wall = 2 × (${m.lenPanels} + ${m.widthPanels}) × ${m.levels} = <b>${b.wall}</b>. Base = ${m.lenPanels} × ${m.widthPanels} = <b>${b.base}</b>. Roof = Base ${b.base} - Deduction ${m.roofDeduct} = <b>${b.roof}</b>. Panel size = ${m.panel} ft.`;
+
+function calculate() {
+  const qty = Math.max(0, Math.floor(num('panelQty', 0)));
+  const laserMin = Math.max(.1, num('laserMinutes', 12));
+  const laserPanels = Math.max(1, Math.floor(num('laserPanels', 2)));
+  const punchMin = Math.max(0, num('punchMinutes', 5));
+  const notchMin = Math.max(0, num('notchMinutes', 5));
+  const weldMin = Math.max(0, num('weldMinutes', 5));
+
+  const laserMachines = Math.max(1, Math.floor(num('laserMachines', 1)));
+  const punchMachines = Math.max(1, Math.floor(num('punchMachines', 1)));
+  const notchMachines = Math.max(1, Math.floor(num('notchMachines', 1)));
+  const weldStations = Math.max(1, Math.floor(num('weldStations', 1)));
+
+  const laserSetup = Math.max(0, num('laserSetup', 0));
+  const punchSetup = Math.max(0, num('punchSetup', 0));
+  const notchSetup = Math.max(0, num('notchSetup', 0));
+  const weldSetup = Math.max(0, num('weldSetup', 0));
+
+  const efficiency = Math.max(.01, Math.min(1, num('efficiency', 100) / 100));
+  const hoursPerShift = Math.max(.5, num('hoursPerShift', 8));
+  const shiftsPerDay = Math.max(1, Math.floor(num('shiftsPerDay', 1)));
+  const breakMin = Math.max(0, num('breakMin', 0));
+  const workdaysPerWeek = Math.max(1, Math.min(7, Math.floor(num('workdaysPerWeek', 6))));
+  const startDate = $('startDate').value;
+
+  const hoursDay = Math.max(.25, (hoursPerShift - breakMin / 60) * shiftsPerDay);
+
+  const effectiveLaserMin = laserMin / efficiency;
+  const effectivePunchMin = punchMin / efficiency;
+  const effectiveNotchMin = notchMin / efficiency;
+  const effectiveWeldMin = weldMin / efficiency;
+
+  const batches = qty === 0 ? 0 : Math.ceil(qty / laserPanels);
+  const laserWork = batches * effectiveLaserMin;
+  const punchWork = qty * effectivePunchMin;
+  const notchWork = qty * effectiveNotchMin;
+  const weldWork = qty * effectiveWeldMin;
+
+  const setupWork = (laserSetup * laserMachines) + (punchSetup * punchMachines) +
+                    (notchSetup * notchMachines) + (weldSetup * weldStations);
+  const workloadMin = laserWork + punchWork + notchWork + weldWork + setupWork;
+
+  const completionMin = simulatePipeline(
+    qty, effectiveLaserMin, laserPanels, effectivePunchMin, effectiveNotchMin, effectiveWeldMin,
+    laserMachines, punchMachines, notchMachines, weldStations,
+    laserSetup, punchSetup, notchSetup, weldSetup
+  );
+
+  const completionHr = completionMin / 60;
+  const days = completionHr / hoursDay;
+
+  // Station rates (panels / hour)
+  const laserRate = (laserMachines * laserPanels * 60) / effectiveLaserMin;
+  const punchRate = effectivePunchMin > 0 ? (punchMachines * 60) / effectivePunchMin : Infinity;
+  const notchRate = effectiveNotchMin > 0 ? (notchMachines * 60) / effectiveNotchMin : Infinity;
+  const weldRate = effectiveWeldMin > 0 ? (weldStations * 60) / effectiveWeldMin : Infinity;
+  const lineRate = Math.min(laserRate, punchRate, notchRate, weldRate);
+
+  // Identify Bottleneck(s)
+  const rates = [
+    { id: 'Laser', rate: laserRate, stepId: 'stepLaser', tagId: 'tagLaser', statId: 'laserStatus' },
+    { id: 'Punch', rate: punchRate, stepId: 'stepPunch', tagId: 'tagPunch', statId: 'punchStatus' },
+    { id: 'Notch', rate: notchRate, stepId: 'stepNotch', tagId: 'tagNotch', statId: 'notchStatus' },
+    { id: 'Weld', rate: weldRate, stepId: 'stepWeld', tagId: 'tagWeld', statId: 'weldStatus' }
+  ];
+
+  rates.forEach(r => {
+    $(r.stepId).classList.remove('bottleneck');
+    $(r.tagId).className = 'tag ok';
+    $(r.tagId).textContent = 'Balanced';
+    $(r.statId).textContent = 'Balanced';
+    $(r.statId).style.color = 'inherit';
+  });
+
+  const bottlenecks = rates.filter(r => Math.abs(r.rate - lineRate) < 0.01);
+  bottlenecks.forEach(b => {
+    $(b.stepId).classList.add('bottleneck');
+    $(b.tagId).className = 'tag bottle';
+    $(b.tagId).textContent = 'Bottleneck';
+    $(b.statId).textContent = 'Bottleneck';
+    $(b.statId).style.color = 'var(--red)';
+  });
+
+  $('bottleneckBadge').textContent = bottlenecks.length > 1
+    ? `Tied Constraints: ${bottlenecks.map(b => b.id).join(', ')} (${fmt(lineRate, 1)} p/hr)`
+    : `Primary Bottleneck: ${bottlenecks[0].id} (${fmt(lineRate, 1)} p/hr)`;
+
+  // Update Workload Distribution Bar
+  if (workloadMin > 0) {
+    $('barLaser').style.width = `${((laserWork / workloadMin) * 100).toFixed(1)}%`;
+    $('barPunch').style.width = `${((punchWork / workloadMin) * 100).toFixed(1)}%`;
+    $('barNotch').style.width = `${((notchWork / workloadMin) * 100).toFixed(1)}%`;
+    $('barWeld').style.width = `${((weldWork / workloadMin) * 100).toFixed(1)}%`;
+    $('workloadRatio').textContent = `Laser ${(laserWork/workloadMin*100).toFixed(0)}% · Punch ${(punchWork/workloadMin*100).toFixed(0)}% · Notch ${(notchWork/workloadMin*100).toFixed(0)}% · Weld ${(weldWork/workloadMin*100).toFixed(0)}%`;
+  }
+
+  // Update Main KPIs
+  $('estimateTime').textContent = qty ? formatDuration(completionMin) : '—';
+  $('targetDate').textContent = qty ? calculateFinishDate(startDate, completionMin, hoursDay, workdaysPerWeek) : '—';
+  $('workingDays').textContent = qty ? `${fmt(days, 2)} days` : '—';
+  $('longSheets').textContent = qty ? `${batches}` : '—';
+  $('rate').textContent = qty ? `${fmt(lineRate, 1)} panels/hr` : '—';
+  $('workload').textContent = qty ? `${fmt(workloadMin / 60, 2)} hr` : '—';
+
+  // Update Table Columns
+  $('laserLoad').textContent = formatDuration(laserWork + laserSetup * laserMachines);
+  $('punchLoad').textContent = formatDuration(punchWork + punchSetup * punchMachines);
+  $('notchLoad').textContent = formatDuration(notchWork + notchSetup * notchMachines);
+  $('weldLoad').textContent = formatDuration(weldWork + weldSetup * weldStations);
+
+  $('laserCap').textContent = `${fmt(laserRate, 1)} panels/hr`;
+  $('punchCap').textContent = Number.isFinite(punchRate) ? `${fmt(punchRate, 1)} panels/hr` : 'No limit';
+  $('notchCap').textContent = Number.isFinite(notchRate) ? `${fmt(notchRate, 1)} panels/hr` : 'No limit';
+  $('weldCap').textContent = Number.isFinite(weldRate) ? `${fmt(weldRate, 1)} panels/hr` : 'No limit';
+
+  // Dynamic Summary Text
+  if (qty === 0) {
+    $('summary').innerHTML = '<b>Enter finished panel quantity</b> to project production timeline.';
   } else {
-    note.innerHTML=`<b>Manual quantity mode:</b> using the custom Wall / Roof / Base / Stay values entered below.`;
+    const bottleneckNames = bottlenecks.map(b => b.id).join(' & ');
+    $('summary').innerHTML =
+      `Order: <b>${qty} panels</b> (${batches} long sheets) · ` +
+      `Est. completion in <b>${formatDuration(completionMin)}</b> ` +
+      `(${fmt(days, 2)} workdays @ ${fmt(hoursDay, 1)}h/day) · ` +
+      `Pacing speed: <b>${fmt(lineRate, 1)} panels/hr</b>. ` +
+      `Active constraint: <b style="color:var(--amber)">${bottleneckNames}</b>. ` +
+      `To accelerate throughput, scale capacity on <b>${bottleneckNames}</b>.`;
   }
 }
-function renderEstimateOutputs(){
-  const est=overallEstimate();
-  document.getElementById('estimateKpis').innerHTML=`
-    <div class="estimateKpi"><strong>${fmt(est.longestLeadMin,1)}</strong><span>First-Flow Lead (min)</span></div>
-    <div class="estimateKpi"><strong>${fmt(est.completionHr,2)}</strong><span>Estimated Completion (hr)</span></div>
-    <div class="estimateKpi"><strong>${fmt(est.completionHr/est.workHoursPerDay,2)}</strong><span>Working Days</span></div>
-    <div class="estimateKpi"><strong>${fmt(est.perTankHr,2)}</strong><span>Time / Tank (hr)</span></div>
-    <div class="estimateKpi"><strong>${fmt(est.workHoursPerDay,2)}</strong><span>Work Hours / Day</span></div>
-    <div class="estimateKpi"><strong>${est.finishDate?est.finishDate.toLocaleString():'—'}</strong><span>Estimated Finish</span></div>
-    <div class="estimateKpi"><strong>${est.bottleneck?.step?.name||'—'}</strong><span>Bottleneck Stage</span></div>
-    <div class="estimateKpi"><strong>${fmt(est.bottleneck?.capHour||0,1)}</strong><span>Bottleneck Capacity / hr</span></div>`;
 
-  const panelRows=Object.values(est.typeResults).map(r=>`<div class="capRow ${r.blocked?'bottleneck':''}"><b>${TYPE_META[r.type]}</b><span>${r.qtyPanels}</span><span>${r.route.length} step(s)</span><span>${Number.isFinite(r.leadMin)?fmt(r.leadMin,1):'Blocked'}</span><span>${r.bottleneck?.step?.name||'—'}</span><span>${Number.isFinite(r.bottleneck?.capHour)?fmt(r.bottleneck.capHour,1):'0.0'} /hr</span><span>${Number.isFinite(r.totalMin)?fmt(r.totalMin/60,2):'Blocked'} hr</span></div>`).join('');
-  document.getElementById('panelTypeTable').innerHTML=`<div class="capRow"><span>Panel Type</span><span>Qty</span><span>Route</span><span>Lead Min</span><span>Bottleneck</span><span>Capacity</span><span>Total Hours</span></div>${panelRows}`;
+// Attach event listeners
+[
+  'panelQty','laserMinutes','laserPanels','punchMinutes','notchMinutes','weldMinutes',
+  'laserMachines','laserSetup','punchMachines','punchSetup','notchMachines','notchSetup',
+  'weldStations','weldSetup','efficiency','hoursPerShift','shiftsPerDay','breakMin',
+  'workdaysPerWeek','startDate'
+].forEach(id => {
+  const el = $(id);
+  if (el) {
+    el.addEventListener('input', calculate);
+    el.addEventListener('change', calculate);
+  }
+});
 
-  document.getElementById('bottleneckCard').innerHTML=est.bottleneck?`<strong>⚠ Bottleneck: ${est.bottleneck.step.name}</strong><span>Applies to: ${est.bottleneck.appliesTypes.map(t=>TYPE_META[t]).join(', ')||'—'} · Machine IDs: ${est.bottleneck.step.machineIds||'—'} · Configured ${Math.max(0,+est.bottleneck.step.machineCount||0)} · Active ${est.bottleneck.active} · Capacity ${fmt(est.bottleneck.capHour,1)} panels/hr · Stage workload ${fmt(est.bottleneck.workloadMin/60,2)} hr.</span>`:`<strong>No bottleneck data</strong>`;
-  document.getElementById('recommendationCard').innerHTML=`<strong>Recommendation</strong><span>${bottleneckRecommendation(est)}</span>`;
-  document.getElementById('capacityTable').innerHTML=`<div class="capRow"><span>Process</span><span>Types</span><span>IDs</span><span>Cfg/Act</span><span>Workers</span><span>Capacity</span><span>Stage Workload</span></div>`+
-    est.stepRows.map(row=>`<div class="capRow ${est.bottleneck&&row.step.id===est.bottleneck.step.id?'bottleneck':''}"><b>${row.step.name}</b><span>${row.appliesTypes.map(t=>TYPE_META[t]).join(', ')||'—'}</span><span>${row.step.machineIds||'—'}</span><span>${Math.max(0,+row.step.machineCount||0)} / ${row.active}</span><span>${Math.max(0,+row.step.availableWorkers||0)} avail</span><span>${fmt(row.capHour,1)} /hr</span><span>${Number.isFinite(row.workloadMin)?fmt(row.workloadMin/60,2):'Blocked'} hr</span></div>`).join('');
-}
-function buildGanttRows(est){
-  const rows=[];
-  Object.values(est.typeResults).forEach(res=>{
-    if(!res.qtyPanels || !res.route.length || !Number.isFinite(res.totalMin)) return;
-    let prefix=0;
-    res.rows.forEach(row=>{
-      const start=prefix;
-      const end=prefix + row.leadOne + Math.max(0,res.qtyPanels-1)*row.amortized;
-      rows.push({label:`${TYPE_META[res.type]} · ${row.step.name}`, startHr:start/60, endHr:end/60, status:row.step.status});
-      prefix += row.leadOne;
-    });
-  });
-  return rows;
-}
-function renderGanttChart(){
-  const est=overallEstimate();
-  const rows=buildGanttRows(est);
-  const wrap=document.getElementById('ganttChart');
-  if(!rows.length){ wrap.innerHTML='<div class="small">No schedulable data yet.</div>'; return; }
-  const maxHr=Math.max(...rows.map(r=>r.endHr), 1);
-  const axis=`<div class="ganttAxis">${Array.from({length:11},(_,i)=>{const p=i*10; const hr=maxHr*p/100; return `<div class="ganttTick" style="left:${p}%"><span>${hr.toFixed(1)}h</span></div>`;}).join('')}</div>`;
-  wrap.innerHTML=axis + rows.map(r=>{const left=(r.startHr/maxHr)*100; const width=Math.max(2,((r.endHr-r.startHr)/maxHr)*100); return `<div class="ganttRow"><div class="ganttLabel">${r.label}</div><div class="ganttTrack"><div class="ganttBar ${statusClass(r.status)}" style="left:${left}%;width:${width}%">${r.startHr.toFixed(1)}h → ${r.endHr.toFixed(1)}h</div></div></div>`;}).join('');
-}
-function renderUtilChart(){
-  const est=overallEstimate();
-  const el=document.getElementById('utilChart');
-  if(!est.stepRows.length || !Number.isFinite(est.completionMin) || est.completionMin<=0){ el.innerHTML='<div class="small">No utilization data yet.</div>'; return; }
-  el.innerHTML=est.stepRows.map(row=>{const util=Math.max(0,Math.min(100,(row.workloadMin/est.completionMin)*100)); const cls=util>=85?'bad':util>=65?'warn':''; return `<div class="utilRow"><div class="utilName">${row.step.name}</div><div class="utilTrack"><div class="utilBar ${cls}" style="width:${util}%"></div></div><div class="tiny">${util.toFixed(1)}%</div></div>`;}).join('');
-}
-
-function renderActual(){
-  const a=state.actual; const est=overallEstimate();
-  document.getElementById('actualStart').value=a.start; document.getElementById('actualFinish').value=a.finish; document.getElementById('actualQty').value=a.qty;
-  let totalHr=NaN, perTank=NaN, variance=NaN, etaDelay='—';
-  if(a.start && a.finish){ totalHr=(new Date(a.finish)-new Date(a.start))/3600000; }
-  if(Number.isFinite(totalHr) && totalHr>=0){ perTank=totalHr/Math.max(1,+a.qty||1); variance=perTank-est.perTankHr; }
-  if(a.start && est.finishDate){ const actualFinish=a.finish?new Date(a.finish):null; if(actualFinish && !isNaN(actualFinish)){ const diff=(actualFinish-est.finishDate)/3600000; etaDelay=`${diff>=0?'+':''}${fmt(diff,2)} hr`; }}
-  document.getElementById('actualKpis').innerHTML=`
-    <div class="estimateKpi"><strong>${Number.isFinite(totalHr)&&totalHr>=0?fmt(totalHr,2):'—'}</strong><span>Actual Total Hours</span></div>
-    <div class="estimateKpi"><strong>${Number.isFinite(perTank)&&perTank>=0?fmt(perTank,2):'—'}</strong><span>Actual Hours / Tank</span></div>
-    <div class="estimateKpi"><strong>${fmt(est.perTankHr,2)}</strong><span>Estimated Hours / Tank</span></div>
-    <div class="estimateKpi"><strong>${Number.isFinite(variance)?(variance>=0?'+':'')+fmt(variance,2):'—'}</strong><span>Variance vs Estimate</span></div>
-    <div class="estimateKpi"><strong>${est.finishDate?est.finishDate.toLocaleString():'—'}</strong><span>Estimated Finish</span></div>
-    <div class="estimateKpi"><strong>${etaDelay}</strong><span>Actual vs ETA</span></div>
-    <div class="estimateKpi"><strong>${Math.max(1,+a.qty||1)}</strong><span>Actual Tanks Completed</span></div>
-    <div class="estimateKpi"><strong>${Number.isFinite(totalHr)&&Number.isFinite(est.completionHr)?((totalHr-est.completionHr)>=0?'+':'')+fmt(totalHr-est.completionHr,2):'—'}</strong><span>Total Hour Difference</span></div>`;
-}
-function renderPresets(){
-  const list=document.getElementById('presetList');
-  list.innerHTML = state.scenarios.length?state.scenarios.map((s,i)=>`<div class="presetRow"><div><b>${s.name}</b><div class="tiny">Saved ${new Date(s.savedAt).toLocaleString()}</div></div><div><button data-load="${i}">Load</button></div><div><button class="danger" data-del="${i}">Delete</button></div></div>`).join(''):`<div class="small">No saved scenarios yet.</div>`;
-  list.querySelectorAll('[data-load]').forEach(btn=>btn.onclick=()=>loadScenario(+btn.dataset.load));
-  list.querySelectorAll('[data-del]').forEach(btn=>btn.onclick=()=>deleteScenario(+btn.dataset.del));
-}
-function renderEditor(){
-  const editor=document.getElementById('editorGrid');
-  editor.innerHTML=state.steps.map((step,i)=>{
-    const active=activeMachines(step), ids=idsCount(step.machineIds);
-    return `<div class="editCard">
-      <h4>${i+1}. ${step.name}</h4>
-      <div class="field"><label>Step name</label><input type="text" value="${escapeHtml(step.name)}" data-act="name" data-id="${step.id}"></div>
-      <div class="checkGrid">
-        ${Object.entries(TYPE_META).map(([k,v])=>`<label class="checkItem"><input type="checkbox" data-act="applies-${k}" data-id="${step.id}" ${step.applies?.[k]?'checked':''}> ${v}</label>`).join('')}
-      </div>
-      <div class="grid2">
-        <div class="field"><label>Process time / panel (min)</label><input type="number" min="0" step="0.5" value="${fmt(+step.time||0,1)}" data-act="time" data-id="${step.id}"></div>
-        <div class="field"><label>Batch size</label><input type="number" min="1" step="1" value="${Math.max(1,+step.batchSize||1)}" data-act="batchSize" data-id="${step.id}"></div>
-        <div class="field"><label>Setup time (min / batch)</label><input type="number" min="0" step="0.5" value="${fmt(+step.setup||0,1)}" data-act="setup" data-id="${step.id}"></div>
-        <div class="field"><label>Transfer time (min / batch)</label><input type="number" min="0" step="0.5" value="${fmt(+step.transfer||0,1)}" data-act="transfer" data-id="${step.id}"></div>
-      </div>
-      <div class="field"><label>Machine IDs / station names (comma separated)</label><input type="text" value="${escapeHtml(step.machineIds||'')}" data-act="machineIds" data-id="${step.id}"><div class="tiny">Detected IDs: ${ids}</div></div>
-      <div class="grid3">
-        <div class="field"><label>Configured machines</label><input type="number" min="0" step="1" value="${Math.max(0,+step.machineCount||0)}" data-act="machineCount" data-id="${step.id}"></div>
-        <div class="field"><label>Workers / machine</label><input type="number" min="1" step="1" value="${Math.max(1,+step.workersPerMachine||1)}" data-act="workersPerMachine" data-id="${step.id}"></div>
-        <div class="field"><label>Available workers</label><input type="number" min="0" step="1" value="${Math.max(0,+step.availableWorkers||0)}" data-act="availableWorkers" data-id="${step.id}"></div>
-      </div>
-      <div class="tiny">Active machines now: ${active}</div>
-      <div class="field"><label>Status</label><select data-act="status" data-id="${step.id}"><option value="running" ${step.status==='running'?'selected':''}>Running</option><option value="ready" ${step.status==='ready'?'selected':''}>Ready</option><option value="blocked" ${step.status==='blocked'?'selected':''}>Blocked</option></select></div>
-      <div class="field"><label>Note</label><textarea data-act="note" data-id="${step.id}">${escapeHtml(step.note||'')}</textarea></div>
-      <div class="stepMoveBtns"><button type="button" data-move="up" data-id="${step.id}">← Earlier</button><button type="button" data-move="down" data-id="${step.id}">Later →</button></div>
-    </div>`;
-  }).join('');
-  editor.querySelectorAll('[data-act]').forEach(el=>{ el.addEventListener('input',onEdit); el.addEventListener('change',onEdit); });
-  editor.querySelectorAll('[data-move]').forEach(btn=>btn.onclick=()=>moveStep(btn.dataset.id, btn.dataset.move==='up'?-1:1));
-}
-function escapeHtml(s){ return String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
-
-function captureFlowRects(){ const out={}; document.querySelectorAll('.flowStep[data-step-id]').forEach(el=>out[el.dataset.stepId]=el.getBoundingClientRect()); return out; }
-function animateFlowFlip(oldRects){ requestAnimationFrame(()=>{ document.querySelectorAll('.flowStep[data-step-id]').forEach(el=>{ const old=oldRects?.[el.dataset.stepId]; if(!old) return; const now=el.getBoundingClientRect(); const dx=old.left-now.left, dy=old.top-now.top; if(Math.abs(dx)<1&&Math.abs(dy)<1)return; el.animate([{transform:`translate(${dx}px,${dy}px) scale(.98)`,opacity:.82},{transform:'translate(0,0) scale(1)',opacity:1}],{duration:420,easing:'cubic-bezier(.2,.8,.2,1)'}); }); }); }
-function moveStep(id,dir){ const oldRects=captureFlowRects(); const i=state.steps.findIndex(s=>s.id===id); if(i<0) return; const ni=i+dir; if(ni<0||ni>=state.steps.length)return; const moved=state.steps[i]; [state.steps[i],state.steps[ni]]=[state.steps[ni],state.steps[i]]; saveState(); renderAll(); animateFlowFlip(oldRects); showMotionToast(`${moved.name} moved ${dir<0?'earlier':'later'}`); }
-function enableFlowDragging(){
-  const cards=[...document.querySelectorAll('.flowStep[data-step-id]')]; let draggedId=null;
-  cards.forEach(card=>{
-    card.addEventListener('dragstart',()=>{draggedId=card.dataset.stepId; card.classList.add('dragging');});
-    card.addEventListener('dragend',()=>{draggedId=null; card.classList.remove('dragging'); cards.forEach(c=>c.classList.remove('dragover'));});
-    card.addEventListener('dragover',e=>{e.preventDefault(); if(card.dataset.stepId!==draggedId) card.classList.add('dragover');});
-    card.addEventListener('dragleave',()=>card.classList.remove('dragover'));
-    card.addEventListener('drop',e=>{ e.preventDefault(); card.classList.remove('dragover'); if(!draggedId||draggedId===card.dataset.stepId)return; const oldRects=captureFlowRects(); const from=state.steps.findIndex(s=>s.id===draggedId), to=state.steps.findIndex(s=>s.id===card.dataset.stepId); if(from<0||to<0)return; const [moved]=state.steps.splice(from,1); state.steps.splice(to,0,moved); saveState(); renderAll(); animateFlowFlip(oldRects); showMotionToast(`${moved.name} reordered`); });
-  });
-}
-
-function onEdit(e){
-  const id=e.target.dataset.id, act=e.target.dataset.act; const step=state.steps.find(s=>s.id===id); if(!step) return;
-  if(act==='name') step.name=e.target.value;
-  else if(act==='time') step.time=Math.max(0,+e.target.value||0);
-  else if(act==='setup') step.setup=Math.max(0,+e.target.value||0);
-  else if(act==='transfer') step.transfer=Math.max(0,+e.target.value||0);
-  else if(act==='batchSize') step.batchSize=Math.max(1,Math.floor(+e.target.value||1));
-  else if(act==='machineIds') step.machineIds=e.target.value;
-  else if(act==='machineCount') step.machineCount=Math.max(0,Math.floor(+e.target.value||0));
-  else if(act==='workersPerMachine') step.workersPerMachine=Math.max(1,Math.floor(+e.target.value||1));
-  else if(act==='availableWorkers') step.availableWorkers=Math.max(0,Math.floor(+e.target.value||0));
-  else if(act==='status'){ step.status=e.target.value; showMotionToast(`${step.name}: ${statusText(step.status)}`); }
-  else if(act==='note') step.note=e.target.value;
-  else if(act.startsWith('applies-')){ const t=act.split('-')[1]; step.applies[t]=e.target.checked; }
-  saveState(); renderAll();
-}
-function updateEstimateField(id,val){ state.estimate[id]=val; saveState(); renderAll(); }
-function bindStaticInputs(){
-  document.getElementById('tankPreset').onchange=e=>{ state.estimate.preset=e.target.value; const p=TANK_PRESETS[e.target.value]||TANK_PRESETS['Custom']; state.estimate.lengthFt=p.L; state.estimate.widthFt=p.W; state.estimate.heightFt=p.H; state.estimate.roofDeduct=p.roofDeduct||0; state.estimate.custom.stay=p.stay||state.estimate.custom.stay; saveState(); renderAll(); };
-  document.getElementById('tankQty').oninput=e=>updateEstimateField('qty',Math.max(1,Math.floor(+e.target.value||1)));
-  document.getElementById('useFormula').onchange=e=>updateEstimateField('useFormula',e.target.checked);
-  document.getElementById('roofDeduct').oninput=e=>updateEstimateField('roofDeduct',Math.max(0,Math.floor(+e.target.value||0)));
-  document.getElementById('lengthFt').oninput=e=>updateEstimateField('lengthFt',Math.max(1,+e.target.value||24));
-  document.getElementById('widthFt').oninput=e=>updateEstimateField('widthFt',Math.max(1,+e.target.value||24));
-  document.getElementById('heightFt').oninput=e=>updateEstimateField('heightFt',Math.max(1,+e.target.value||8));
-  document.getElementById('panelSizeFt').oninput=e=>updateEstimateField('panelSizeFt',Math.max(1,+e.target.value||4));
-  document.getElementById('includeStay').onchange=e=>updateEstimateField('includeStay',e.target.checked);
-  document.getElementById('efficiency').oninput=e=>updateEstimateField('efficiency',Math.max(1,Math.min(100,+e.target.value||100)));
-  ['Wall','Roof','Base','Stay'].forEach(K=>{ document.getElementById('custom'+K).oninput=e=>{ state.estimate.preset='Custom'; state.estimate.custom[K.toLowerCase()]=Math.max(0,Math.floor(+e.target.value||0)); saveState(); renderAll(); }; });
-  document.getElementById('startDate').onchange=e=>updateEstimateField('startDate',e.target.value);
-  document.getElementById('targetDays').oninput=e=>updateEstimateField('targetDays',Math.max(0,+e.target.value||0));
-  document.getElementById('hoursPerShift').oninput=e=>updateEstimateField('hoursPerShift',Math.max(1,+e.target.value||8));
-  document.getElementById('shiftsPerDay').oninput=e=>updateEstimateField('shiftsPerDay',Math.max(1,Math.floor(+e.target.value||1)));
-  document.getElementById('breakMin').oninput=e=>updateEstimateField('breakMin',Math.max(0,+e.target.value||0));
-  document.getElementById('workdaysPerWeek').oninput=e=>updateEstimateField('workdaysPerWeek',Math.max(1,Math.min(7,Math.floor(+e.target.value||6))));
-  document.getElementById('actualStart').onchange=e=>{ state.actual.start=e.target.value; saveState(); renderAll(); };
-  document.getElementById('actualFinish').onchange=e=>{ state.actual.finish=e.target.value; saveState(); renderAll(); };
-  document.getElementById('actualQty').oninput=e=>{ state.actual.qty=Math.max(1,Math.floor(+e.target.value||1)); saveState(); renderAll(); };
-  document.getElementById('saveScenarioBtn').onclick=saveScenario;
-}
-
-function saveScenario(){
-  const name=document.getElementById('scenarioName').value.trim(); if(!name){ showMotionToast('Enter a preset name first'); return; }
-  state.scenarios.unshift({name,savedAt:Date.now(),payload:deepClone({previewType:state.previewType,steps:state.steps,estimate:state.estimate,actual:state.actual})});
-  saveState(); document.getElementById('scenarioName').value=''; renderAll(); showMotionToast(`Scenario saved: ${name}`);
-}
-function loadScenario(i){ const s=state.scenarios[i]; if(!s) return; state.previewType=s.payload.previewType||'wall'; state.steps=deepClone(s.payload.steps||DEFAULT_STEPS); state.estimate={...defaultState().estimate,...deepClone(s.payload.estimate||{})}; state.actual={...defaultState().actual,...deepClone(s.payload.actual||{})}; saveState(); renderAll(); showMotionToast(`Loaded scenario: ${s.name}`); }
-function deleteScenario(i){ const s=state.scenarios[i]; if(!s) return; state.scenarios.splice(i,1); saveState(); renderAll(); showMotionToast(`Deleted scenario: ${s.name}`); }
-
-function resetDefaults(){ state=defaultState(); saveState(); renderAll(); showMotionToast('Reset to default'); }
-function setAllStatus(status){ state.steps.forEach(s=>s.status=status); saveState(); renderAll(); }
-
-function renderAll(){
-  renderSummary(); renderPreviewTypeSeg(); renderFlow(); renderTimeline(); renderEstimatorFields(); renderEstimateOutputs(); renderGanttChart(); renderUtilChart(); renderActual(); renderPresets(); renderEditor();
-}
-
-document.getElementById('resetBtn').onclick=resetDefaults;
-document.getElementById('runningAllBtn').onclick=()=>setAllStatus('running');
-document.getElementById('readyAllBtn').onclick=()=>setAllStatus('ready');
-document.getElementById('blockedAllBtn').onclick=()=>setAllStatus('blocked');
-bindStaticInputs();
-renderAll();
+calculate();
 </script>
 </body>
 </html>
