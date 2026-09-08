@@ -13,10 +13,11 @@
 body{
   margin:0;font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
   background:linear-gradient(180deg,#07101b,#0b1422);color:var(--text);
-  height:100vh;overflow:hidden;display:flex;flex-direction:column;padding:16px;
+  /* Changed to allow scrolling ONLY if the screen is too small */
+  height:100vh;overflow-y:auto;overflow-x:hidden;display:flex;flex-direction:column;padding:16px;
 }
 .wrap{
-  display:flex;flex-direction:column;height:100%;max-width:1600px;margin:0 auto;width:100%;
+  display:flex;flex-direction:column;min-height:100%;max-width:1600px;margin:0 auto;width:100%;
 }
 .header{
   display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-shrink:0;
@@ -31,12 +32,12 @@ body{
 .btn:hover{background:rgba(255,255,255,.14);border-color:var(--accent)}
 
 .dashboard{
-  display:grid;grid-template-columns:300px 1.25fr 380px;gap:16px;flex-grow:1;min-height:0;
+  display:grid;grid-template-columns:300px 1.25fr 380px;gap:16px;flex-grow:1;
 }
 .col{
   background:linear-gradient(180deg,rgba(255,255,255,.04),rgba(255,255,255,.015));
   border:1px solid rgba(255,255,255,.08);border-radius:18px;padding:16px;
-  display:flex;flex-direction:column;gap:16px;overflow:hidden;
+  display:flex;flex-direction:column;gap:16px;overflow-y:auto;
 }
 
 label{display:block;color:var(--muted);font-size:11px;font-weight:600;margin-bottom:6px;text-transform:uppercase;letter-spacing:.03em}
@@ -94,6 +95,10 @@ textarea{resize:none;}
 .settingsTitle{margin-bottom:10px;font-size:13px;font-weight:700;color:var(--text)}
 .settingsGrid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px 12px}
 
+@media(max-width:1100px){
+  .dashboard{grid-template-columns:1fr;}
+  .col{overflow-y:visible;}
+}
 @media print{
   body{background:#fff;color:#000;height:auto;overflow:visible}.col{box-shadow:none;border:1px solid #ccc}.btn{display:none}
 }
@@ -240,7 +245,7 @@ textarea{resize:none;}
     </div>
 
     <!-- COLUMN 3: Settings -->
-    <div class="col" style="overflow-y:auto; padding-right:8px;">
+    <div class="col" style="padding-right:12px;">
       
       <div class="settingsSection">
         <div class="settingsTitle">1. Process Cycle Times</div>
@@ -290,17 +295,23 @@ textarea{resize:none;}
 </div>
 
 <script>
+// Bulletproof element selector
 const $ = id => document.getElementById(id);
 const num = (id, fallback=0) => {
-  const n = Number($(id).value);
+  const el = $(id);
+  if(!el) return fallback;
+  const n = Number(el.value);
   return Number.isFinite(n) ? n : fallback;
 };
 const fmt = (n, d=2) => Number.isFinite(n) ? n.toFixed(d) : '—';
 
 (function initDefaultDate() {
-  const d = new Date();
-  d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
-  $('startDate').value = d.toISOString().slice(0, 16);
+  try {
+    const d = new Date();
+    d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
+    const el = $('startDate');
+    if(el) el.value = d.toISOString().slice(0, 16);
+  } catch(e) { console.warn('Date init failed:', e); }
 })();
 
 function formatDuration(minutes) {
@@ -313,7 +324,6 @@ function formatDuration(minutes) {
   return `${h}h ${m}m`;
 }
 
-// Format local date to YYYY-MM-DD for holiday checking
 function getLocalYMD(dateObj) {
   const y = dateObj.getFullYear();
   const m = String(dateObj.getMonth() + 1).padStart(2, '0');
@@ -321,55 +331,50 @@ function getLocalYMD(dateObj) {
   return `${y}-${m}-${d}`;
 }
 
-// Simulates real factory clock, pausing overnight and on off-days/holidays
 function calculateFinishDate(startDateStr, totalLeadMinutes, startTimeStr, endTimeStr, breakMin, workdaysPerWeek, holidaysStr) {
   if (!startDateStr || !totalLeadMinutes) return '—';
   let cur = new Date(startDateStr);
   if (isNaN(cur.getTime())) return '—';
 
-  // Parse holidays array
-  const holidays = holidaysStr.split(',').map(s => s.trim()).filter(s => s);
+  const holidays = (holidaysStr || '').split(',').map(s => s.trim()).filter(s => s);
 
-  const [sh, sm] = startTimeStr.split(':').map(Number);
-  const [eh, em] = endTimeStr.split(':').map(Number);
+  const [sh, sm] = (startTimeStr || '08:00').split(':').map(Number);
+  const [eh, em] = (endTimeStr || '17:00').split(':').map(Number);
   
-  const dayStartMin = sh * 60 + sm;
-  let dayEndMin = eh * 60 + em;
-  if (dayEndMin <= dayStartMin) dayEndMin += 24 * 60; // Shifts crossing midnight
+  const dayStartMin = (sh||8) * 60 + (sm||0);
+  let dayEndMin = (eh||17) * 60 + (em||0);
+  if (dayEndMin <= dayStartMin) dayEndMin += 24 * 60;
 
   const grossDailyMin = dayEndMin - dayStartMin;
   const netDailyMin = grossDailyMin - breakMin;
-  if (netDailyMin <= 0) return 'Invalid Schedule';
+  if (netDailyMin <= 0) return 'Invalid Schedule (Fix breaks)';
 
   const clockStretch = grossDailyMin / netDailyMin; 
   let remainingNet = totalLeadMinutes;
   let loops = 0;
 
-  while (remainingNet > 0 && loops++ < 1500) {
+  while (remainingNet > 0 && loops++ < 2000) {
     const dayOfWeek = cur.getDay(); 
     const isWorkingDay = workdaysPerWeek === 7 ? true : (dayOfWeek !== 0 && dayOfWeek <= workdaysPerWeek);
     const currentDateStr = getLocalYMD(cur);
     const isHoliday = holidays.includes(currentDateStr);
 
-    // Skip to next day if it's a weekend or holiday
     if (!isWorkingDay || isHoliday) {
       cur.setDate(cur.getDate() + 1);
-      cur.setHours(sh, sm, 0, 0);
+      cur.setHours(sh||8, sm||0, 0, 0);
       continue;
     }
 
     let curMin = cur.getHours() * 60 + cur.getMinutes();
     
-    // If started before factory opens, wait until open time
     if (curMin < dayStartMin) {
-      cur.setHours(sh, sm, 0, 0);
+      cur.setHours(sh||8, sm||0, 0, 0);
       curMin = dayStartMin;
     }
     
-    // If it's already closing time, jump to tomorrow morning
     if (curMin >= dayEndMin) {
       cur.setDate(cur.getDate() + 1);
-      cur.setHours(sh, sm, 0, 0);
+      cur.setHours(sh||8, sm||0, 0, 0);
       continue;
     }
 
@@ -377,17 +382,14 @@ function calculateFinishDate(startDateStr, totalLeadMinutes, startTimeStr, endTi
     const maxNetLeftToday = minutesLeftToday / clockStretch;
 
     if (remainingNet <= maxNetLeftToday) {
-      // Job finishes today
       cur.setMinutes(cur.getMinutes() + (remainingNet * clockStretch));
       remainingNet = 0;
     } else {
-      // Job carries over to tomorrow
       cur.setDate(cur.getDate() + 1);
-      cur.setHours(sh, sm, 0, 0);
+      cur.setHours(sh||8, sm||0, 0, 0);
       remainingNet -= maxNetLeftToday;
     }
   }
-
   return cur.toLocaleDateString(undefined, {
     weekday: 'short', month: 'short', day: 'numeric',
     hour: '2-digit', minute: '2-digit'
@@ -457,6 +459,7 @@ function simulatePipeline(
 
 function updateGanttBar(id, data, maxTime) {
   const el = $(id);
+  if(!el) return;
   if (!maxTime || !data || data.end === 0) {
     el.style.left = '0%';
     el.style.width = '0%';
@@ -465,136 +468,143 @@ function updateGanttBar(id, data, maxTime) {
   const leftPct = (data.start / maxTime) * 100;
   const widthPct = ((data.end - data.start) / maxTime) * 100;
   el.style.left = `${leftPct}%`;
-  el.style.width = `${Math.max(widthPct, 1)}%`; // Ensure it's at least slightly visible
+  el.style.width = `${Math.max(widthPct, 1)}%`;
 }
 
 function calculate() {
-  const qty = Math.max(0, Math.floor(num('panelQty', 0)));
-  const laserMin = Math.max(.1, num('laserMinutes', 12));
-  const laserPanels = Math.max(1, Math.floor(num('laserPanels', 2)));
-  const punchMin = Math.max(0, num('punchMinutes', 5));
-  const notchMin = Math.max(0, num('notchMinutes', 5));
-  const weldMin = Math.max(0, num('weldMinutes', 5));
+  try {
+    const qty = Math.max(0, Math.floor(num('panelQty', 0)));
+    const laserMin = Math.max(.1, num('laserMinutes', 12));
+    const laserPanels = Math.max(1, Math.floor(num('laserPanels', 2)));
+    const punchMin = Math.max(0, num('punchMinutes', 5));
+    const notchMin = Math.max(0, num('notchMinutes', 5));
+    const weldMin = Math.max(0, num('weldMinutes', 5));
 
-  const laserMachines = Math.max(1, Math.floor(num('laserMachines', 1)));
-  const punchMachines = Math.max(1, Math.floor(num('punchMachines', 1)));
-  const notchMachines = Math.max(1, Math.floor(num('notchMachines', 1)));
-  const weldStations = Math.max(1, Math.floor(num('weldStations', 1)));
+    const laserMachines = Math.max(1, Math.floor(num('laserMachines', 1)));
+    const punchMachines = Math.max(1, Math.floor(num('punchMachines', 1)));
+    const notchMachines = Math.max(1, Math.floor(num('notchMachines', 1)));
+    const weldStations = Math.max(1, Math.floor(num('weldStations', 1)));
 
-  const laserSetup = Math.max(0, num('laserSetup', 0));
-  const punchSetup = Math.max(0, num('punchSetup', 0));
-  const notchSetup = Math.max(0, num('notchSetup', 0));
-  const weldSetup = Math.max(0, num('weldSetup', 0));
+    const laserSetup = Math.max(0, num('laserSetup', 0));
+    const punchSetup = Math.max(0, num('punchSetup', 0));
+    const notchSetup = Math.max(0, num('notchSetup', 0));
+    const weldSetup = Math.max(0, num('weldSetup', 0));
 
-  const efficiency = Math.max(.01, Math.min(1, num('efficiency', 100) / 100));
-  const dayStartTime = $('dayStartTime').value || '08:00';
-  const dayEndTime = $('dayEndTime').value || '17:00';
-  const breakMin = Math.max(0, num('breakMin', 0));
-  const workdaysPerWeek = Math.max(1, Math.min(7, Math.floor(num('workdaysPerWeek', 6))));
-  const startDate = $('startDate').value;
-  const holidaysStr = $('holidays').value;
+    const efficiency = Math.max(.01, Math.min(1, num('efficiency', 100) / 100));
+    const dayStartTime = $('dayStartTime')?.value || '08:00';
+    const dayEndTime = $('dayEndTime')?.value || '17:00';
+    const breakMin = Math.max(0, num('breakMin', 0));
+    const workdaysPerWeek = Math.max(1, Math.min(7, Math.floor(num('workdaysPerWeek', 6))));
+    const startDate = $('startDate')?.value || '';
+    const holidaysStr = $('holidays')?.value || '';
 
-  const [sh, sm] = dayStartTime.split(':').map(Number);
-  const [eh, em] = dayEndTime.split(':').map(Number);
-  let grossMin = (eh * 60 + em) - (sh * 60 + sm);
-  if (grossMin < 0) grossMin += 24 * 60;
-  const hoursDay = Math.max(0.1, (grossMin - breakMin) / 60);
+    const [sh, sm] = dayStartTime.split(':').map(Number);
+    const [eh, em] = dayEndTime.split(':').map(Number);
+    let grossMin = ((eh||17) * 60 + (em||0)) - ((sh||8) * 60 + (sm||0));
+    if (grossMin < 0) grossMin += 24 * 60;
+    const hoursDay = Math.max(0.1, (grossMin - breakMin) / 60);
 
-  const effectiveLaserMin = laserMin / efficiency;
-  const effectivePunchMin = punchMin / efficiency;
-  const effectiveNotchMin = notchMin / efficiency;
-  const effectiveWeldMin = weldMin / efficiency;
+    const effectiveLaserMin = laserMin / efficiency;
+    const effectivePunchMin = punchMin / efficiency;
+    const effectiveNotchMin = notchMin / efficiency;
+    const effectiveWeldMin = weldMin / efficiency;
 
-  const batches = qty === 0 ? 0 : Math.ceil(qty / laserPanels);
-  const laserWork = batches * effectiveLaserMin;
-  const punchWork = qty * effectivePunchMin;
-  const notchWork = qty * effectiveNotchMin;
-  const weldWork = qty * effectiveWeldMin;
+    const batches = qty === 0 ? 0 : Math.ceil(qty / laserPanels);
+    const laserWork = batches * effectiveLaserMin;
+    const punchWork = qty * effectivePunchMin;
+    const notchWork = qty * effectiveNotchMin;
+    const weldWork = qty * effectiveWeldMin;
 
-  const setupWork = (laserSetup * laserMachines) + (punchSetup * punchMachines) +
-                    (notchSetup * notchMachines) + (weldSetup * weldStations);
-  const workloadMin = laserWork + punchWork + notchWork + weldWork + setupWork;
+    const setupWork = (laserSetup * laserMachines) + (punchSetup * punchMachines) +
+                      (notchSetup * notchMachines) + (weldSetup * weldStations);
+    const workloadMin = laserWork + punchWork + notchWork + weldWork + setupWork;
 
-  const pipelineRes = simulatePipeline(
-    qty, effectiveLaserMin, laserPanels, effectivePunchMin, effectiveNotchMin, effectiveWeldMin,
-    laserMachines, punchMachines, notchMachines, weldStations,
-    laserSetup, punchSetup, notchSetup, weldSetup
-  );
+    const pipelineRes = simulatePipeline(
+      qty, effectiveLaserMin, laserPanels, effectivePunchMin, effectiveNotchMin, effectiveWeldMin,
+      laserMachines, punchMachines, notchMachines, weldStations,
+      laserSetup, punchSetup, notchSetup, weldSetup
+    );
 
-  const completionMin = pipelineRes ? pipelineRes.totalTime : 0;
-  const completionHr = completionMin / 60;
-  const days = completionHr / hoursDay;
+    const completionMin = pipelineRes ? pipelineRes.totalTime : 0;
+    const completionHr = completionMin / 60;
+    const days = completionHr / hoursDay;
 
-  // Update Gantt UI
-  if (pipelineRes) {
-    updateGanttBar('gBarLaser', pipelineRes.timeline.laser, completionMin);
-    updateGanttBar('gBarPunch', pipelineRes.timeline.punch, completionMin);
-    updateGanttBar('gBarNotch', pipelineRes.timeline.notch, completionMin);
-    updateGanttBar('gBarWeld', pipelineRes.timeline.weld, completionMin);
-  } else {
-    updateGanttBar('gBarLaser', null, 0); updateGanttBar('gBarPunch', null, 0);
-    updateGanttBar('gBarNotch', null, 0); updateGanttBar('gBarWeld', null, 0);
-  }
+    if (pipelineRes) {
+      updateGanttBar('gBarLaser', pipelineRes.timeline.laser, completionMin);
+      updateGanttBar('gBarPunch', pipelineRes.timeline.punch, completionMin);
+      updateGanttBar('gBarNotch', pipelineRes.timeline.notch, completionMin);
+      updateGanttBar('gBarWeld', pipelineRes.timeline.weld, completionMin);
+    } else {
+      updateGanttBar('gBarLaser', null, 0); updateGanttBar('gBarPunch', null, 0);
+      updateGanttBar('gBarNotch', null, 0); updateGanttBar('gBarWeld', null, 0);
+    }
 
-  const laserRate = (laserMachines * laserPanels * 60) / effectiveLaserMin;
-  const punchRate = effectivePunchMin > 0 ? (punchMachines * 60) / effectivePunchMin : Infinity;
-  const notchRate = effectiveNotchMin > 0 ? (notchMachines * 60) / effectiveNotchMin : Infinity;
-  const weldRate = effectiveWeldMin > 0 ? (weldStations * 60) / effectiveWeldMin : Infinity;
-  const lineRate = Math.min(laserRate, punchRate, notchRate, weldRate);
+    const laserRate = (laserMachines * laserPanels * 60) / effectiveLaserMin;
+    const punchRate = effectivePunchMin > 0 ? (punchMachines * 60) / effectivePunchMin : Infinity;
+    const notchRate = effectiveNotchMin > 0 ? (notchMachines * 60) / effectiveNotchMin : Infinity;
+    const weldRate = effectiveWeldMin > 0 ? (weldStations * 60) / effectiveWeldMin : Infinity;
+    const lineRate = Math.min(laserRate, punchRate, notchRate, weldRate);
 
-  const rates = [
-    { id: 'Laser', rate: laserRate, stepId: 'stepLaser', tagId: 'tagLaser', statId: 'laserStatus' },
-    { id: 'Punch', rate: punchRate, stepId: 'stepPunch', tagId: 'tagPunch', statId: 'punchStatus' },
-    { id: 'Notch', rate: notchRate, stepId: 'stepNotch', tagId: 'tagNotch', statId: 'notchStatus' },
-    { id: 'Weld', rate: weldRate, stepId: 'stepWeld', tagId: 'tagWeld', statId: 'weldStatus' }
-  ];
+    const rates = [
+      { id: 'Laser', rate: laserRate, stepId: 'stepLaser', tagId: 'tagLaser', statId: 'laserStatus' },
+      { id: 'Punch', rate: punchRate, stepId: 'stepPunch', tagId: 'tagPunch', statId: 'punchStatus' },
+      { id: 'Notch', rate: notchRate, stepId: 'stepNotch', tagId: 'tagNotch', statId: 'notchStatus' },
+      { id: 'Weld', rate: weldRate, stepId: 'stepWeld', tagId: 'tagWeld', statId: 'weldStatus' }
+    ];
 
-  rates.forEach(r => {
-    $(r.stepId).classList.remove('bottleneck');
-    $(r.tagId).className = 'tag ok';
-    $(r.tagId).textContent = 'Balanced';
-    $(r.statId).textContent = 'Balanced';
-    $(r.statId).style.color = 'inherit';
-  });
+    rates.forEach(r => {
+      const stepEl = $(r.stepId); const tagEl = $(r.tagId); const statEl = $(r.statId);
+      if(stepEl) stepEl.classList.remove('bottleneck');
+      if(tagEl) { tagEl.className = 'tag ok'; tagEl.textContent = 'Balanced'; }
+      if(statEl) { statEl.textContent = 'Balanced'; statEl.style.color = 'inherit'; }
+    });
 
-  const bottlenecks = rates.filter(r => Math.abs(r.rate - lineRate) < 0.01);
-  bottlenecks.forEach(b => {
-    $(b.stepId).classList.add('bottleneck');
-    $(b.tagId).className = 'tag bottle';
-    $(b.tagId).textContent = 'Bottleneck';
-    $(b.statId).textContent = 'Bottleneck';
-    $(b.statId).style.color = 'var(--red)';
-  });
+    const bottlenecks = rates.filter(r => Math.abs(r.rate - lineRate) < 0.01);
+    bottlenecks.forEach(b => {
+      const stepEl = $(b.stepId); const tagEl = $(b.tagId); const statEl = $(b.statId);
+      if(stepEl) stepEl.classList.add('bottleneck');
+      if(tagEl) { tagEl.className = 'tag bottle'; tagEl.textContent = 'Bottleneck'; }
+      if(statEl) { statEl.textContent = 'Bottleneck'; statEl.style.color = 'var(--red)'; }
+    });
 
-  $('bottleneckBadge').textContent = bottlenecks.length > 1
-    ? `Tied: ${bottlenecks.map(b => b.id).join(', ')} (${fmt(lineRate, 1)} p/hr)`
-    : `Constraint: ${bottlenecks[0].id} (${fmt(lineRate, 1)} p/hr)`;
+    const badgeEl = $('bottleneckBadge');
+    if(badgeEl) {
+      badgeEl.textContent = bottlenecks.length > 1
+        ? `Tied: ${bottlenecks.map(b => b.id).join(', ')} (${fmt(lineRate, 1)} p/hr)`
+        : `Constraint: ${bottlenecks[0].id} (${fmt(lineRate, 1)} p/hr)`;
+    }
 
-  $('estimateTime').textContent = qty ? formatDuration(completionMin) : '—';
-  $('targetDate').textContent = qty ? calculateFinishDate(startDate, completionMin, dayStartTime, dayEndTime, breakMin, workdaysPerWeek, holidaysStr) : '—';
-  $('workingDays').textContent = qty ? `${fmt(days, 2)} days` : '—';
-  $('longSheets').textContent = qty ? `${batches}` : '—';
-  $('rate').textContent = qty ? `${fmt(lineRate, 1)} / hr` : '—';
-  $('workload').textContent = qty ? `${fmt(workloadMin / 60, 2)} hr` : '—';
+    if($('estimateTime')) $('estimateTime').textContent = qty ? formatDuration(completionMin) : '—';
+    if($('targetDate')) $('targetDate').textContent = qty ? calculateFinishDate(startDate, completionMin, dayStartTime, dayEndTime, breakMin, workdaysPerWeek, holidaysStr) : '—';
+    if($('workingDays')) $('workingDays').textContent = qty ? `${fmt(days, 2)} days` : '—';
+    if($('longSheets')) $('longSheets').textContent = qty ? `${batches}` : '—';
+    if($('rate')) $('rate').textContent = qty ? `${fmt(lineRate, 1)} / hr` : '—';
+    if($('workload')) $('workload').textContent = qty ? `${fmt(workloadMin / 60, 2)} hr` : '—';
 
-  $('laserLoad').textContent = formatDuration(laserWork + laserSetup * laserMachines);
-  $('punchLoad').textContent = formatDuration(punchWork + punchSetup * punchMachines);
-  $('notchLoad').textContent = formatDuration(notchWork + notchSetup * notchMachines);
-  $('weldLoad').textContent = formatDuration(weldWork + weldSetup * weldStations);
+    if($('laserLoad')) $('laserLoad').textContent = formatDuration(laserWork + laserSetup * laserMachines);
+    if($('punchLoad')) $('punchLoad').textContent = formatDuration(punchWork + punchSetup * punchMachines);
+    if($('notchLoad')) $('notchLoad').textContent = formatDuration(notchWork + notchSetup * notchMachines);
+    if($('weldLoad')) $('weldLoad').textContent = formatDuration(weldWork + weldSetup * weldStations);
 
-  $('laserCap').textContent = `${fmt(laserRate, 1)}/h`;
-  $('punchCap').textContent = Number.isFinite(punchRate) ? `${fmt(punchRate, 1)}/h` : 'N/A';
-  $('notchCap').textContent = Number.isFinite(notchRate) ? `${fmt(notchRate, 1)}/h` : 'N/A';
-  $('weldCap').textContent = Number.isFinite(weldRate) ? `${fmt(weldRate, 1)}/h` : 'N/A';
+    if($('laserCap')) $('laserCap').textContent = `${fmt(laserRate, 1)}/h`;
+    if($('punchCap')) $('punchCap').textContent = Number.isFinite(punchRate) ? `${fmt(punchRate, 1)}/h` : 'N/A';
+    if($('notchCap')) $('notchCap').textContent = Number.isFinite(notchRate) ? `${fmt(notchRate, 1)}/h` : 'N/A';
+    if($('weldCap')) $('weldCap').textContent = Number.isFinite(weldRate) ? `${fmt(weldRate, 1)}/h` : 'N/A';
 
-  if (qty === 0) {
-    $('summary').innerHTML = '<b>Enter quantity</b> to project production timeline.';
-  } else {
-    const bottleneckNames = bottlenecks.map(b => b.id).join(' & ');
-    $('summary').innerHTML =
-      `Order: <b>${qty} panels</b> (${batches} sheets). Est. pipeline runtime is <b>${formatDuration(completionMin)}</b> ` +
-      `(${fmt(days, 2)} workdays @ ${fmt(hoursDay, 1)}h net/day). Pacing speed: <b>${fmt(lineRate, 1)} panels/hr</b>. ` +
-      `Constraint is <b style="color:var(--amber)">${bottleneckNames}</b>.`;
+    const sumEl = $('summary');
+    if(sumEl) {
+      if (qty === 0) {
+        sumEl.innerHTML = '<b>Enter quantity</b> to project production timeline.';
+      } else {
+        const bottleneckNames = bottlenecks.map(b => b.id).join(' & ');
+        sumEl.innerHTML =
+          `Order: <b>${qty} panels</b> (${batches} sheets). Est. pipeline runtime is <b>${formatDuration(completionMin)}</b> ` +
+          `(${fmt(days, 2)} workdays @ ${fmt(hoursDay, 1)}h net/day). Pacing speed: <b>${fmt(lineRate, 1)} panels/hr</b>. ` +
+          `Constraint is <b style="color:var(--amber)">${bottleneckNames}</b>.`;
+      }
+    }
+  } catch(err) {
+    console.error("Calculation Error:", err);
   }
 }
 
@@ -608,7 +618,8 @@ function calculate() {
   if (el) { el.addEventListener('input', calculate); el.addEventListener('change', calculate); }
 });
 
-calculate();
+// Run initial calculation
+setTimeout(calculate, 100);
 </script>
 </body>
 </html>
